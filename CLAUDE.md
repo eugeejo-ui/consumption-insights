@@ -1,8 +1,8 @@
 # consumption-insights: 프로젝트 마스터 계획
 
-데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 승인을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
+데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 승인을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 사용자의 Google 스프레드시트에도 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
-> **현재 위치:** Phase 1 진행 중. Task 1(`d5930d1`)·Task 2(`0c5b6c9`)·**Task 3 완료**. 다음은 Task 4(수동 가격표 + 확인 게이트)이고, 사용자 지시를 기다린다(규칙 10). Phase별 진행계획은 `docs/phases/`에 있다.
+> **현재 위치:** Phase 1 진행 중. Task 1~3 완료, **Task 4 코드 완료**. 남은 것은 BigQuery 컴퓨트 4행 사용자 확인이다. 다음은 Task 5(워크로드 가정 + 월 비용)이고, 사용자 지시를 기다린다(규칙 10). Phase별 진행계획은 `docs/phases/`에 있다.
 > **마지막 갱신:** 2026-09-11
 
 ---
@@ -15,22 +15,19 @@
 | 기획 2: v1 가설 (09-10) | 완료(보존) | H1~H5, P | `docs/00_hypotheses_v1.md` |
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
-| Phase 1: 가격·TCO·대시보드 | **진행 중** (Task 3/8 완료) | 스키마·AWS·Azure 수집기 완료, 테스트 9/28 통과, 자동 수집 가격 8개 모두 Phase 0 값과 같음 | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·변동 감지·아카이브 게시 | 대기 | — | `docs/phases/phase-2-automation-publish.md` |
+| Phase 1: 가격·TCO·대시보드 | **진행 중** (Task 4/8 코드 완료) | 수집기 3종 완료, 테스트 13/28 통과. 자동 가격 8개와 수동 가격 6행 확인, BigQuery 컴퓨트 4행 확인 대기 | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
+| Phase 2: 자동 수집·변동 감지·게시·Sheets 적재 | 대기 | Sheets 적재 방식 확정(Python + google-auth). Sheets API는 이미 사용 설정됨 | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
-**결정 대기**
-1. Task 4 착수 지시
-2. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
+**결정·확인 대기**
+1. BigQuery 컴퓨트 4행 확인(온디맨드 TiB, Enterprise 슬롯-시간, US(us)/서울). Task 8 전까지 필요하다.
+2. Task 5 착수 지시
+3. Google Cloud 프로젝트: 기존 강의용 프로젝트를 쓸지, 전용 새 프로젝트를 만들지(Phase 2-0c. 전용 권장)
+4. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 지시하면 Task 4를 한다. Task 4에는 사용자 단계가 있다.
-- Claude가 로더와 가격표를 만든다. `confirmed_on`은 비워 둔다.
-- 사용자가 브라우저로 원본을 확인한 뒤 `confirmed_on`을 적는다.
-- 그다음 커밋한다.
-
-사용자 단계에서 한 번 멈춘다.
+**다음 행동:** 사용자가 지시하면 Task 5(워크로드 가정 + 월 비용 계산)를 한다. Task 5에는 사용자의 가정 검토 단계가 있다. 끝나면 보고하고 멈춘다.
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -46,7 +43,7 @@
    - [가정] 모델에 넣은 가정
 4. **외부로 나가는 행동은 매번 사용자 확인을 받는다.** LinkedIn 게시, 공개 배포, 계정 생성, 비밀키 입력이 여기에 해당한다. 계정 생성과 비밀키 입력은 사용자가 직접 한다.
 5. **판정 기준은 데이터를 보기 전에 고정한다** (`config/thresholds.yaml`). 기준을 바꾸면 아래 결정 로그에 이유와 함께 기록한다.
-6. **공개 저장소 전제로 작업한다.** 코드와 문서에 이메일, 토큰 같은 개인정보나 비밀값을 넣지 않는다. 필요한 값은 환경변수나 GitHub Secret으로 받는다(예: `SEC_USER_AGENT`).
+6. **공개 저장소 전제로 작업한다.** 코드와 문서에 이메일, 토큰 같은 개인정보나 비밀값을 넣지 않는다. 필요한 값은 환경변수나 GitHub Secret으로 받는다(예: `SEC_USER_AGENT`, `GOOGLE_SA_KEY`, `PRICE_SHEET_ID`).
 7. **작업이 끝날 때마다 문서를 갱신한다.**
    - 이 파일: 진행 현황 표, 체크박스, "현재 위치", 진행 로그
    - 해당 Phase의 진행계획 파일: 상태, 진행 과정 표, 진행 기록
@@ -58,11 +55,11 @@
     - 승인된 계획이라도 Task 하나를 끝내면 결과를 보고하고, 다음 지시를 기다린다.
     - 여러 Task나 Phase를 이어서 실행하지 않는다.
     - 사용자가 다른 단위를 지정하면 그 단위를 따른다.
-11. **공개될 수 있는 개인정보가 기록되는 행동은 먼저 묻는다.** 커밋 이메일 같은 것이 여기에 해당한다. 문서에는 실제 주소를 적지 않는다.
+11. **공개될 수 있는 개인정보가 기록되는 행동은 먼저 묻는다.** 커밋 이메일 같은 것이 여기에 해당한다. 문서에는 실제 주소나 개인 프로젝트 ID를 적지 않는다.
     - 커밋 전에는 커밋할 파일에 이메일 주소나 로컬 사용자 경로가 없는지 검사한다.
-12. **막히면 사용자 지시에 따라 Aside CLI(설치됨)를 쓸 수 있는지 먼저 확인하고 보고한다** (2026-09-11 사용자 지시).
+12. **막히면 사용자 지시에 따라 Aside CLI(설치됨, 로그인됨)를 쓸 수 있는지 먼저 확인하고 보고한다** (2026-09-11 사용자 지시).
     - 규칙 9와 충돌하는 용도에는 쓰지 않는다.
-    - 로그인, 비밀번호 입력, OAuth 승인은 사용자가 직접 한다.
+    - 로그인, 비밀번호 입력, OAuth 승인, 서비스 계정 키 발급·열람은 사용자가 직접 한다.
 
 ## 2. 문서 지도
 
@@ -70,8 +67,8 @@
 |---|---|
 | `CLAUDE.md` (이 파일) | 전체 진행 마스터. 진행 현황, 규칙, 단계 요약, 결정 기록 |
 | `docs/phases/phase-0-access-check.md` | Phase 0 진행계획과 결과(완료). 이 Phase가 바꾼 계획, 남은 확인 항목 |
-| `docs/phases/phase-1-tco-dashboard.md` | Phase 1 진행계획. Task 표, 사용자 할 일, 가정, 위험, 진행 기록 |
-| `docs/phases/phase-2-automation-publish.md` | Phase 2 진행계획. 자동 수집, 이벤트 기준, 승인 흐름, 위험 |
+| `docs/phases/phase-1-tco-dashboard.md` | Phase 1 진행계획. Task 표, 가격 확인 상태, 사용자 할 일, 가정, 위험, 진행 기록 |
+| `docs/phases/phase-2-automation-publish.md` | Phase 2 진행계획. 자동 수집, 이벤트 기준, 승인 흐름, Sheets 적재(2-2b)와 준비 방법(2-0c), 위험 |
 | `docs/phases/phase-3-linkedin.md` | Phase 3 진행계획. 약관 제약, 선택지 A'/A/B/C 비교 |
 | `docs/phases/phase-4-earnings-experiment.md` | Phase 4 진행계획. 실적 코너 판정 기준, H5/T3 실험 설계 |
 | `docs/phases/phase-5-stabilize.md` | Phase 5 진행계획. 자동 전환·복귀 조건, 운영 점검표 초안 |
@@ -89,15 +86,16 @@
 SEC 실적 수집 (Phase 4) ────────────────────────────────────────┘                          │
                                                                               의미 있는 변동?
 [분기 1회 알림 Issue: "Snowflake·Databricks 가격표 확인"]                      ├ 없음 → 스냅샷만 커밋
-[BigQuery 가격 페이지 가격 문자열 지문 비교 (Phase 2, 약관 허용)]              └ 있음 → 템플릿 글 초안 → PR
-  → 사용자가 브라우저로 확인 → 수동 가격표 PR                                                  │
-                                                                             [사용자가 PR 머지 = 승인]
-                                                                                               │
-                                                     사이트 빌드 → GitHub Pages 배포 → LinkedIn (방식 결정 대기)
+[BigQuery 가격 페이지 가격 문자열 지문 비교 (Phase 2, 약관 허용)]              └ 있음 ─┬→ 템플릿 글 초안 → PR
+  → 사용자가 브라우저로 확인 → 수동 가격표 PR                                           │        │
+                                                                                         │  [사용자가 PR 머지 = 승인]
+                                                                                         │        │
+                                                                                         │  사이트 빌드 → GitHub Pages → LinkedIn (방식 결정 대기)
+                                                                                         └→ Google 스프레드시트에 변동 이력 행 추가 (Phase 2-2b)
 ```
 
-- **기술 스택:** Python 3.11(프로젝트 venv), requests, PyYAML, Jinja2, plotly, pytest, GitHub Actions, GitHub Pages
-- **저장:** 날짜별 CSV 스냅샷을 `data/raw/`에 둔다. Git에서 차이를 읽기 쉽기 때문이다.
+- **기술 스택:** Python 3.11(프로젝트 venv), requests, PyYAML, Jinja2, plotly, pytest, GitHub Actions, GitHub Pages. Phase 2에서 google-auth를 추가한다.
+- **저장:** 날짜별 CSV 스냅샷을 `data/raw/`에 둔다. Git에서 차이를 읽기 쉽기 때문이다. 정본은 Git이고, 스프레드시트는 비공개 변동 기록장이다.
 
 ## 4. 단계별 계획 (요약. 상세 과정은 각 Phase 진행계획 파일에 있다)
 
@@ -129,13 +127,16 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 테스트 3개 통과(누적 6개).
   - 실제 조회값은 서버리스 RPU $0.375/$0.438, 관리형 스토리지 $0.024/$0.0261(미국/서울)로 Phase 0 값과 같다 [확인].
   - 선결제 항목이 실제 데이터에서도 걸러졌다.
-- [x] **Task 3 (1-3) Azure 수집기.** 완료
+- [x] **Task 3 (1-3) Azure 수집기.** 완료, 커밋 `4e2ef6c`
   - 테스트 3개 통과(누적 9개).
   - 실제 조회값은 Databricks 서버리스 SQL DBU $0.70/$0.95, ADLS Hot LRS $0.0208/$0.02(미국/서울)로 Phase 0 값과 같다 [확인].
-- [ ] Task 4 (1-1, 1-4 변경) 수동 가격표(Snowflake, BigQuery) + 로더. **다음 차례**
-  - **(U) 원본을 브라우저로 확인한 뒤 `confirmed_on`을 입력한다. 비어 있으면 파이프라인이 멈춘다.**
-  - BigQuery는 가격 페이지가 SKU 이름 없이 위치 배열로만 되어 있어서 수동 가격표로 처리한다 [확인]. 자동 변경 감지는 Phase 2-6에서 한다.
-- [ ] Task 5 (1-5) 워크로드 가정 + 월 비용 계산: `workloads.yaml`, `model/tco.py`
+- [ ] **Task 4 (1-1, 1-4 변경) 수동 가격표 + 확인 게이트.** 코드 완료, 확인 대기
+  - [x] 테스트 4개 통과(누적 13개)
+  - [x] `collectors/manual_prices.py`, `data/manual/snowflake_prices.csv`, `data/manual/bigquery_prices.csv` 작성
+  - [x] (U) Snowflake 4행 확인(2026-09-11)
+  - [x] (U) BigQuery 스토리지 2행 확인(2026-09-11. 페이지는 GiB-시간 단위라 ×730으로 변환)
+  - [ ] (U) BigQuery 컴퓨트 4행 확인(온디맨드 TiB, Enterprise 슬롯-시간). 비어 있으면 파이프라인이 멈춘다(동작 확인함).
+- [ ] Task 5 (1-5) 워크로드 가정 + 월 비용 계산: `workloads.yaml`, `model/tco.py`. **다음 차례**
   - (U) 가정값을 검토한다.
 - [ ] Task 6 (1-6) T1 순위·민감도, T2 서울 프리미엄 판정: `config/thresholds.yaml`
 - [ ] Task 7 (1-7) 정적 대시보드: 판정표, 차트, 가정 공개, 가격 확인일
@@ -144,8 +145,8 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - (U) 화면 확인, 가격 3개 대조
 - **게이트:** (U) 화면 확인 → Phase 2 상세 계획 승인
 
-### Phase 2: 자동 수집 + 변동 감지 + 승인 흐름 + 아카이브 게시. 진행계획: `docs/phases/phase-2-automation-publish.md`
-**목표:** 매일 자동 수집하고, 변동이 생기면 PR로 초안을 올리며, 머지하면 Pages에 게시된다.
+### Phase 2: 자동 수집 + 변동 감지 + 승인 흐름 + 아카이브 게시 + Sheets 적재. 진행계획: `docs/phases/phase-2-automation-publish.md`
+**목표:** 매일 자동 수집하고, 변동이 생기면 PR로 초안을 올리며, 머지하면 Pages에 게시된다. 변동 이력은 Google 스프레드시트에 쌓는다.
 - [ ] 2-0 (U) GitHub 준비
   - `gh auth refresh -s workflow` 실행(브라우저 승인은 사용자가 직접)
   - 공개 저장소 생성
@@ -153,6 +154,11 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - Pages 소스를 GitHub Actions로 설정
   - Secret `SEC_USER_AGENT` 등록
 - [ ] 2-0b (C) `.gitattributes`(`* text=auto eol=lf`) 추가를 검토한다. Windows 작업 사본(CRLF)과 Linux CI의 줄바꿈을 맞추기 위해서다.
+- [ ] 2-0c (U, C 보조) Google Sheets 준비
+  - 프로젝트 결정(전용 권장). Sheets API는 기존 활성 프로젝트에서 이미 사용 설정돼 있다 [확인].
+  - 서비스 계정과 JSON 키 발급 → Secret `GOOGLE_SA_KEY`
+  - 스프레드시트를 만들어 서비스 계정에 편집 권한을 공유 → Secret `PRICE_SHEET_ID`
+  - 키 발급과 열람은 사용자가 직접 한다.
 - [ ] 2-1 (C) `.github/workflows/collect.yml`
   - 매일 00:17 UTC(= 09:17 KST, 정각 혼잡 회피)
   - 수집 → 스냅샷 커밋
@@ -161,6 +167,10 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 이전 스냅샷과 비교해 `events.json` 생성
   - E1 기준: 월 비용 ±1% 이상 변동 또는 순위 변경. 수동 가격표 변경도 여기서 E1이 된다.
   - 같은 날 이벤트는 합치고, 하루 최대 1건
+- [ ] 2-2b (C) **가격 변동 이력 Google Sheets 적재** `publish/sheets_log.py`
+  - Python + google-auth로 Sheets API `values.append`를 호출한다.
+  - 실패해도 파이프라인은 계속하고 Issue로 알린다.
+  - 처음 연결할 때 현재 가격을 기준선으로 한 번 기록한다.
 - [ ] 2-3 (C) 글 생성
   - `templates/post_price_change.md.j2`, `publish/render_post.py`
   - 숫자 일치 검사: 글에 나온 모든 숫자가 `events.json`에 있어야 하고, 아니면 중단
@@ -173,6 +183,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 가짜 가격 변동 주입 → PR 생성 → **사람이 머지했을 때 publish.yml이 실행되는지 실측** → 게시
   - 변동이 없으면 PR이 없는지(멱등성)
   - `--dry-run` 모드 동작
+  - 시트에 행이 추가되는지 확인
 - **게이트:** (U) 첫 실제 게시 전 확인 → Phase 3 상세 계획 승인
 
 ### Phase 3: LinkedIn (사용자 결정 대기). 진행계획: `docs/phases/phase-3-linkedin.md`
@@ -235,6 +246,9 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - ADLS Gen2 Hot LRS 첫 구간은 eastus $0.0208, koreacentral $0.02로 서울이 더 싸다.
   - Task 3 수집기로 다시 확인했다.
 - BigQuery 가격 페이지: HTML에 리전별 가격이 SKU 이름 없이 위치 배열로 들어 있다. nonce가 매번 바뀐다 [확인].
+  - 스토리지는 GiB-시간 단위로 표시된다. Active logical storage는 US(us) $0.000027397, 서울 $0.000031507이다(사용자 확인). 매월 10GiB가 무료다.
+  - 리전 이름은 "US (us)"다.
+- Snowflake 서비스 소비표(2026-09-09 발효)는 Table 2(a)에 크레딧 단가, Table 3(a)에 스토리지 단가가 있다. AWS US East (N. Virginia)와 Seoul 값을 사용자가 확인했다.
 - 가격 실측값과 서울 프리미엄 표는 `docs/02_phase0_report.md`에 있다.
 
 **약관**
@@ -249,14 +263,19 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - GITHUB_TOKEN이 일으킨 이벤트는 새 실행을 만들지 않는다(workflow_dispatch·repository_dispatch 예외).
   - 새 저장소는 워크플로 PR 생성이 금지돼 있고 토큰이 읽기 전용이다.
 - BigQuery 샌드박스: 스토리지는 평생 10GiB이고 삭제해도 복구되지 않는다. 쿼리는 월 1TiB, 테이블은 60일 뒤 만료되고 DML은 쓸 수 없다 [확인].
+- Google Sheets 연동 [확인]
+  - `gcloud`에는 Sheets 명령이 없다 [지식].
+  - `gws` CLI 0.22.5는 설치돼 있고, OAuth와 서비스 계정 인증을 지원한다. 다만 공식 지원 제품은 아니다.
+  - 활성 gcloud 프로젝트(강의용 기존 프로젝트)에서 Sheets API가 이미 사용 설정돼 있고, 서비스 계정은 0개다.
 
 **실행 환경 (Phase 1에서 확인)**
 - 로컬: Python 3.11.7(Anaconda). gh 토큰에 `workflow` 권한이 없다 [확인].
+- Google Cloud SDK 579.0.0(`gcloud`, `bq` 2.1.36)이 설치돼 있고, 사용자 개인 계정 1개로 로그인돼 있다 [확인].
 - venv에 설치된 버전 [확인]: requests 2.34.2, PyYAML 6.0.3, Jinja2 3.1.6, plotly 7.0.0, pytest 9.1.1 (pip 23.2.1)
 - plotly는 계획 기준(5.x)보다 새 버전(7.0.0)이 설치됐다. 그래도 Task 7에서 쓸 API(`get_plotlyjs_version`, `to_html`, `add_bar`)는 동작하고, JS 4.0.0 CDN 파일도 200 응답(약 4.3MB)을 확인했다 [확인].
 - 커밋 이메일: 이 저장소에서만 `git config --local`로 GitHub noreply 주소를 쓴다. 전역 설정(noreply 아님)은 그대로다 [확인]. 주소 자체는 기록하지 않는다(규칙 11). 작성자 이름은 전역 설정을 쓰고, push 전까지는 공개되지 않는다.
 - git 줄바꿈: 커밋할 때 "LF will be replaced by CRLF" 경고가 나온다. 전역 autocrlf 설정 때문이며, 저장소에는 LF로 저장된다 [확인]. Phase 2 전에 `.gitattributes`를 검토한다(2-0b).
-- Aside CLI 1.26.906.1630이 설치돼 있다(`%LOCALAPPDATA%\Aside\CLI`) [확인]. 로그인 상태는 확인하지 않았다. 로컬 git 작업에는 필요 없다.
+- Aside CLI 1.26.906.1630이 설치돼 있고, 계정 u0(Google 제공자)로 로그인돼 있다 [확인]. `aside account`는 하위 명령(`list`, `status`)이 필요하다.
 - PowerShell에서 `gh --jq` 식을 쓰면 따옴표가 깨진다. `gh api ... | ConvertFrom-Json`을 쓴다 [확인].
 - 첫 커밋 전에는 git worktree를 만들 수 없어서 main에서 진행했다. 이후 Task도 규칙 10(Task마다 확인)에 따라 main에 로컬 커밋한다.
 
@@ -283,6 +302,9 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 | 2026-09-11 | 커밋 이메일: 이 저장소만 GitHub noreply(`--local`), 이름은 전역 설정 | 사용자 결정. 공개 저장소에서 실제 이메일이 드러나지 않게 한다(규칙 11) |
 | 2026-09-11 | 막히면 Aside CLI를 먼저 검토(규칙 12). 첫 커밋에는 쓰지 않음 | 사용자 지시. 로컬 커밋은 인증이 필요 없어 막히지 않았다 |
 | 2026-09-11 | Phase별 진행계획은 `docs/phases/`에 별도 파일로 두고, 코드 계획은 `docs/plans/`에 둔다(규칙 1·7) | 사용자 지시. 전체 계획서에서 각 Phase의 과정을 상세히 보기 위해서다 |
+| 2026-09-11 | 가격 변동 이력은 Google 스프레드시트에 적재한다: Python + google-auth + 서비스 계정, Phase 2-2b | 사용자 결정(권장안 채택). gcloud는 Sheets 명령이 없고, gws는 0.x 비공식 도구라 매일 도는 자동화에 쓰지 않는다 |
+| 2026-09-11 | Sheets 적재는 Phase 2에서 구현하고, 서비스 계정 키도 그때 발급한다 | Sheets API는 이미 사용 설정돼 있어서 Aside로 따로 확보할 것이 없다 [확인]. 쓰지 않는 장기 키를 미리 만들면 노출 기간만 늘어난다 |
+| 2026-09-11 | BigQuery 스토리지는 페이지의 GiB-시간 값에 730시간/월을 곱해 GiB-월로 저장 | 모델의 단위(GiB-월)에 맞춘다. 원래 표시값은 Phase 1 진행계획에 남긴다 |
 
 ## 7. 진행 로그
 - **2026-09-10:** 데이터 소스 조사. SEC와 pypistats를 직접 호출해 확인했다. 혼합안과 v1 가설 설계를 확정했다.
@@ -302,8 +324,18 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 테스트는 누적 6개가 통과했다.
   - 실제 AWS 조회값이 Phase 0 값과 같다: RPU $0.375/$0.438, 스토리지 $0.024/$0.0261.
   - 선결제 항목이 걸러지는 것을 확인했다.
-- **2026-09-11:** Task 3을 완료했다.
+- **2026-09-11:** Task 3을 완료했다(커밋 `4e2ef6c`).
   - `collectors/azure_prices.py`를 TDD로 구현했다(ImportError로 실패 확인 → 구현 → 통과).
   - 테스트는 누적 9개가 통과했다.
   - 실제 Azure 조회값이 Phase 0 값과 같다: DBU $0.70/$0.95, ADLS $0.0208/$0.02.
-  - Task 4 지시를 기다린다.
+- **2026-09-11:** Google Sheets 적재 방식을 검토했고, 사용자가 권장안(Python + google-auth, Phase 2-2b)을 채택했다.
+  - gcloud 579.0.0, bq, gws 0.22.5가 설치돼 있다.
+  - Sheets API는 이미 사용 설정돼 있고, 서비스 계정은 0개다.
+  - Aside는 로그인돼 있다.
+  - Phase 2 진행계획에 2-0c(준비 방법)와 2-2b를 추가했다.
+- **2026-09-11:** Task 4 코드를 완료했다.
+  - `collectors/manual_prices.py`를 TDD로 구현하고, 가격표 2개를 작성했다.
+  - 테스트는 누적 13개가 통과했다.
+  - 사용자 확인: Snowflake 4행과 BigQuery 스토리지 2행을 확인했다(2026-09-11).
+  - BigQuery 컴퓨트 4행은 확인 대기라 비워 두었다. 실제 가격표에서 게이트가 멈추는 것도 확인했다.
+  - Task 5 지시를 기다린다.

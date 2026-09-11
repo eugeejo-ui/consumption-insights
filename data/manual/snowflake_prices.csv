@@ -1,0 +1,5 @@
+platform,service,sku,region,unit,price_usd,source,confirmed_on
+snowflake,compute,enterprise-credit,us,credit,3.00,https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf,2026-09-11
+snowflake,compute,enterprise-credit,seoul,credit,4.05,https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf,2026-09-11
+snowflake,storage,on-demand-storage,us,TB-month,23.00,https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf,2026-09-11
+snowflake,storage,on-demand-storage,seoul,TB-month,25.00,https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf,2026-09-11

@@ -1,0 +1,7 @@
+platform,service,sku,region,unit,price_usd,source,confirmed_on
+bigquery,compute,enterprise-slot,us,slot-hour,0.06,https://cloud.google.com/bigquery/pricing,
+bigquery,compute,enterprise-slot,seoul,slot-hour,0.0765,https://cloud.google.com/bigquery/pricing,
+bigquery,scan,on-demand,us,TiB,6.25,https://cloud.google.com/bigquery/pricing,
+bigquery,scan,on-demand,seoul,TiB,7.50,https://cloud.google.com/bigquery/pricing,
+bigquery,storage,active-logical,us,GiB-month,0.02,https://cloud.google.com/bigquery/pricing,2026-09-11
+bigquery,storage,active-logical,seoul,GiB-month,0.023,https://cloud.google.com/bigquery/pricing,2026-09-11

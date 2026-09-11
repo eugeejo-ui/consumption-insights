@@ -1,0 +1,16 @@
+{
+  "products": {
+    "SKU_OD": {"productFamily": "Serverless", "attributes": {"usagetype": "APN2-Redshift:ServerlessUsage"}},
+    "SKU_CR_AU": {"productFamily": "Serverless", "attributes": {"usagetype": "APN2-Redshift:ServerlessUsage-CR-1YR-AU"}},
+    "SKU_CR_NU": {"productFamily": "Serverless", "attributes": {"usagetype": "APN2-Redshift:ServerlessUsage-CR-1YR-NU"}},
+    "SKU_RMS": {"productFamily": "Redshift Managed Storage", "attributes": {"usagetype": "APN2-RMS:ra3.4xlarge"}}
+  },
+  "terms": {
+    "OnDemand": {
+      "SKU_OD": {"T1": {"priceDimensions": {"D1": {"unit": "RPU-Hr", "pricePerUnit": {"USD": "0.4380000000"}}}}},
+      "SKU_CR_AU": {"T2": {"priceDimensions": {"D2": {"unit": "RPU-Hr", "pricePerUnit": {"USD": "2839.0000000000"}}}}},
+      "SKU_CR_NU": {"T3": {"priceDimensions": {"D3": {"unit": "RPU-Hr", "pricePerUnit": {"USD": "0.3420000000"}}}}},
+      "SKU_RMS": {"T4": {"priceDimensions": {"D4": {"unit": "GB-Mo", "pricePerUnit": {"USD": "0.0261000000"}}}}}
+    }
+  }
+}

@@ -17,7 +17,8 @@
 
 **Spec:** `CLAUDE.md` Phase 2와 규칙 13·14, `docs/phases/phase-2-automation-publish.md`, `docs/plans/phase1-tco-dashboard.md`(Task 8b)
 
-**진행 현황:** Task 1 완료(`5dcad55`, 38 passed), Task 2 완료(`72723d5`, 40 passed), Task 3 완료(44 passed). 다음은 Task 4이고, 지시를 받으면 진행한다.
+**진행 현황:** Task 1 완료(`5dcad55`, 38 passed), Task 2 완료(`72723d5`, 40 passed), Task 3 완료(`9a46707`, 44 passed), Task 4 완료(47 passed, google-auth 2.58.0). 다음은 Task 5이고, 사용자의 2-0 준비가 먼저다.
+- Task 4 Step 6(실제 기준선 적재, 선택)은 2-0c 전이라 2-7로 미뤘다.
 - Task 3 Step 5(실제 실행): 오늘(2026-09-11)은 승인 스냅샷이 있어 같은 날 재수집 가드가 막았다. 그래서 `data/checks.csv`는 아직 없다. 파일을 쓰지 않은 실제 수집·비교에서는 18행이 승인본과 같았다.
 
 ## 결정 (2026-09-11 사용자 승인: 계획 승인, D1~D3 모두 추천안)

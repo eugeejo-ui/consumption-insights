@@ -31,7 +31,8 @@
 | 2-2b | **가격 변동 이력 Google Sheets 적재** | C | `publish/sheets_log.py`(Python + `google-auth`, Sheets API `values.append`) | 가짜 이벤트 1건 → 시트에 1행이 추가된다. 인증 실패는 파이프라인을 멈추지 않고 Issue로 알린다. 처음 연결할 때 현재 가격을 기준선으로 한 번 기록한다 |
 | 2-3 | 글 생성 | C | `templates/post_price_change.md.j2`, `publish/render_post.py` | 숫자 하나를 바꿔 넣으면 검사가 실패한다 |
 | 2-4 | 초안 PR 생성 | C | `posts/` 초안, PR | 이벤트가 있으면 PR 1건이 생긴다 |
-| 2-5 | 게시 워크플로 | C | `.github/workflows/publish.yml` | main에 push하면 Pages가 갱신된다 |
+| 2-5a | **대시보드 디자인 게이트** (2026-09-11 사용자 지시): 공개 대시보드를 만들기 **전에 멈추고 보고**한다. 사용자가 마음에 드는 대시보드 템플릿을 주면, Claude가 그 디자인(레이아웃, 색, 타이포, 차트 스타일)을 분석해 비슷한 디자인으로 대시보드를 만든다. Phase 1의 `site/index.html`은 기능 확인용 임시 디자인이다 | U → C | 사용자 템플릿, 디자인 적용 계획 | 사용자가 템플릿을 주고 디자인 적용 계획을 승인한다 |
+| 2-5 | 게시 워크플로 | C | `.github/workflows/publish.yml` | main에 push하면 Pages가 갱신된다(2-5a 디자인 반영 후) |
 | 2-6 | 가격 확인 알림 | C | Issue 생성 로직 | 분기 알림이 생성되고, BigQuery 지문이 바뀌면 Issue가 열린다 |
 | 2-7 | 종단 검증 | C+U | 검증 기록 | 사람이 머지했을 때 publish.yml이 실행된다(실측). 멱등성, `--dry-run`, 시트 적재 확인 |
 

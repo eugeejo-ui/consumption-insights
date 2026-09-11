@@ -44,6 +44,14 @@
 | 8 | 파이프라인 실행·검증 | 화면 확인, 가격 3개 대조 |
 
 - **계획 작성 이후 달라진 점:** plotly가 7.0.0으로 설치됐다(Task 7에서 쓸 API 호환 확인). 설치된 버전 목록은 CLAUDE.md 5절에 있다.
+- **Task 5 이후 변경 (2026-09-11 가정 검토, 커밋 `529fbc4`):** BigQuery 스토리지를 `active-logical`에서 `active-physical`로 바꿨다(`data/manual/bigquery_prices.csv`). 아래 Task 4의 가격표 예시는 작성 당시 값이다. `tests/conftest.py`의 가격은 로직 검증용으로 그대로 둔다.
+- **Task 7 변경 (2026-09-11 사용자 결정: T1을 두 리전 모두 표시)**
+  - `render()`의 인자 `t1`을 `t1_by_region: dict[str, dict]`(리전 → `t1_verdict` 결과)로 바꿨다.
+  - 템플릿은 리전마다 T1 행을 하나씩 그린다.
+  - 테스트는 2개다(`test_render_writes_page_with_disclaimer_numbers_and_dates`, `test_render_shows_t1_for_both_regions`). 그래서 **Phase 1 전체 테스트는 29개**가 된다.
+  - 아래 Task 7 본문의 코드는 작성 당시 버전이고, 실제 코드는 `publish/render_site.py`와 `templates/site/index.html.j2`에 있다.
+- **Task 8 변경:** `pipeline.py`는 `render()`를 부를 때 `t1_by_region={region: t1_verdict(book, workloads, thresholds["t1_sensitivity"], region) for region in REGIONS}`를 넘긴다. 테스트 합계는 29개다.
+- **디자인:** Phase 1의 `site/index.html`은 기능 확인용 임시 디자인이다. 공개 대시보드 디자인은 Phase 2-5a에서 사용자가 준 템플릿을 바탕으로 정한다.
 
 ## 한눈에 보기 (사용자용 요약)
 | Task | 만드는 것 | 사용자가 할 일 |

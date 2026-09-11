@@ -3,7 +3,7 @@
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
 > **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
-> - **다음: Phase 2 계획 작성 → 사용자 승인.** 대시보드를 만들기 전(2-5a)에 멈춘다.
+> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. **현재 Task 1(변동 감지).**
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -19,17 +19,17 @@
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | 대기 | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
+| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 1) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. Phase 2 계획 승인: 진행계획과 코드 계획을 쓰고 승인받는다. 2-5a 전에 멈춘다.
+1. (U, Phase 2 Task 5 전) 2-0 GitHub 준비: 작성자 이름 공개 확인, `gh auth refresh -s workflow`, 공개 저장소, Actions 설정 2개, push 승인
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** Phase 2 계획을 쓰고 승인을 받은 뒤 Task 하나씩 진행한다.
+**다음 행동:** Phase 2 Task 1을 끝내고 보고한 뒤 멈춘다(규칙 10).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -99,9 +99,9 @@
 자동 수집: AWS 가격 파일(Redshift) · Azure API(Databricks, ADLS) ─┐
 수동 가격표: Snowflake · BigQuery (사람이 원본 확인, confirmed_on) ─┼─→ 스냅샷 → TCO 계산 → 이전 승인 스냅샷과 비교
 SEC 실적 수집 (Phase 4) ────────────────────────────────────────┘                          │
-                                                                              의미 있는 변동?
-[분기 1회 알림 Issue: "Snowflake·Databricks 가격표 확인"]                      ├ 없음 → 스냅샷만 커밋 (PR 없음)
-[BigQuery 가격 페이지 가격 문자열 지문 비교 (약관 허용)]                       └ 있음 → 검토 PR(스냅샷 + review.md + 글 초안) → [멈춤]
+                                                                              단가가 바뀌었나?
+[분기 1회 알림 Issue: "Snowflake·Databricks 가격표 확인"]                      ├ 없음 → data/checks.csv 한 줄 커밋 (PR 없음, D1)
+[BigQuery 가격 페이지 가격 문자열 지문 비교 (약관 허용)]                       └ 있음 → 검토 PR(스냅샷 + review.md + E1이면 글 초안) → [멈춤] (D2)
                                                                                                    │
                                                               [사용자: GitHub 웹/모바일에서 판단 → Merge = 컨펌 / Close = 반려]
                                                                                                    │
@@ -167,11 +167,13 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 키 발급과 열람은 사용자가 직접 한다.
 - [ ] 2-1 (C) `.github/workflows/collect.yml`
   - 매일 00:17 UTC(= 09:17 KST, 정각 혼잡 회피)
-  - 변화가 없으면 스냅샷을 커밋하고, 있으면 2-4의 검토 PR을 만든다.
-  - Actions 서버에서 AWS·Azure·SEC 호출이 되는지 여기서 확인한다.
-- [ ] 2-2 (C) `detect/diff.py`
+  - 변화가 없으면 `data/checks.csv`에 한 줄을 커밋하고(D1), 단가가 바뀌면 2-4의 검토 PR을 만든다(D2).
+  - 매일 스케줄은 게시 워크플로(2-5)가 생긴 뒤에 켠다(D3). 그 전에는 수동 실행만 한다.
+  - Actions 서버에서 AWS·Azure 호출이 되는지 여기서 확인한다(SEC는 Phase 4).
+- [ ] 2-2 (C) `detect/events.py` (코드 계획 Task 1. 기존 이름 `diff.py`에서 변경)
   - **이전 승인 스냅샷**과 비교해 `events.json`을 만든다. Task 8b의 `price_changes`를 재사용한다.
-  - E1 기준: 월 비용 ±1% 이상 변동 또는 순위 변경. 수동 가격표 변경도 여기서 E1이 된다.
+  - E1 기준: 월 비용 ±1% 이상 변동 또는 순위 변경이면 글 초안을 만든다. 수동 가격표 변경도 포함한다.
+  - 검토 PR은 단가가 하나라도 바뀌면 연다(D2).
   - 같은 날 이벤트는 합치고, 하루 최대 1건
 - [ ] 2-2b (C) **가격 변동 이력 Google Sheets 적재(컨펌 이후)** `publish/sheets_log.py`
   - Python + google-auth로 Sheets API `values.append`를 호출한다.
@@ -334,6 +336,10 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 | 2026-09-11 | BigQuery 물리 스토리지 확인: US $0.04, 서울 $0.052 | 사용자가 GiB-시간과 GiB-월 표시를 모두 확인했고, 후보값과 일치한다. 수동 가격 10행 모두 확인됨 |
 | 2026-09-11 | **중간 검토 체크포인트를 둔다**(규칙 14, Task 8b). Phase 1은 검토 보고서 → `--confirm`, Phase 2는 검토 PR 머지가 컨펌. Sheets 적재는 컨펌 이후로 옮긴다 | 사용자 지시("중간 결과를 내가 판단해서 컨펌하면 나머지 진행"). 설계 승인 후 구현했다(`929f1f1`) |
 | 2026-09-11 | 자동화 이후 컨펌 채널은 **GitHub PR Merge 버튼**(웹·모바일)이다. Claude는 필요 없고, 변화가 없는 날에는 PR이 없다 | 사용자 질문에 답했고, 사용자가 동의했다("맘에 든다"). 최종 방식은 Phase 2 상세 계획에서 다시 확인한다 |
+| 2026-09-11 | **Phase 2 계획 승인**(`docs/plans/phase2-automation-publish.md`, Task 1~5, 2-5a 전 멈춤). 변동 감지 모듈 이름은 `detect/events.py`, E1 기준값은 `e1_min_cost_change_pct: 1.0` | 사용자 승인 |
+| 2026-09-11 | **D1** 변화 없는 날은 스냅샷을 만들지 않고 `data/checks.csv`에 한 줄을 커밋한다 | 사용자 결정(추천안). 매일 커밋으로 60일 무활동 스케줄 중지를 막고, 확인 기록을 남긴다. 같은 스냅샷이 매일 쌓이지 않는다 |
+| 2026-09-11 | **D2** 단가가 하나라도 바뀌면 검토 PR을 열고, 글 초안은 E1일 때만 만든다 | 사용자 결정(추천안). 작은 변화도 사람이 보고, 비교 기준(승인 가격)이 오래된 채로 남지 않게 한다 |
+| 2026-09-11 | **D3** 매일 스케줄은 게시 워크플로(2-5) 뒤에 켜고, 그 전에는 수동 실행만 한다 | 사용자 결정(추천안). 게시 워크플로 없이 머지하면 승인 기록이 생기지 않아 비교 기준이 꼬인다 |
 
 ## 7. 진행 로그
 - **2026-09-10:** 데이터 소스 조사. SEC와 pypistats를 직접 호출해 확인했다. 혼합안과 v1 가설 설계를 확정했다.
@@ -359,4 +365,5 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 사용자가 컨펌해서 2단계를 실행했다. `site/index.html`을 생성했고, `approved.txt`는 17:45:36이다.
   - 첫 승인 스냅샷을 커밋했다(`60520ee`).
   - 판정: T1은 미국·서울 모두 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2는 지지(39.5%p)다.
-- **2026-09-11:** 사용자가 화면을 확인하고 자동 수집 가격 3개를 대조했다. **Phase 1 완료.** Phase 2 계획 작성으로 넘어간다.
+- **2026-09-11:** 사용자가 화면을 확인하고 자동 수집 가격 3개를 대조했다. **Phase 1 완료**(`9e9f672`). Phase 2 계획 작성으로 넘어간다.
+- **2026-09-11:** Phase 2 코드 계획(Task 1~5, 2-5a 전 멈춤)을 작성했고, 계획과 결정 D1~D3을 승인받았다(모두 추천안). 최신 액션 버전(checkout v7, setup-python v7)을 확인했다 [확인]. Task 1을 시작했다.

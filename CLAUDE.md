@@ -2,35 +2,36 @@
 
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 승인을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
-> **현재 위치:** Phase 1 진행 중. Task 1의 7단계(첫 커밋)를 진행한다(2026-09-11 재개 지시). 커밋 이메일은 이 저장소에서만 GitHub noreply 주소를 쓴다(사용자 결정). 재개 계획은 `docs/plans/phase1-tco-dashboard.md` 맨 위에 있다.
+> **현재 위치:** Phase 1 진행 중. Task 1 완료(`d5930d1`). **Task 2(AWS Redshift 수집기) 진행 중**(2026-09-11). Phase별 진행계획은 `docs/phases/`에 있다.
 > **마지막 갱신:** 2026-09-11
 
 ---
 
 ## 0. 진행 현황 한눈에
 
-| 단계 | 상태 | 핵심 결과 | 산출물 |
+| 단계 | 상태 | 핵심 결과 | 진행계획 / 산출물 |
 |---|---|---|---|
 | 기획 1: 데이터 소스 조사 (09-10) | 완료 | 고객별 소비량은 비공개 → 층위를 나눠 설계. SEC·pypistats 직접 확인 | — |
 | 기획 2: v1 가설 (09-10) | 완료(보존) | H1~H5, P | `docs/00_hypotheses_v1.md` |
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
-| Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/02_phase0_report.md` |
-| Phase 1: 가격·TCO·대시보드 | **일시 중단** (Task 1의 7단계 중 6단계) | venv·git·스키마 완료, 테스트 3/28 통과, 커밋 0건 | `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·변동 감지·아카이브 게시 | 대기 | — | — |
-| Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | — |
-| Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | — |
-| Phase 5: 안정화·자동 게시 전환 | 대기 | — | — |
+| Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
+| Phase 1: 가격·TCO·대시보드 | **진행 중** (Task 1/8 완료, Task 2 진행 중) | venv·git·스키마 완료, 테스트 3/28 통과, 커밋 1건(`d5930d1`) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
+| Phase 2: 자동 수집·변동 감지·아카이브 게시 | 대기 | — | `docs/phases/phase-2-automation-publish.md` |
+| Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
+| Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
+| Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정 대기**
-1. git 커밋 이메일: 추천은 이 저장소에서만 GitHub noreply 주소를 쓰는 것이다(`git config --local`). 현재 전역 이메일은 noreply가 아니다.
-2. Phase 1 재개 시점
-3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
+1. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 지시하면 Task 1의 7단계(첫 커밋)부터 한다. 끝나면 보고하고 멈춘다.
+**다음 행동:** Task 2를 끝내면 보고하고 멈춘다. Task 3은 사용자의 지시를 받은 뒤에 한다.
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
-1. **계획 → 승인 → 실행.** 각 Phase를 시작하기 전에 그 Phase의 상세 계획을 `docs/plans/`에 쓰고, 사용자 승인을 받은 뒤 실행한다. 계획 없이 실행하지 않는다.
+1. **계획 → 승인 → 실행.** 각 Phase는 두 문서로 관리한다.
+   - **진행계획** `docs/phases/phase-N-*.md`: 목표, 단계, 담당, 사용자 할 일, 위험, 완료 기준, 진행 기록
+   - **코드 단위 상세 계획** `docs/plans/phaseN-*.md`: 테스트와 구현 코드
+   - Phase를 시작하기 전에 두 문서를 쓰거나 갱신하고, 승인을 받는다. 계획 없이 실행하지 않는다.
 2. **"의견만" 달라는 요청에는 아무것도 실행하지 않는다.** 답은 결론 + 근거로 한다.
 3. **근거에는 표기를 붙인다.**
    - [확인] 직접 호출해 확인한 것
@@ -40,7 +41,9 @@
 4. **외부로 나가는 행동은 매번 사용자 확인을 받는다.** LinkedIn 게시, 공개 배포, 계정 생성, 비밀키 입력이 여기에 해당한다. 계정 생성과 비밀키 입력은 사용자가 직접 한다.
 5. **판정 기준은 데이터를 보기 전에 고정한다** (`config/thresholds.yaml`). 기준을 바꾸면 아래 결정 로그에 이유와 함께 기록한다.
 6. **공개 저장소 전제로 작업한다.** 코드와 문서에 이메일, 토큰 같은 개인정보나 비밀값을 넣지 않는다. 필요한 값은 환경변수나 GitHub Secret으로 받는다(예: `SEC_USER_AGENT`).
-7. **작업이 끝날 때마다 이 파일을 갱신한다.** 진행 현황 표, 체크박스, "현재 위치", 진행 로그를 고친다.
+7. **작업이 끝날 때마다 문서를 갱신한다.**
+   - 이 파일: 진행 현황 표, 체크박스, "현재 위치", 진행 로그
+   - 해당 Phase의 진행계획 파일: 상태, 진행 과정 표, 진행 기록
 8. **Windows 환경을 전제한다.** 기본 셸은 PowerShell이다. venv는 `.venv\Scripts\python.exe`로 직접 호출한다. Python에서 한글·특수문자를 출력할 때는 `PYTHONIOENCODING=utf-8`을 설정한다(cp949 오류를 겪었다 [확인]).
 9. **자동 접근·자동 게시 전에는 대상 사이트의 약관과 robots.txt를 확인한다.** 약관이 금지하는 대상에는 자동으로 접근하거나 게시하지 않는다. 브라우저 자동화 도구(예: Aside)로 우회하는 방식도 쓰지 않는다.
    - Snowflake·Databricks 웹사이트는 자동 모니터링을 금지한다 [확인].
@@ -50,16 +53,26 @@
     - 여러 Task나 Phase를 이어서 실행하지 않는다.
     - 사용자가 다른 단위를 지정하면 그 단위를 따른다.
 11. **공개될 수 있는 개인정보가 기록되는 행동은 먼저 묻는다.** 커밋 이메일 같은 것이 여기에 해당한다. 문서에는 실제 주소를 적지 않는다.
+    - 커밋 전에는 커밋할 파일에 이메일 주소나 로컬 사용자 경로가 없는지 검사한다.
+12. **막히면 사용자 지시에 따라 Aside CLI(설치됨)를 쓸 수 있는지 먼저 확인하고 보고한다** (2026-09-11 사용자 지시).
+    - 규칙 9와 충돌하는 용도에는 쓰지 않는다.
+    - 로그인, 비밀번호 입력, OAuth 승인은 사용자가 직접 한다.
 
 ## 2. 문서 지도
 
 | 파일 | 역할 |
 |---|---|
-| `CLAUDE.md` (이 파일) | 전체 진행 마스터. 진행 현황, 규칙, 단계, 결정 기록 |
+| `CLAUDE.md` (이 파일) | 전체 진행 마스터. 진행 현황, 규칙, 단계 요약, 결정 기록 |
+| `docs/phases/phase-0-access-check.md` | Phase 0 진행계획과 결과(완료). 이 Phase가 바꾼 계획, 남은 확인 항목 |
+| `docs/phases/phase-1-tco-dashboard.md` | Phase 1 진행계획. Task 표, 사용자 할 일, 가정, 위험, 진행 기록 |
+| `docs/phases/phase-2-automation-publish.md` | Phase 2 진행계획. 자동 수집, 이벤트 기준, 승인 흐름, 위험 |
+| `docs/phases/phase-3-linkedin.md` | Phase 3 진행계획. 약관 제약, 선택지 A'/A/B/C 비교 |
+| `docs/phases/phase-4-earnings-experiment.md` | Phase 4 진행계획. 실적 코너 판정 기준, H5/T3 실험 설계 |
+| `docs/phases/phase-5-stabilize.md` | Phase 5 진행계획. 자동 전환·복귀 조건, 운영 점검표 초안 |
+| `docs/plans/phase1-tco-dashboard.md` | Phase 1 코드 단위 상세 계획(Task 1~8). 맨 위에 진행 현황과 재개 계획이 있다 |
 | `docs/01_plan_v2.md` | 설계 근거. 가설(T1~T3, H1·H2), TCO 모델, 가격 소스, 게시 흐름 |
 | `docs/00_hypotheses_v1.md` | 이전 가설 설계(보존용) |
 | `docs/02_phase0_report.md` | Phase 0 점검 결과. 가격 실측값, 약관 확인, T2 초기 신호, Aside 검토 |
-| `docs/plans/phase1-tco-dashboard.md` | Phase 1 코드 단위 상세 계획 (Task 1~8). 승인됨, Task 1 진행 중(일시 중단) |
 
 ## 3. 전체 흐름
 
@@ -80,11 +93,11 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - **기술 스택:** Python 3.11(프로젝트 venv), requests, PyYAML, Jinja2, plotly, pytest, GitHub Actions, GitHub Pages
 - **저장:** 날짜별 CSV 스냅샷을 `data/raw/`에 둔다. Git에서 차이를 읽기 쉽기 때문이다.
 
-## 4. 단계별 계획
+## 4. 단계별 계획 (요약. 상세 과정은 각 Phase 진행계획 파일에 있다)
 
 담당 표기: (C) Claude / (U) 사용자 / (C+U) 함께
 
-### Phase 0: 막힘 점검 (완료)
+### Phase 0: 막힘 점검 (완료). 진행계획: `docs/phases/phase-0-access-check.md`
 - [x] 0-1 로컬 환경: 조건부 통과(gh `workflow` 권한과 duckdb 없음. duckdb는 Phase 1에서 불필요해져서 제외)
 - [x] 0-2 AWS 가격 파일: 통과
 - [x] 0-3 Azure Retail Prices API: 통과
@@ -94,40 +107,41 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - [x] 0-7 BigQuery 샌드박스: 조건부(스토리지 평생 10GiB)
 - [x] 0-8 보고서 `docs/02_phase0_report.md`
 
-### Phase 1: 가격 수집 + TCO 모델 + 정적 대시보드 (로컬). **일시 중단**
-상세: `docs/plans/phase1-tco-dashboard.md`. 괄호 안은 이전 1-x 번호다.
+### Phase 1: 가격 수집 + TCO 모델 + 정적 대시보드 (로컬). **진행 중**
+진행계획: `docs/phases/phase-1-tco-dashboard.md`. 코드 계획: `docs/plans/phase1-tco-dashboard.md`. 괄호 안은 이전 1-x 번호다.
 
 **목표:** 로컬에서 명령 한 번으로 가격을 수집하고 월 비용을 계산해 `site/`를 만든다.
-- [ ] **Task 1 (1-0) 뼈대 + 공통 스키마.** 7단계 중 6단계 완료
+- [x] **Task 1 (1-0) 뼈대 + 공통 스키마.** 완료, 커밋 `d5930d1`
   - [x] 뼈대 파일(`requirements.txt`, `pytest.ini`, `.gitignore`)
   - [x] venv 생성과 의존성 설치
   - [x] git init(main)
   - [x] 테스트 작성 → 실패 확인(`ModuleNotFoundError`)
   - [x] `common/schema.py` 구현
   - [x] 테스트 3개 통과
-  - [ ] 첫 커밋: **git 이메일 결정 대기**(규칙 11)
-- [ ] Task 2 (1-2) AWS Redshift 수집기: 서버리스 RPU, 관리형 스토리지. 선결제 함정을 막는 테스트 포함. 미착수
-- [ ] Task 3 (1-3) Azure 수집기: Databricks 서버리스 SQL DBU(AWS 직판과 같은 가격 [확인]), ADLS Gen2 Hot LRS. 미착수
-- [ ] Task 4 (1-1, 1-4 변경) 수동 가격표(Snowflake, BigQuery) + 로더. 미착수
+  - [x] 첫 커밋: 이 저장소 전용 noreply 이메일 사용. 개인정보 검사 0건, 파일 11개
+- [ ] Task 2 (1-2) AWS Redshift 수집기: 서버리스 RPU, 관리형 스토리지. 선결제 함정을 막는 테스트 포함. **진행 중**
+- [ ] Task 3 (1-3) Azure 수집기: Databricks 서버리스 SQL DBU(AWS 직판과 같은 가격 [확인]), ADLS Gen2 Hot LRS
+- [ ] Task 4 (1-1, 1-4 변경) 수동 가격표(Snowflake, BigQuery) + 로더
   - **(U) 원본을 브라우저로 확인한 뒤 `confirmed_on`을 입력한다. 비어 있으면 파이프라인이 멈춘다.**
   - BigQuery는 가격 페이지가 SKU 이름 없이 위치 배열로만 되어 있어서 수동 가격표로 처리한다 [확인]. 자동 변경 감지는 Phase 2-6에서 한다.
-- [ ] Task 5 (1-5) 워크로드 가정 + 월 비용 계산: `workloads.yaml`, `model/tco.py`. 미착수
+- [ ] Task 5 (1-5) 워크로드 가정 + 월 비용 계산: `workloads.yaml`, `model/tco.py`
   - (U) 가정값을 검토한다.
-- [ ] Task 6 (1-6) T1 순위·민감도, T2 서울 프리미엄 판정: `config/thresholds.yaml`. 미착수
-- [ ] Task 7 (1-7) 정적 대시보드: 판정표, 차트, 가정 공개, 가격 확인일. 미착수
-- [ ] Task 8 (1-8) `pipeline.py` 실제 실행과 검증. 미착수
+- [ ] Task 6 (1-6) T1 순위·민감도, T2 서울 프리미엄 판정: `config/thresholds.yaml`
+- [ ] Task 7 (1-7) 정적 대시보드: 판정표, 차트, 가정 공개, 가격 확인일
+- [ ] Task 8 (1-8) `pipeline.py` 실제 실행과 검증
   - pytest 28개 통과
   - (U) 화면 확인, 가격 3개 대조
 - **게이트:** (U) 화면 확인 → Phase 2 상세 계획 승인
 
-### Phase 2: 자동 수집 + 변동 감지 + 승인 흐름 + 아카이브 게시
+### Phase 2: 자동 수집 + 변동 감지 + 승인 흐름 + 아카이브 게시. 진행계획: `docs/phases/phase-2-automation-publish.md`
 **목표:** 매일 자동 수집하고, 변동이 생기면 PR로 초안을 올리며, 머지하면 Pages에 게시된다.
 - [ ] 2-0 (U) GitHub 준비
-  - `gh auth refresh -s workflow` 실행
+  - `gh auth refresh -s workflow` 실행(브라우저 승인은 사용자가 직접)
   - 공개 저장소 생성
   - Settings > Actions > General에서 워크플로 PR 생성 허용, GITHUB_TOKEN 쓰기 권한 설정
   - Pages 소스를 GitHub Actions로 설정
   - Secret `SEC_USER_AGENT` 등록
+- [ ] 2-0b (C) `.gitattributes`(`* text=auto eol=lf`) 추가를 검토한다. Windows 작업 사본(CRLF)과 Linux CI의 줄바꿈을 맞추기 위해서다.
 - [ ] 2-1 (C) `.github/workflows/collect.yml`
   - 매일 00:17 UTC(= 09:17 KST, 정각 혼잡 회피)
   - 수집 → 스냅샷 커밋
@@ -150,7 +164,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - `--dry-run` 모드 동작
 - **게이트:** (U) 첫 실제 게시 전 확인 → Phase 3 상세 계획 승인
 
-### Phase 3: LinkedIn (사용자 결정 대기)
+### Phase 3: LinkedIn (사용자 결정 대기). 진행계획: `docs/phases/phase-3-linkedin.md`
 - **사용자 지시(2026-09-11):** aside cli로 API를 따서 자동 게시
 - **검토 결과:** Aside는 로그인 세션을 쓰는 브라우저 자동화다. 이 방식은 LinkedIn 사용자 약관 13번(봇·무단 자동화로 게시물 생성 금지)과 API 약관 3.1(26)에 해당하고, 사용자 계정이 제한될 위험이 있다 [확인].
   - **Claude는 이 방식을 구현하지 않는다.**
@@ -161,7 +175,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - C 제외
 - 결정이 나면 이 Phase의 작업 목록을 다시 쓴다.
 
-### Phase 4: 실적 코너(H1·H2) + 비용 설계 실험(H5 → T3)
+### Phase 4: 실적 코너(H1·H2) + 비용 설계 실험(H5 → T3). 진행계획: `docs/phases/phase-4-earnings-experiment.md`
 **목표:** 실적 공시 이벤트로 글이 생성되고, BigQuery 실측으로 T3를 판정한다.
 - [ ] 4-1 (C) `collectors/sec_filings.py`
   - companyfacts에서 매출과 RPO
@@ -183,7 +197,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - [ ] 4-7 (C, 선택) E3 이벤트: H5/T3 실험 결과를 매달 요약하는 글 템플릿(`templates/post_experiment.md.j2`)
 - **게이트:** (U) 확인 → Phase 5 상세 계획 승인
 
-### Phase 5: 안정화와 자동 게시 전환 (아카이브 한정)
+### Phase 5: 안정화와 자동 게시 전환 (아카이브 한정). 진행계획: `docs/phases/phase-5-stabilize.md`
 - [ ] 5-1 (C) 승인 기록 집계. 연속 5건을 수정 없이 승인하면 전환을 제안한다.
 - [ ] 5-2 (C+U) 아카이브 자동 게시 모드로 전환
   - 수집 워크플로 안에서 바로 배포한다.
@@ -224,13 +238,15 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 새 저장소는 워크플로 PR 생성이 금지돼 있고 토큰이 읽기 전용이다.
 - BigQuery 샌드박스: 스토리지는 평생 10GiB이고 삭제해도 복구되지 않는다. 쿼리는 월 1TiB, 테이블은 60일 뒤 만료되고 DML은 쓸 수 없다 [확인].
 
-**실행 환경 (Phase 1 Task 1에서 확인)**
+**실행 환경 (Phase 1에서 확인)**
 - 로컬: Python 3.11.7(Anaconda). gh 토큰에 `workflow` 권한이 없다 [확인].
 - venv에 설치된 버전 [확인]: requests 2.34.2, PyYAML 6.0.3, Jinja2 3.1.6, plotly 7.0.0, pytest 9.1.1 (pip 23.2.1)
 - plotly는 계획 기준(5.x)보다 새 버전(7.0.0)이 설치됐다. 그래도 Task 7에서 쓸 API(`get_plotlyjs_version`, `to_html`, `add_bar`)는 동작하고, JS 4.0.0 CDN 파일도 200 응답(약 4.3MB)을 확인했다 [확인].
-- git 전역 이메일은 GitHub noreply 주소가 아니다 [확인]. 결정 대기이며, 주소 자체는 기록하지 않는다(규칙 11).
+- 커밋 이메일: 이 저장소에서만 `git config --local`로 GitHub noreply 주소를 쓴다. 전역 설정(noreply 아님)은 그대로다 [확인]. 주소 자체는 기록하지 않는다(규칙 11). 작성자 이름은 전역 설정을 쓰고, push 전까지는 공개되지 않는다.
+- git 줄바꿈: 커밋할 때 "LF will be replaced by CRLF" 경고가 나온다. 전역 autocrlf 설정 때문이며, 저장소에는 LF로 저장된다 [확인]. Phase 2 전에 `.gitattributes`를 검토한다(2-0b).
+- Aside CLI 1.26.906.1630이 설치돼 있다(`%LOCALAPPDATA%\Aside\CLI`) [확인]. 로그인 상태는 확인하지 않았다. 로컬 git 작업에는 필요 없다.
 - PowerShell에서 `gh --jq` 식을 쓰면 따옴표가 깨진다. `gh api ... | ConvertFrom-Json`을 쓴다 [확인].
-- 커밋이 없는 새 저장소라 git worktree를 만들 수 없다. 그래서 승인된 계획대로 main에서 로컬 커밋만 한다.
+- 첫 커밋 전에는 git worktree를 만들 수 없어서 main에서 진행했다. 이후 Task도 규칙 10(Task마다 확인)에 따라 main에 로컬 커밋한다.
 
 ## 6. 결정 로그
 | 날짜 | 결정 | 이유 |
@@ -252,6 +268,9 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 | 2026-09-11 | Phase 1 실행 방식: 이 세션에서 Task별로 진행 | 사용자 무응답이라 기본값 적용. 과정을 따라가기 쉽다 |
 | 2026-09-11 | 진행 단위: Task 하나마다 멈추고 보고(규칙 10) | 사용자 지시("한 번에 모든 phase를 진행하려고 하지 말고 여기서 중단") |
 | 2026-09-11 | main 브랜치에 로컬 커밋 | 커밋 없는 새 저장소라 worktree가 불가하다. 승인된 계획 |
+| 2026-09-11 | 커밋 이메일: 이 저장소만 GitHub noreply(`--local`), 이름은 전역 설정 | 사용자 결정. 공개 저장소에서 실제 이메일이 드러나지 않게 한다(규칙 11) |
+| 2026-09-11 | 막히면 Aside CLI를 먼저 검토(규칙 12). 첫 커밋에는 쓰지 않음 | 사용자 지시. 로컬 커밋은 인증이 필요 없어 막히지 않았다 |
+| 2026-09-11 | Phase별 진행계획은 `docs/phases/`에 별도 파일로 두고, 코드 계획은 `docs/plans/`에 둔다(규칙 1·7) | 사용자 지시. 전체 계획서에서 각 Phase의 과정을 상세히 보기 위해서다 |
 
 ## 7. 진행 로그
 - **2026-09-10:** 데이터 소스 조사. SEC와 pypistats를 직접 호출해 확인했다. 혼합안과 v1 가설 설계를 확정했다.
@@ -259,3 +278,10 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - **2026-09-11:** Phase 0 점검을 완료했다. 약관 막힘 2건(LinkedIn 자동 게시, Snowflake·Databricks 자동 감시)을 발견했다.
 - **2026-09-11:** 사용자 지시(aside cli)를 검토했다. Aside는 브라우저 자동화이고, 약관 적용이 같다는 것을 확인했다. Snowflake·Databricks는 사용자가 지정한 대체안(분기 1회)을 적용하고, LinkedIn은 자동 게시를 구현하지 않기로 하고 대안을 제시했다. Phase 1 상세 계획(Task 1~8, 테스트 28개)을 작성했다.
 - **2026-09-11:** Phase 1 승인 → Task 1의 1~6단계를 완료했다(venv·의존성·git init·스키마, 테스트 3개 통과). 커밋 전 git 이메일을 확인하던 중 사용자 지시로 중단했다. 이어서 진행 현황을 정리하고 규칙 10·11을 추가했다.
+- **2026-09-11:** Task 1을 재개해 완료했다.
+  - 재개 계획을 계획서 맨 위에 정리했다.
+  - 이 저장소 전용으로 noreply 이메일을 설정했다.
+  - 개인정보 검사는 0건, 테스트 3개가 통과했다.
+  - 첫 커밋은 `d5930d1`(파일 11개)이다. 작성자 이메일이 noreply인 것을 확인했다.
+  - Aside CLI가 설치돼 있는 것을 확인했지만 쓸 필요는 없었다.
+- **2026-09-11:** 사용자 지시로 Phase별 진행계획 파일 6개를 `docs/phases/`에 작성했다(Phase 0~5). 규칙 1·7을 갱신하고, Task 2에 착수했다.

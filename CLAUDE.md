@@ -2,10 +2,8 @@
 
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
-> **현재 위치:** Phase 1 마무리 단계. Task 1~8, 8b 완료(테스트 33개).
-> - 2026-09-11 첫 스냅샷을 사용자가 컨펌했고, `site/index.html`을 생성해 승인을 기록했다.
-> - 스냅샷은 이 문서와 함께 커밋한다.
-> - **남은 것: 사용자의 화면 확인과 가격 3개 대조.** 끝나면 Phase 1을 완료로 기록하고 Phase 2 계획으로 간다(2-5a 전 멈춤).
+> **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
+> - **다음: Phase 2 계획 작성 → 사용자 승인.** 대시보드를 만들기 전(2-5a)에 멈춘다.
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -20,19 +18,18 @@
 | 기획 2: v1 가설 (09-10) | 완료(보존) | H1~H5, P | `docs/00_hypotheses_v1.md` |
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
-| Phase 1: 가격·TCO·대시보드 | **마무리** (화면 확인 대기) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
+| Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
 | Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | 대기 | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. **(U) `site/index.html` 화면 확인과 자동 수집 가격 3개 대조.** 대상은 Redshift Serverless 서울 RPU $0.438, Azure Databricks 서버리스 SQL 서울 $0.95, ADLS Gen2 Hot LRS 미국 첫 구간 $0.0208이다. 끝나면 Phase 1이 완료된다.
-2. Phase 2 착수 지시: 먼저 진행계획과 코드 계획을 쓰고 승인받는다. 2-5a 전에 멈춘다.
-3. (Phase 2-5a) 마음에 드는 대시보드 템플릿
-4. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
+1. Phase 2 계획 승인: 진행계획과 코드 계획을 쓰고 승인받는다. 2-5a 전에 멈춘다.
+2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
+3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 1번을 확인해 주면 Phase 1을 완료로 기록하고 보고한 뒤 멈춘다. Phase 2는 지시를 받은 뒤 계획부터 쓴다.
+**다음 행동:** Phase 2 계획을 쓰고 승인을 받은 뒤 Task 하나씩 진행한다.
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -129,7 +126,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - [x] 0-7 BigQuery 샌드박스: 조건부(스토리지 평생 10GiB)
 - [x] 0-8 보고서 `docs/02_phase0_report.md`
 
-### Phase 1: 가격 수집 + TCO 모델 + 정적 대시보드 (로컬). **마무리 단계**
+### Phase 1: 가격 수집 + TCO 모델 + 정적 대시보드 (로컬). **완료 (2026-09-11)**
 진행계획: `docs/phases/phase-1-tco-dashboard.md`. 코드 계획: `docs/plans/phase1-tco-dashboard.md`.
 
 **목표:** 로컬에서 가격을 수집하고 월 비용을 계산한다. 사용자가 중간 결과를 컨펌하면 `site/`를 만든다.
@@ -146,13 +143,13 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - [x] 1단계 실제 실행: 18행 수집(AWS 4, Azure 4, 수동 10), 첫 스냅샷
   - [x] (U) 검토 보고서 컨펌(2026-09-11)
   - [x] 2단계 실행: `site/index.html` 생성, `approved.txt` 17:45:36
-  - [x] 첫 스냅샷 커밋(이 문서와 함께)
-  - [ ] (U) 화면 확인, 자동 수집 가격 3개 대조
+  - [x] 첫 스냅샷 커밋(`60520ee`)
+  - [x] (U) 화면 확인, 자동 수집 가격 3개 대조(2026-09-11)
 - **첫 승인 스냅샷 판정 (2026-09-11)**
   - T1 미국: 기각. 전 시나리오 Redshift 1위이고 **민감**
   - T1 서울: 기각. 전 시나리오 Redshift 1위이고 **견고**
   - T2: 지지(39.5%p)
-- **게이트:** (U) 화면 확인 → Phase 1 완료 → Phase 2 상세 계획 승인(2-5a 전 멈춤)
+- **게이트:** (U) 화면 확인 완료 → **Phase 1 완료** → Phase 2 상세 계획 승인(2-5a 전 멈춤)
 
 ### Phase 2: 자동 수집 + 변동 감지 + 검토 PR + 아카이브 게시 + Sheets 적재. 진행계획: `docs/phases/phase-2-automation-publish.md`
 **목표:** 매일 자동 수집한다. 변동이 생기면 중간 결과를 검토 PR로 올리고 멈춘다. 사용자가 머지(컨펌)하면 Pages 게시와 Sheets 적재가 진행된다.
@@ -360,6 +357,6 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 1단계를 실제로 실행해 첫 스냅샷과 검토 보고서를 만들었다. 18행이다.
   - 사용자가 "자동화하면 Claude를 열어 컨펌해야 하나?"라고 물었다. Phase 2에서는 GitHub PR Merge가 컨펌이라고 답했고, 사용자가 동의했다.
   - 사용자가 컨펌해서 2단계를 실행했다. `site/index.html`을 생성했고, `approved.txt`는 17:45:36이다.
-  - 첫 승인 스냅샷을 이 문서와 함께 커밋한다.
+  - 첫 승인 스냅샷을 커밋했다(`60520ee`).
   - 판정: T1은 미국·서울 모두 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2는 지지(39.5%p)다.
-  - 사용자의 화면 확인과 가격 3개 대조를 기다린다.
+- **2026-09-11:** 사용자가 화면을 확인하고 자동 수집 가격 3개를 대조했다. **Phase 1 완료.** Phase 2 계획 작성으로 넘어간다.

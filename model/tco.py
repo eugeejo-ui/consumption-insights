@@ -69,3 +69,41 @@ def estimate(book: PriceBook, workloads: dict, factors: dict[str, float] | None 
                     storage_cost(book, platform, region, workloads["storage_gb"]),
                 ))
     return rows
+
+
+def ranking(rows: list[CostRow], scenario: str, region: str) -> list[str]:
+    selected = sorted((r for r in rows if r.scenario == scenario and r.region == region), key=lambda r: r.total_usd)
+    return [r.platform for r in selected]
+
+
+def t1_verdict(book: PriceBook, workloads: dict, sensitivity: float, region: str = "us") -> dict:
+    """T1: 시나리오마다 1위가 다른가. 1위가 플랫폼 하나의 용량 가정 ±sensitivity에도 유지되면 '견고'."""
+    base = estimate(book, workloads)
+    winners = {sid: ranking(base, sid, region)[0] for sid in workloads["scenarios"]}
+    robustness = {sid: "견고" for sid in workloads["scenarios"]}
+    for platform in PLATFORMS:
+        for factor in (1 - sensitivity, 1 + sensitivity):
+            shaken = estimate(book, workloads, {platform: factor})
+            for sid in workloads["scenarios"]:
+                if ranking(shaken, sid, region)[0] != winners[sid]:
+                    robustness[sid] = "민감"
+    return {"winners": winners, "robustness": robustness, "supported": len(set(winners.values())) > 1}
+
+
+def seoul_premiums(records: list[PriceRecord]) -> list[dict]:
+    by = {(r.platform, r.service, r.sku, r.region): r for r in records}
+    out = []
+    for (platform, service, sku, region), us in sorted(by.items()):
+        seoul = by.get((platform, service, sku, "seoul"))
+        if region != "us" or seoul is None:
+            continue
+        out.append({"platform": platform, "service": service, "sku": sku,
+                    "us": us.price_usd, "seoul": seoul.price_usd,
+                    "premium_pct": round((seoul.price_usd / us.price_usd - 1) * 100, 1)})
+    return out
+
+
+def t2_verdict(premiums: list[dict], min_spread_pp: float) -> dict:
+    values = [p["premium_pct"] for p in premiums]
+    spread = round(max(values) - min(values), 1)
+    return {"spread_pp": spread, "supported": spread >= min_spread_pp}

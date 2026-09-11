@@ -2,7 +2,7 @@
 
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 승인을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
-> **현재 위치:** Phase 1 진행 중. Task 1(`d5930d1`)·**Task 2 완료**. 다음은 Task 3(Azure 수집기)이고, 사용자 지시를 기다린다(규칙 10). Phase별 진행계획은 `docs/phases/`에 있다.
+> **현재 위치:** Phase 1 진행 중. Task 1(`d5930d1`)·Task 2(`0c5b6c9`)·**Task 3 완료**. 다음은 Task 4(수동 가격표 + 확인 게이트)이고, 사용자 지시를 기다린다(규칙 10). Phase별 진행계획은 `docs/phases/`에 있다.
 > **마지막 갱신:** 2026-09-11
 
 ---
@@ -15,17 +15,22 @@
 | 기획 2: v1 가설 (09-10) | 완료(보존) | H1~H5, P | `docs/00_hypotheses_v1.md` |
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
-| Phase 1: 가격·TCO·대시보드 | **진행 중** (Task 2/8 완료) | 스키마·AWS 수집기 완료, 테스트 6/28 통과, 실제 AWS 조회값이 Phase 0 값과 같음 | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
+| Phase 1: 가격·TCO·대시보드 | **진행 중** (Task 3/8 완료) | 스키마·AWS·Azure 수집기 완료, 테스트 9/28 통과, 자동 수집 가격 8개 모두 Phase 0 값과 같음 | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
 | Phase 2: 자동 수집·변동 감지·아카이브 게시 | 대기 | — | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정 대기**
-1. Task 3 착수 지시
+1. Task 4 착수 지시
 2. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 지시하면 Task 3(Azure Databricks·ADLS 수집기)을 한다. 끝나면 보고하고 멈춘다.
+**다음 행동:** 사용자가 지시하면 Task 4를 한다. Task 4에는 사용자 단계가 있다.
+- Claude가 로더와 가격표를 만든다. `confirmed_on`은 비워 둔다.
+- 사용자가 브라우저로 원본을 확인한 뒤 `confirmed_on`을 적는다.
+- 그다음 커밋한다.
+
+사용자 단계에서 한 번 멈춘다.
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -120,12 +125,14 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - [x] `common/schema.py` 구현
   - [x] 테스트 3개 통과
   - [x] 첫 커밋: 이 저장소 전용 noreply 이메일 사용. 개인정보 검사 0건, 파일 11개
-- [x] **Task 2 (1-2) AWS Redshift 수집기.** 완료
+- [x] **Task 2 (1-2) AWS Redshift 수집기.** 완료, 커밋 `0c5b6c9`
   - 테스트 3개 통과(누적 6개).
   - 실제 조회값은 서버리스 RPU $0.375/$0.438, 관리형 스토리지 $0.024/$0.0261(미국/서울)로 Phase 0 값과 같다 [확인].
   - 선결제 항목이 실제 데이터에서도 걸러졌다.
-- [ ] Task 3 (1-3) Azure 수집기: Databricks 서버리스 SQL DBU(AWS 직판과 같은 가격 [확인]), ADLS Gen2 Hot LRS. **다음 차례**
-- [ ] Task 4 (1-1, 1-4 변경) 수동 가격표(Snowflake, BigQuery) + 로더
+- [x] **Task 3 (1-3) Azure 수집기.** 완료
+  - 테스트 3개 통과(누적 9개).
+  - 실제 조회값은 Databricks 서버리스 SQL DBU $0.70/$0.95, ADLS Hot LRS $0.0208/$0.02(미국/서울)로 Phase 0 값과 같다 [확인].
+- [ ] Task 4 (1-1, 1-4 변경) 수동 가격표(Snowflake, BigQuery) + 로더. **다음 차례**
   - **(U) 원본을 브라우저로 확인한 뒤 `confirmed_on`을 입력한다. 비어 있으면 파이프라인이 멈춘다.**
   - BigQuery는 가격 페이지가 SKU 이름 없이 위치 배열로만 되어 있어서 수동 가격표로 처리한다 [확인]. 자동 변경 감지는 Phase 2-6에서 한다.
 - [ ] Task 5 (1-5) 워크로드 가정 + 월 비용 계산: `workloads.yaml`, `model/tco.py`
@@ -226,6 +233,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - Azure Retail Prices API [확인]
   - Databricks 서버리스 SKU는 `Azure Databricks Regional`이다. 클래식 DBU는 리전과 관계없이 가격이 같다.
   - ADLS Gen2 Hot LRS 첫 구간은 eastus $0.0208, koreacentral $0.02로 서울이 더 싸다.
+  - Task 3 수집기로 다시 확인했다.
 - BigQuery 가격 페이지: HTML에 리전별 가격이 SKU 이름 없이 위치 배열로 들어 있다. nonce가 매번 바뀐다 [확인].
 - 가격 실측값과 서울 프리미엄 표는 `docs/02_phase0_report.md`에 있다.
 
@@ -289,9 +297,13 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 첫 커밋은 `d5930d1`(파일 11개)이다. 작성자 이메일이 noreply인 것을 확인했다.
   - Aside CLI가 설치돼 있는 것을 확인했지만 쓸 필요는 없었다.
 - **2026-09-11:** 사용자 지시로 Phase별 진행계획 파일 6개를 `docs/phases/`에 작성했다(Phase 0~5). 규칙 1·7을 갱신했다. 문서 커밋은 `6e8c670`이다.
-- **2026-09-11:** Task 2를 완료했다.
+- **2026-09-11:** Task 2를 완료했다(커밋 `0c5b6c9`).
   - `collectors/aws_prices.py`를 TDD로 구현했다(실패 확인 → 구현 → 통과).
   - 테스트는 누적 6개가 통과했다.
   - 실제 AWS 조회값이 Phase 0 값과 같다: RPU $0.375/$0.438, 스토리지 $0.024/$0.0261.
   - 선결제 항목이 걸러지는 것을 확인했다.
-  - Task 3 지시를 기다린다.
+- **2026-09-11:** Task 3을 완료했다.
+  - `collectors/azure_prices.py`를 TDD로 구현했다(ImportError로 실패 확인 → 구현 → 통과).
+  - 테스트는 누적 9개가 통과했다.
+  - 실제 Azure 조회값이 Phase 0 값과 같다: DBU $0.70/$0.95, ADLS $0.0208/$0.02.
+  - Task 4 지시를 기다린다.

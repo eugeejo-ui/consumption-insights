@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **진행 중**: Task 1·2 완료, Task 3 대기 (2026-09-11) |
+| 상태 | **진행 중**: Task 1~3 완료, Task 4 대기 (2026-09-11) |
 | 목표 | 로컬에서 명령 한 번으로 플랫폼 4개 × 리전 2개의 가격을 모으고, 워크로드 3개의 월 비용을 추정해 `site/index.html`을 만든다 |
 | 선행 조건 | Phase 0 완료 |
 | 코드 단위 계획 | `docs/plans/phase1-tco-dashboard.md` (테스트와 구현 코드 전문) |
@@ -24,7 +24,7 @@ Azure API ──────┼─→ PriceRecord(공통 스키마) → data/raw
 | 플랫폼 | 가격 출처 | 방식 | US / 서울 (Phase 0 확인값) |
 |---|---|---|---|
 | Redshift | AWS 가격 파일 | 자동 | RPU-시간 $0.375 / $0.438, 스토리지 GB-월 $0.024 / $0.0261 (Task 2에서 실제 조회로 재확인) |
-| Databricks | Azure Retail API | 자동 | 서버리스 SQL DBU $0.70 / $0.95, ADLS GB-월 $0.0208 / $0.02 |
+| Databricks | Azure Retail API | 자동 | 서버리스 SQL DBU $0.70 / $0.95, ADLS GB-월 $0.0208 / $0.02 (Task 3에서 실제 조회로 재확인) |
 | Snowflake | 서비스 소비표 PDF | 수동(사용자 확인) | Enterprise 크레딧 $3.00 / $4.05, 스토리지 TB-월 $23 / $25 |
 | BigQuery | 가격 페이지 | 수동(사용자 확인) | Enterprise 슬롯-시간 $0.06 / $0.0765, 온디맨드 TiB $6.25 / $7.50, 스토리지 GiB-월 $0.02 / $0.023 |
 
@@ -32,9 +32,9 @@ Azure API ──────┼─→ PriceRecord(공통 스키마) → data/raw
 | Task | 작업 | 담당 | 산출물 | 완료 기준 | 상태 |
 |---|---|---|---|---|---|
 | 1 | 뼈대 + 공통 스키마 | C | `requirements.txt`, `pytest.ini`, `.gitignore`, `common/schema.py` | 테스트 3개 통과, 첫 커밋 | **완료** (`d5930d1`) |
-| 2 | AWS Redshift 수집기 | C | `collectors/aws_prices.py`, 픽스처 | 테스트 3개 통과, 실제 조회값이 Phase 0 값과 같음 | **완료** |
-| 3 | Azure 수집기 (Databricks, ADLS) | C | `collectors/azure_prices.py`, 픽스처 | 테스트 3개 통과, 실제 조회값 확인 | **다음** |
-| 4 | 수동 가격표 + 확인 게이트 | C+U | `collectors/manual_prices.py`, `data/manual/*_prices.csv` | 테스트 4개 통과, 사용자가 `confirmed_on` 입력 | 대기 |
+| 2 | AWS Redshift 수집기 | C | `collectors/aws_prices.py`, 픽스처 | 테스트 3개 통과, 실제 조회값이 Phase 0 값과 같음 | **완료** (`0c5b6c9`) |
+| 3 | Azure 수집기 (Databricks, ADLS) | C | `collectors/azure_prices.py`, 픽스처 | 테스트 3개 통과, 실제 조회값 확인 | **완료** |
+| 4 | 수동 가격표 + 확인 게이트 | C+U | `collectors/manual_prices.py`, `data/manual/*_prices.csv` | 테스트 4개 통과, 사용자가 `confirmed_on` 입력 | **다음** |
 | 5 | 워크로드 가정 + 월 비용 계산 | C+U | `data/manual/workloads.yaml`, `model/tco.py` | 테스트 7개 통과(W1 손계산 $1,550 포함), 사용자 가정 검토 | 대기 |
 | 6 | T1·T2 판정 | C | `config/thresholds.yaml`, 판정 함수 | 테스트 6개 통과 | 대기 |
 | 7 | 정적 대시보드 | C | `publish/render_site.py`, `templates/site/index.html.j2` | 테스트 1개 통과 | 대기 |
@@ -66,8 +66,9 @@ Task마다 순서는 같다: 테스트 작성 → 실패 확인 → 구현 → �
 ## 위험과 대응
 | 위험 | 대응 |
 |---|---|
-| 실제 가격이 Phase 0 확인값과 다름 | Task 2·3의 실제 조회 단계에서 보고한다. 가격 변동은 Phase 2의 E1 이벤트 후보다. Task 2(AWS)는 값이 같았다 |
+| 실제 가격이 Phase 0 확인값과 다름 | Task 2·3의 실제 조회 단계에서 보고한다. 가격 변동은 Phase 2의 E1 이벤트 후보다. Task 2(AWS)와 Task 3(Azure) 모두 값이 같았다 |
 | AWS 파일의 선결제 항목이 단가로 섞임 | usagetype 접미어를 정확히 맞추고, 함정을 넣은 테스트로 막는다. 실제 데이터에서도 걸러지는 것을 확인했다 |
+| Azure의 0원 체험·POC SKU, 클래식 SKU, 스토리지 구간이 섞임 | 상품명·SKU명·구간 조건을 정확히 맞추고, 함정을 넣은 테스트로 막는다 |
 | 수동 가격을 잘못 입력 | `confirmed_on`이 없으면 실행이 멈춘다 |
 | 가정 하나가 결론을 바꿈 | ±50% 민감도 라벨을 붙이고, 가정 전체를 화면에 공개한다 |
 | plotly 7.0 설치 (계획은 5.x 기준) | 필요한 API의 호환성을 확인했다 |
@@ -81,7 +82,7 @@ Task마다 순서는 같다: 테스트 작성 → 실패 확인 → 구현 → �
 ## 진행 기록
 - **2026-09-11 Task 1 완료:** venv, git init, 공통 스키마를 만들었다. 테스트 3개가 통과했다. 첫 커밋 `d5930d1`은 이 저장소 전용 noreply 이메일로 했다.
 - **2026-09-11 Phase별 진행계획 문서화:** 이 파일을 포함해 `docs/phases/` 6개 파일을 만들었다(커밋 `6e8c670`).
-- **2026-09-11 Task 2 완료**
+- **2026-09-11 Task 2 완료** (커밋 `0c5b6c9`)
   - 순서: 테스트 작성 → 실패 확인(`collectors` 모듈 없음) → `collectors/aws_prices.py` 구현
   - 테스트: Task 2의 3개 통과, 누적 6개 통과
   - 실제 AWS 조회값이 Phase 0 확인값과 같다 [확인].
@@ -91,3 +92,13 @@ Task마다 순서는 같다: 테스트 작성 → 실패 확인 → 구현 → �
     | 서버리스 RPU (RPU-시간) | $0.375 | $0.438 |
     | 관리형 스토리지 (GB-월) | $0.024 | $0.0261 |
   - 선결제 항목(`-CR-1YR-AU`, "RPU-시간당 $2,430"으로 표기)이 실제 데이터에서도 걸러졌다.
+- **2026-09-11 Task 3 완료**
+  - 순서: 테스트 작성 → 실패 확인(`collectors.azure_prices` ImportError) → `collectors/azure_prices.py` 구현
+  - 테스트: Task 3의 3개 통과, 누적 9개 통과
+  - 실제 Azure 조회값이 Phase 0 확인값과 같다 [확인].
+
+    | | 미국 (eastus) | 서울 (koreacentral) |
+    |---|---|---|
+    | Databricks 서버리스 SQL (DBU-시간) | $0.70 | $0.95 |
+    | ADLS Gen2 Hot LRS 첫 구간 (GB-월) | $0.0208 | $0.02 |
+  - 0원 체험·POC SKU, 클래식 SQL SKU($0.22), 51,200GB 이상 스토리지 구간이 테스트로 걸러진다.

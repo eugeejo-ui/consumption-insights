@@ -1,0 +1,9 @@
+[
+  {"productName": "Azure Databricks Regional", "skuName": "Premium Serverless SQL", "meterName": "Premium Serverless SQL DBU", "unitOfMeasure": "1 Hour", "unitPrice": 0.95, "tierMinimumUnits": 0.0},
+  {"productName": "Azure Databricks Regional", "skuName": "Premium - Free Trial Serverless SQL", "meterName": "Premium - Free Trial Serverless SQL DBU", "unitOfMeasure": "1 Hour", "unitPrice": 0.0, "tierMinimumUnits": 0.0},
+  {"productName": "Azure Databricks Regional", "skuName": "POC Non-Billable Serverless SQL", "meterName": "POC Non-Billable Serverless SQL DBU", "unitOfMeasure": "1 Hour", "unitPrice": 0.0, "tierMinimumUnits": 0.0},
+  {"productName": "Azure Databricks", "skuName": "Premium SQL Analytics", "meterName": "Premium SQL Analytics DBU", "unitOfMeasure": "1 Hour", "unitPrice": 0.22, "tierMinimumUnits": 0.0},
+  {"productName": "Azure Data Lake Storage Gen2 Hierarchical Namespace", "skuName": "Hot LRS", "meterName": "Hot LRS Data Stored", "unitOfMeasure": "1 GB/Month", "unitPrice": 0.02, "tierMinimumUnits": 0.0},
+  {"productName": "Azure Data Lake Storage Gen2 Hierarchical Namespace", "skuName": "Hot LRS", "meterName": "Hot LRS Data Stored", "unitOfMeasure": "1 GB/Month", "unitPrice": 0.0192, "tierMinimumUnits": 51200.0},
+  {"productName": "Blob Storage", "skuName": "Hot LRS", "meterName": "Hot LRS Data Stored", "unitOfMeasure": "1 GB/Month", "unitPrice": 0.02, "tierMinimumUnits": 0.0}
+]

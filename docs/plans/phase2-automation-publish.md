@@ -17,7 +17,8 @@
 
 **Spec:** `CLAUDE.md` Phase 2와 규칙 13·14, `docs/phases/phase-2-automation-publish.md`, `docs/plans/phase1-tco-dashboard.md`(Task 8b)
 
-**진행 현황:** Task 1 완료(`5dcad55`, 38 passed), Task 2 완료(`72723d5`, 40 passed). 다음은 Task 3이고, 지시를 받으면 진행한다.
+**진행 현황:** Task 1 완료(`5dcad55`, 38 passed), Task 2 완료(`72723d5`, 40 passed), Task 3 완료(44 passed). 다음은 Task 4이고, 지시를 받으면 진행한다.
+- Task 3 Step 5(실제 실행): 오늘(2026-09-11)은 승인 스냅샷이 있어 같은 날 재수집 가드가 막았다. 그래서 `data/checks.csv`는 아직 없다. 파일을 쓰지 않은 실제 수집·비교에서는 18행이 승인본과 같았다.
 
 ## 결정 (2026-09-11 사용자 승인: 계획 승인, D1~D3 모두 추천안)
 | # | 결정 | 추천 | 이유 | 대안 |
@@ -1023,6 +1024,7 @@ git push -u origin main
 ```
 
 - [ ] **Step 6: 실제 실행 1회**
+- **UTC 2026-09-12 이후에 실행한다.** 그 전에는 승인 스냅샷(2026-09-11)이 있어 같은 날 재수집 가드에 걸려 실패한다(Task 3에서 확인).
 - `gh workflow run collect.yml`을 실행하고, `gh run watch`로 끝까지 지켜본다.
 - 결과는 둘 중 하나다.
   - 가격이 2026-09-11 승인본과 같으면 main에 `chore: price check <날짜> (unchanged)` 커밋이 생기고 PR은 없다. Actions 서버에서 AWS·Azure 호출이 되는 것도 여기서 확인된다.

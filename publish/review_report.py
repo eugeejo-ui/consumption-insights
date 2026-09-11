@@ -56,7 +56,8 @@ def price_changes(current: list[PriceRecord], previous: list[PriceRecord] | None
 
 
 def build_review(day: str, records: list[PriceRecord], changes: list[dict] | None, rows: list[CostRow],
-                 t1_by_region: dict[str, dict], t2: dict, counts: dict[str, int] | None = None) -> str:
+                 t1_by_region: dict[str, dict], t2: dict, counts: dict[str, int] | None = None,
+                 significant: bool | None = None) -> str:
     if changes is None:
         changes_summary = "첫 스냅샷 (비교할 승인 스냅샷이 없다)"
     elif not changes:
@@ -72,4 +73,5 @@ def build_review(day: str, records: list[PriceRecord], changes: list[dict] | Non
     env = Environment(loader=FileSystemLoader(TEMPLATES), trim_blocks=True, lstrip_blocks=True, keep_trailing_newline=True)
     return env.get_template("review.md.j2").render(
         day=day, records=sorted(records, key=_key), changes=changes, changes_summary=changes_summary,
-        counts_text=counts_text, rankings=rankings, t1_by_region=t1_by_region, t2=t2, region_labels=REGION_LABELS)
+        counts_text=counts_text, rankings=rankings, t1_by_region=t1_by_region, t2=t2, region_labels=REGION_LABELS,
+        significant=significant)

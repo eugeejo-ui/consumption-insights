@@ -1,12 +1,15 @@
 # 중간 검토 보고서 · {{ day }}
 
 > **파이프라인은 여기서 멈춰 있습니다.** 아래 내용을 확인하고 판단해 주세요.
-> - **컨펌:** `.venv\Scripts\python.exe pipeline.py --confirm {{ day }}` → 화면 생성, 승인 기록(`approved.txt`) → 스냅샷 커밋
-> - **반려:** `data/raw/{{ day }}/` 폴더를 커밋하지 말고 지운 뒤, 원인을 고쳐 `pipeline.py`를 다시 실행
+> - **컨펌:** GitHub 검토 PR이면 **Merge**. 로컬이면 `.venv\Scripts\python.exe pipeline.py --confirm {{ day }}` → 화면 생성, 승인 기록(`approved.txt`) → 스냅샷 커밋
+> - **반려:** GitHub 검토 PR이면 **Close**. 로컬이면 `data/raw/{{ day }}/` 폴더를 커밋하지 말고 지운 뒤, 원인을 고쳐 `pipeline.py`를 다시 실행
 
 ## 1. 요약
 - 수집 가격: {{ records|length }}행{{ counts_text }}
 - 이전 승인 스냅샷 대비: {{ changes_summary }}
+{% if significant is not none %}
+- 글 초안(E1): {{ "있음 (post.md)" if significant else "없음 (월 비용 변화가 기준 미만이고 순위 변화도 없다)" }}
+{% endif %}
 {% for region, v in t1_by_region.items() %}
 - T1 ({{ region_labels[region] }}): {{ "지지" if v.supported else "기각" }}
 {% endfor %}

@@ -3,7 +3,9 @@
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
 > **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
-> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~3(`5dcad55`, `72723d5`, `9a46707`), **Task 4(Sheets 적재 모듈) 완료**(테스트 47개). 다음은 Task 5(GitHub 연결)이고, 사용자의 2-0 준비가 먼저 필요하다.
+> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~4 완료(`5dcad55`, `72723d5`, `9a46707`, `802c126`, 테스트 47개). **Task 5(GitHub 연결) 진행 중.**
+>   - 완료: 공개 저장소 `consumption-insights` 생성(push 전), `.gitattributes`와 `collect.yml` 로컬 커밋
+>   - push 전 사용자 조치 대기: `workflow` 권한, Actions 설정 2개, push 승인
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -19,18 +21,21 @@
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 4 완료, Task 5 대기: 2-0 사용자 준비 필요) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
+| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 5: push 전 사용자 조치 대기) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. (U, Phase 2 Task 5 전) 2-0 GitHub 준비: 작성자 이름 공개 확인, `gh auth refresh -s workflow`, 공개 저장소, Actions 설정 2개, push 승인
+1. (U, Task 5 push 전) 남은 2-0 조치. 작성자 이름 공개 확인과 저장소 생성은 끝났다.
+   - ① `gh auth refresh -s workflow` 실행(브라우저 승인). 현재 토큰에 `workflow` 권한이 없다 [확인].
+   - ② Actions 설정 2개 변경 승인. 현재 값은 토큰 `read`, PR 승인 불가다 [확인].
+   - ③ push 승인
    - 첫 실제 수집 실행은 UTC 2026-09-12 이후에 한다. 오늘(2026-09-11)은 승인 스냅샷이 있어 같은 날 재수집 가드가 막는다.
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 2-0 GitHub 준비를 진행하거나 지시하면 Phase 2 Task 5(GitHub 연결)를 한다. 첫 실제 수집 실행은 UTC 2026-09-12 이후에 한다(규칙 10).
+**다음 행동:** 사용자 조치 ①~③이 끝나면 push한다. UTC 2026-09-12 이후에 첫 실제 수집 실행과 시뮬레이션 실행을 한다(Task 5 Step 5~8, 규칙 10).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -155,12 +160,15 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 ### Phase 2: 자동 수집 + 변동 감지 + 검토 PR + 아카이브 게시 + Sheets 적재. 진행계획: `docs/phases/phase-2-automation-publish.md`
 **목표:** 매일 자동 수집한다. 변동이 생기면 중간 결과를 검토 PR로 올리고 멈춘다. 사용자가 머지(컨펌)하면 Pages 게시와 Sheets 적재가 진행된다.
 - [ ] 2-0 (U) GitHub 준비
+  - 2026-09-11 진행 상황
+    - 완료: 작성자 이름 공개 확인(사용자), 공개 저장소 `consumption-insights` 생성(사용자 승인, Claude 실행, push 전)
+    - 남은 것: `workflow` 권한, Actions 설정 2개, push
   - `gh auth refresh -s workflow` 실행(브라우저 승인은 사용자가 직접)
   - 공개 저장소 생성
   - Settings > Actions > General에서 워크플로 PR 생성 허용, GITHUB_TOKEN 쓰기 권한 설정
   - Pages 소스를 GitHub Actions로 설정
   - Secret `SEC_USER_AGENT` 등록
-- [ ] 2-0b (C) `.gitattributes`(`* text=auto eol=lf`) 추가를 검토한다. Windows 작업 사본(CRLF)과 Linux CI의 줄바꿈을 맞추기 위해서다.
+- [x] 2-0b (C) `.gitattributes`(`* text=auto eol=lf`)를 추가했다. Windows 작업 사본(CRLF)과 Linux CI의 줄바꿈을 맞추기 위해서다. 재정규화해 보니 기존 파일은 바뀌지 않았다 [확인].
 - [ ] 2-0c (U, C 보조) Google Sheets 준비
   - **이 프로젝트 전용 새 GCP 프로젝트를 만든다(2026-09-11 사용자 결정).** 새 프로젝트에서 Sheets API를 활성화한다.
   - 서비스 계정과 JSON 키 발급 → Secret `GOOGLE_SA_KEY`
@@ -296,7 +304,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - venv에 설치된 버전 [확인]: requests 2.34.2, PyYAML 6.0.3, Jinja2 3.1.6, plotly 7.0.0, pytest 9.1.1 (pip 23.2.1), google-auth 2.58.0(Phase 2 Task 4)
 - plotly는 계획 기준(5.x)보다 새 버전(7.0.0)이 설치됐다. 그래도 필요한 API(`get_plotlyjs_version`, `to_html`, `add_bar`)는 동작하고, JS 4.0.0 CDN 파일도 200 응답(약 4.3MB)을 확인했다 [확인].
 - 커밋 이메일: 이 저장소에서만 `git config --local`로 GitHub noreply 주소를 쓴다. 전역 설정(noreply 아님)은 그대로다 [확인]. 주소 자체는 기록하지 않는다(규칙 11). 작성자 이름은 전역 설정을 쓰고, push 전까지는 공개되지 않는다.
-- git 줄바꿈: 커밋할 때 "LF will be replaced by CRLF" 경고가 나온다. 전역 autocrlf 설정 때문이며, 저장소에는 LF로 저장된다 [확인]. Phase 2 전에 `.gitattributes`를 검토한다(2-0b).
+- git 줄바꿈: 커밋할 때 "LF will be replaced by CRLF" 경고가 나온다. 전역 autocrlf 설정 때문이며, 저장소에는 LF로 저장된다 [확인]. Phase 2 Task 5에서 `.gitattributes`(`* text=auto eol=lf`)를 추가했다(2-0b).
 - `.gitignore`: 패턴 `site/`는 모든 위치의 `site` 폴더를 제외한다. 루트 빌드 결과물만 제외하려면 `/site/`로 쓴다 [확인, Task 7 사고].
 - Aside CLI 1.26.906.1630이 설치돼 있고, 계정 u0(Google 제공자)로 로그인돼 있다 [확인]. `aside account`는 하위 명령(`list`, `status`)이 필요하다.
 - humanize-korean 스킬: 스크립트 경로를 찾지 못한다(스킬 폴더 위쪽에 `.claude-plugin` 폴더가 없다) [확인]. 그래서 정량 점수 shim과 변경률 게이트 없이 에이전트 2콜(진단 → 윤문)로 실행한다. 변경률은 difflib로 대신 잰다(요약 블록을 반드시 떼고 비교).
@@ -343,6 +351,8 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 | 2026-09-11 | **D2** 단가가 하나라도 바뀌면 검토 PR을 열고, 글 초안은 E1일 때만 만든다 | 사용자 결정(추천안). 작은 변화도 사람이 보고, 비교 기준(승인 가격)이 오래된 채로 남지 않게 한다 |
 | 2026-09-11 | **D3** 매일 스케줄은 게시 워크플로(2-5) 뒤에 켜고, 그 전에는 수동 실행만 한다 | 사용자 결정(추천안). 게시 워크플로 없이 머지하면 승인 기록이 생기지 않아 비교 기준이 꼬인다 |
 | 2026-09-11 | 글 초안 고정 문장을 윤문본으로 바꾼다. 도입 1은 "바뀐 단가와 그에 따른 월 비용·순위 변화를 정리했습니다"(Claude 대안) | 사용자 결정. humanize-korean 진단 결과를 반영했다(명사 나열, 안내문형 도입, 쉼표, 구어 소제목). 도입 1의 윤문본은 쉼표가 어색하고, 순위 변화가 없는 날에도 "순위에 미친 영향"을 말하게 된다 |
+| 2026-09-11 | 커밋 작성자 이름(전역 설정)을 공개 저장소에 그대로 둔다. 이메일은 noreply | 사용자 결정(규칙 11). 이력을 다시 쓰지 않는다 |
+| 2026-09-11 | 공개 저장소 이름은 `consumption-insights`. Claude가 `gh repo create`로 만들었고 push는 하지 않았다 | 사용자 결정(추천안 채택, 생성 승인) |
 
 ## 7. 진행 로그
 - **2026-09-10:** 데이터 소스 조사. SEC와 pypistats를 직접 호출해 확인했다. 혼합안과 v1 가설 설계를 확정했다.
@@ -397,3 +407,11 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - google-auth 2.58.0을 설치했고 `.gitignore`에 `/secrets/`를 추가했다.
   - CLI는 승인되지 않은 날짜로 기준선을 적재하려 하면 거부한다(확인함).
   - 실제 시트 적재는 2-0c(사용자 준비) 전이라 2-7로 미뤘다.
+- **2026-09-11:** Phase 2 Task 5를 시작했다.
+  - 사용자가 작성자 이름 공개를 확인했고, 저장소 생성을 승인했다. 공개 저장소 `consumption-insights`를 만들었다(비어 있음, push 전).
+  - `.gitattributes`(재정규화 결과 변경 없음)와 `.github/workflows/collect.yml`(수동 실행 전용, checkout·setup-python v7)을 로컬에 커밋했다.
+  - push 전 점검
+    - YAML 문법 정상, 테스트 47개 통과
+    - 전체 커밋 기록 개인정보 검사: 4건 모두 계획서의 검사 패턴 설명이라 오탐이다.
+    - 작성자·커밋 이메일은 모두 GitHub noreply다.
+  - 막힌 것: gh 토큰에 `workflow` 권한이 없다. Actions 설정은 기본값(토큰 read, PR 승인 불가)이다. 사용자 조치를 기다린다.

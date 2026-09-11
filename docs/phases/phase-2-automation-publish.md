@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **진행 중** (2026-09-11): 계획 승인, 결정 D1~D3 확정. Task 1~4 완료(테스트 47개), Task 5 대기(2-0 사용자 준비 필요) |
+| 상태 | **진행 중** (2026-09-11): 계획 승인, 결정 D1~D3 확정. Task 1~4 완료(테스트 47개), Task 5 진행 중(저장소 생성, 워크플로 로컬 커밋 완료. push 전 사용자 조치 대기) |
 | 목표 | 매일 자동으로 가격을 모은다. 단가가 바뀌면 **중간 결과(스냅샷, 검토 보고서, 글 초안)를 PR로 올리고 멈춘다.** 사용자가 판단해 머지(컨펌)하면 GitHub Pages 게시와 Google 스프레드시트 적재가 진행된다 |
 | 선행 조건 | Phase 1 완료, 사용자의 GitHub 준비(2-0), Google Sheets 준비(2-0c) |
 | 코드 단위 계획 | `docs/plans/phase2-automation-publish.md`. Task 1~5까지 다루고 2-5a 전에 멈춘다. 그 이후(Task 6~9)는 템플릿을 받은 뒤 상세화한다 |
@@ -147,3 +147,14 @@
 - **2026-09-11 Task 4 완료**: `publish/sheets_log.py`(단가 변화 행, 기준선, `values.append`, CLI `--events`·`--baseline`). google-auth 2.58.0, `.gitignore`에 `/secrets/` 추가. 테스트 누적 47개
   - 승인되지 않은 날짜로 기준선을 적재하려 하면 CLI가 거부한다.
   - 실제 시트 적재는 2-0c 전이라 2-7로 미뤘다.
+- **2026-09-11 Task 5 진행** (2-0, 2-0b, 2-1)
+  - 완료
+    - 작성자 이름 공개 확인(사용자)
+    - 공개 저장소 `consumption-insights` 생성(push 전)
+    - `.gitattributes`, `collect.yml` 로컬 커밋
+    - push 전 점검: YAML, 테스트 47개, 전체 기록 개인정보 검사, noreply 이메일
+  - 남은 것
+    - `gh auth refresh -s workflow`(사용자)
+    - Actions 설정 2개(현재 read, PR 승인 불가)
+    - push 승인
+    - UTC 2026-09-12 이후 실제 실행과 시뮬레이션 실행

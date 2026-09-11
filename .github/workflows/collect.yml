@@ -1,0 +1,81 @@
+name: collect
+# 매일 가격 수집 → 이전 승인 스냅샷과 비교 → 변화가 있으면 검토 PR을 올리고 멈춘다(CLAUDE.md 규칙 14).
+# 매일 스케줄은 게시 워크플로(2-5)가 준비된 뒤에 켠다(결정 D3). 그 전에는 수동 실행만 한다.
+on:
+  workflow_dispatch:
+    inputs:
+      simulate:
+        description: "검증용 가짜 변동(Redshift 미국 RPU +5%). 이 PR은 머지하지 말고 닫는다"
+        type: boolean
+        default: false
+  # schedule:
+  #   - cron: "17 0 * * *"   # 00:17 UTC = 09:17 KST, 정각 혼잡 회피 (2-5 이후 활성화)
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONIOENCODING: utf-8
+      SIMULATE: ${{ inputs.simulate && 'true' || 'false' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+      - name: git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - id: run
+        run: python pipeline.py $([ "$SIMULATE" = "true" ] && echo --simulate)
+      - name: record daily check on main
+        if: env.SIMULATE != 'true'
+        run: |
+          git add data/checks.csv
+          git diff --cached --quiet || git commit -m "chore: price check ${{ steps.run.outputs.day }} (${{ steps.run.outputs.status }})"
+          git push origin HEAD:main
+      - name: close stale review PR when prices match the approved snapshot
+        if: steps.run.outputs.status == 'unchanged'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(gh pr view review/pending --json state -q .state 2>/dev/null)" = "OPEN" ]; then
+            gh pr close review/pending --delete-branch --comment "가격이 승인 스냅샷과 같아져 검토할 것이 없다."
+          fi
+      - name: open or update review PR
+        if: steps.run.outputs.status != 'unchanged'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DAY: ${{ steps.run.outputs.day }}
+        run: |
+          BRANCH=review/pending
+          TITLE="가격 검토 $DAY"
+          if [ "$SIMULATE" = "true" ]; then BRANCH=review/simulated; TITLE="[시뮬레이션·머지 금지] $TITLE"; fi
+          git switch -c "$BRANCH"
+          git add "data/raw/$DAY"
+          git commit -m "review: price snapshot $DAY"
+          git push --force origin "$BRANCH"
+          BODY="$RUNNER_TEMP/body.md"
+          cat "data/raw/$DAY/review.md" > "$BODY"
+          if [ -f "data/raw/$DAY/post.md" ]; then
+            printf '\n---\n## 글 초안 (post.md)\n\n' >> "$BODY"
+            cat "data/raw/$DAY/post.md" >> "$BODY"
+          fi
+          if [ "$(gh pr view "$BRANCH" --json state -q .state 2>/dev/null)" = "OPEN" ]; then
+            gh pr edit "$BRANCH" --title "$TITLE" --body-file "$BODY"
+          else
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY"
+          fi

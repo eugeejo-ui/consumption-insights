@@ -2,7 +2,7 @@ from dataclasses import replace
 
 from common.schema import write_snapshot
 from model.tco import PriceBook, estimate, seoul_premiums, t1_verdict, t2_verdict
-from publish.review_report import build_review, previous_snapshot, price_changes
+from publish.review_report import build_review, latest_approved_day, previous_snapshot, price_changes
 
 
 def _results(price_records, workloads):
@@ -34,5 +34,6 @@ def test_review_lists_changes_against_previous_snapshot(tmp_path, price_records,
 
     assert [(c["sku"], c["region"], c["before"], c["after"], c["change_pct"]) for c in changes] == \
         [("serverless-rpu", "seoul", 0.40, 0.438, 9.5)]
+    assert latest_approved_day("2026-09-11", root=tmp_path) == "2026-09-09"   # 반려(승인 기록 없음)된 09-10은 건너뛴다
     rows, t1, t2 = _results(price_records, workloads)
     assert "+9.5%" in build_review("2026-09-11", price_records, changes, rows, t1, t2)

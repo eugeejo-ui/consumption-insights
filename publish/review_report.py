@@ -19,15 +19,21 @@ def _key(r: PriceRecord) -> tuple[str, str, str, str]:
     return (r.platform, r.service, r.sku, r.region)
 
 
-def previous_snapshot(day: str, root: Path = Path("data/raw")) -> list[PriceRecord] | None:
-    """day보다 앞선 가장 최근의 **승인된** 스냅샷을 읽는다. 승인 기록이 없는(반려된) 날은 건너뛴다."""
+def latest_approved_day(day: str, root: Path = Path("data/raw")) -> str | None:
+    """day보다 앞선 가장 최근의 **승인된** 스냅샷 날짜. 승인 기록이 없는(반려된) 날은 건너뛴다."""
     root = Path(root)
     if not root.exists():
         return None
-    approved = sorted(p for p in root.iterdir() if p.is_dir() and p.name < day and (p / APPROVED_FILE).exists())
-    if not approved:
+    approved = sorted(p.name for p in root.iterdir() if p.is_dir() and p.name < day and (p / APPROVED_FILE).exists())
+    return approved[-1] if approved else None
+
+
+def previous_snapshot(day: str, root: Path = Path("data/raw")) -> list[PriceRecord] | None:
+    """latest_approved_day의 스냅샷을 읽는다. 승인된 스냅샷이 없으면 None."""
+    prev = latest_approved_day(day, root)
+    if prev is None:
         return None
-    return [r for csv_path in sorted(approved[-1].glob("*.csv")) for r in read_snapshot(csv_path)]
+    return [r for csv_path in sorted((Path(root) / prev).glob("*.csv")) for r in read_snapshot(csv_path)]
 
 
 def price_changes(current: list[PriceRecord], previous: list[PriceRecord] | None) -> list[dict] | None:

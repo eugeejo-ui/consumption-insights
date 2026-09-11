@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데이터 플랫폼 월 비용 비교</title>
+<script src="{{ plotly_cdn }}"></script>
+<style>
+  body { font-family: system-ui, -apple-system, "Malgun Gothic", sans-serif; max-width: 960px; margin: 0 auto; padding: 24px; color: #1f2328; }
+  .notice { background: #fff8e1; border-left: 4px solid #f5a623; padding: 12px 16px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 24px; }
+  th, td { border-bottom: 1px solid #d0d7de; padding: 6px 8px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  .verdict { font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>데이터 플랫폼 월 비용(TCO) 비교</h1>
+<p>빌드일 {{ built_on }}</p>
+<p class="notice">플랫폼 간 비교는 <strong>가정 기반 모델 추정</strong>입니다. 모든 가정은 맨 아래에 공개합니다.</p>
+
+<h2>가설 판정</h2>
+<table>
+  <tr><th>가설</th><th>판정</th><th>근거</th></tr>
+  {% for region, v in t1_by_region.items() %}
+  <tr><td>T1 월 비용 1위는 워크로드마다 다르다 ({{ region_labels[region] }})</td>
+      <td class="verdict">{{ "지지" if v.supported else "기각" }}</td>
+      <td>{% for sid, p in v.winners.items() %}{{ sid }}: {{ p }} ({{ v.robustness[sid] }}){% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+  {% endfor %}
+  <tr><td>T2 서울 프리미엄은 서비스마다 다르다</td>
+      <td class="verdict">{{ "지지" if t2.supported else "기각" }}</td>
+      <td>최대-최소 차이 {{ t2.spread_pp }}%p</td></tr>
+</table>
+<p>괄호 안의 견고/민감은 플랫폼 하나의 용량 가정을 ±50% 흔들었을 때 1위가 유지되는지를 뜻합니다.</p>
+
+{% for sid, sc in workloads.scenarios.items() %}
+<h2>{{ sid }} · {{ sc.name }}</h2>
+{{ charts[sid] | safe }}
+<table>
+  <tr><th>플랫폼</th><th>리전</th><th>컴퓨트</th><th>스토리지</th><th>합계 (USD/월)</th></tr>
+  {% for r in rows if r.scenario == sid %}
+  <tr><td>{{ r.platform }}</td><td>{{ region_labels[r.region] }}</td><td>{{ "%.2f"|format(r.compute_usd) }}</td>
+      <td>{{ "%.2f"|format(r.storage_usd) }}</td><td>{{ "%.2f"|format(r.total_usd) }}</td></tr>
+  {% endfor %}
+</table>
+{% endfor %}
+
+<h2>서울 프리미엄 (공시 단가 기준)</h2>
+<table>
+  <tr><th>플랫폼 / 항목</th><th>미국</th><th>서울</th><th>프리미엄</th></tr>
+  {% for p in premiums %}
+  <tr><td>{{ p.platform }} / {{ p.service }} ({{ p.sku }})</td><td>{{ p.us }}</td><td>{{ p.seoul }}</td>
+      <td>{{ "%+.1f"|format(p.premium_pct) }}%</td></tr>
+  {% endfor %}
+</table>
+
+<h2>가정 공개</h2>
+<ul>
+  <li>공통 저장량: {{ workloads.storage_gb }} GB (압축 후 물리 기준)</li>
+  {% for p, c in workloads.capacity_per_small.items() %}<li>{{ p }}: small 1단위 = 시간당 {{ c.per_hour }} {{ c.unit }}</li>{% endfor %}
+  {% for sid, sc in workloads.scenarios.items() %}<li>{{ sid }} {{ sc.name }}: {{ sc }}</li>{% endfor %}
+  <li>제외 항목: 네트워크 송출, 무료 등급, 최소 과금 단위, 약정 할인</li>
+</ul>
+
+<h2>가격 확인일</h2>
+<ul>{% for p, d in price_dates.items() %}<li>{{ p }}: {{ d }}</li>{% endfor %}</ul>
+</body>
+</html>

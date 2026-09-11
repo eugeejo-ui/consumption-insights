@@ -1,0 +1,261 @@
+# consumption-insights: 프로젝트 마스터 계획
+
+데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 승인을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
+
+> **현재 위치:** Phase 1 진행 중. Task 1의 7단계(첫 커밋)를 진행한다(2026-09-11 재개 지시). 커밋 이메일은 이 저장소에서만 GitHub noreply 주소를 쓴다(사용자 결정). 재개 계획은 `docs/plans/phase1-tco-dashboard.md` 맨 위에 있다.
+> **마지막 갱신:** 2026-09-11
+
+---
+
+## 0. 진행 현황 한눈에
+
+| 단계 | 상태 | 핵심 결과 | 산출물 |
+|---|---|---|---|
+| 기획 1: 데이터 소스 조사 (09-10) | 완료 | 고객별 소비량은 비공개 → 층위를 나눠 설계. SEC·pypistats 직접 확인 | — |
+| 기획 2: v1 가설 (09-10) | 완료(보존) | H1~H5, P | `docs/00_hypotheses_v1.md` |
+| 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
+| Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/02_phase0_report.md` |
+| Phase 1: 가격·TCO·대시보드 | **일시 중단** (Task 1의 7단계 중 6단계) | venv·git·스키마 완료, 테스트 3/28 통과, 커밋 0건 | `docs/plans/phase1-tco-dashboard.md` |
+| Phase 2: 자동 수집·변동 감지·아카이브 게시 | 대기 | — | — |
+| Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | — |
+| Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | — |
+| Phase 5: 안정화·자동 게시 전환 | 대기 | — | — |
+
+**결정 대기**
+1. git 커밋 이메일: 추천은 이 저장소에서만 GitHub noreply 주소를 쓰는 것이다(`git config --local`). 현재 전역 이메일은 noreply가 아니다.
+2. Phase 1 재개 시점
+3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
+
+**다음 행동:** 사용자가 지시하면 Task 1의 7단계(첫 커밋)부터 한다. 끝나면 보고하고 멈춘다.
+
+## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
+
+1. **계획 → 승인 → 실행.** 각 Phase를 시작하기 전에 그 Phase의 상세 계획을 `docs/plans/`에 쓰고, 사용자 승인을 받은 뒤 실행한다. 계획 없이 실행하지 않는다.
+2. **"의견만" 달라는 요청에는 아무것도 실행하지 않는다.** 답은 결론 + 근거로 한다.
+3. **근거에는 표기를 붙인다.**
+   - [확인] 직접 호출해 확인한 것
+   - [지식] 모델 지식(2026-05 기준)
+   - [미확인] 아직 확인하지 않은 것
+   - [가정] 모델에 넣은 가정
+4. **외부로 나가는 행동은 매번 사용자 확인을 받는다.** LinkedIn 게시, 공개 배포, 계정 생성, 비밀키 입력이 여기에 해당한다. 계정 생성과 비밀키 입력은 사용자가 직접 한다.
+5. **판정 기준은 데이터를 보기 전에 고정한다** (`config/thresholds.yaml`). 기준을 바꾸면 아래 결정 로그에 이유와 함께 기록한다.
+6. **공개 저장소 전제로 작업한다.** 코드와 문서에 이메일, 토큰 같은 개인정보나 비밀값을 넣지 않는다. 필요한 값은 환경변수나 GitHub Secret으로 받는다(예: `SEC_USER_AGENT`).
+7. **작업이 끝날 때마다 이 파일을 갱신한다.** 진행 현황 표, 체크박스, "현재 위치", 진행 로그를 고친다.
+8. **Windows 환경을 전제한다.** 기본 셸은 PowerShell이다. venv는 `.venv\Scripts\python.exe`로 직접 호출한다. Python에서 한글·특수문자를 출력할 때는 `PYTHONIOENCODING=utf-8`을 설정한다(cp949 오류를 겪었다 [확인]).
+9. **자동 접근·자동 게시 전에는 대상 사이트의 약관과 robots.txt를 확인한다.** 약관이 금지하는 대상에는 자동으로 접근하거나 게시하지 않는다. 브라우저 자동화 도구(예: Aside)로 우회하는 방식도 쓰지 않는다.
+   - Snowflake·Databricks 웹사이트는 자동 모니터링을 금지한다 [확인].
+   - LinkedIn은 API 약관과 사용자 약관 모두 자동 게시를 금지한다 [확인].
+10. **진행 단위: 한 번에 Task 하나만 한다** (2026-09-11 사용자 지시).
+    - 승인된 계획이라도 Task 하나를 끝내면 결과를 보고하고, 다음 지시를 기다린다.
+    - 여러 Task나 Phase를 이어서 실행하지 않는다.
+    - 사용자가 다른 단위를 지정하면 그 단위를 따른다.
+11. **공개될 수 있는 개인정보가 기록되는 행동은 먼저 묻는다.** 커밋 이메일 같은 것이 여기에 해당한다. 문서에는 실제 주소를 적지 않는다.
+
+## 2. 문서 지도
+
+| 파일 | 역할 |
+|---|---|
+| `CLAUDE.md` (이 파일) | 전체 진행 마스터. 진행 현황, 규칙, 단계, 결정 기록 |
+| `docs/01_plan_v2.md` | 설계 근거. 가설(T1~T3, H1·H2), TCO 모델, 가격 소스, 게시 흐름 |
+| `docs/00_hypotheses_v1.md` | 이전 가설 설계(보존용) |
+| `docs/02_phase0_report.md` | Phase 0 점검 결과. 가격 실측값, 약관 확인, T2 초기 신호, Aside 검토 |
+| `docs/plans/phase1-tco-dashboard.md` | Phase 1 코드 단위 상세 계획 (Task 1~8). 승인됨, Task 1 진행 중(일시 중단) |
+
+## 3. 전체 흐름
+
+```
+[매일 GitHub Actions]
+자동 수집: AWS 가격 파일(Redshift) · Azure API(Databricks, ADLS) ─┐
+수동 가격표: Snowflake · BigQuery (사람이 원본 확인, confirmed_on) ─┼─→ 스냅샷(CSV) → TCO 계산 → 이전 값과 비교
+SEC 실적 수집 (Phase 4) ────────────────────────────────────────┘                          │
+                                                                              의미 있는 변동?
+[분기 1회 알림 Issue: "Snowflake·Databricks 가격표 확인"]                      ├ 없음 → 스냅샷만 커밋
+[BigQuery 가격 페이지 가격 문자열 지문 비교 (Phase 2, 약관 허용)]              └ 있음 → 템플릿 글 초안 → PR
+  → 사용자가 브라우저로 확인 → 수동 가격표 PR                                                  │
+                                                                             [사용자가 PR 머지 = 승인]
+                                                                                               │
+                                                     사이트 빌드 → GitHub Pages 배포 → LinkedIn (방식 결정 대기)
+```
+
+- **기술 스택:** Python 3.11(프로젝트 venv), requests, PyYAML, Jinja2, plotly, pytest, GitHub Actions, GitHub Pages
+- **저장:** 날짜별 CSV 스냅샷을 `data/raw/`에 둔다. Git에서 차이를 읽기 쉽기 때문이다.
+
+## 4. 단계별 계획
+
+담당 표기: (C) Claude / (U) 사용자 / (C+U) 함께
+
+### Phase 0: 막힘 점검 (완료)
+- [x] 0-1 로컬 환경: 조건부 통과(gh `workflow` 권한과 duckdb 없음. duckdb는 Phase 1에서 불필요해져서 제외)
+- [x] 0-2 AWS 가격 파일: 통과
+- [x] 0-3 Azure Retail Prices API: 통과
+- [x] 0-4 가격 페이지 약관: Snowflake·Databricks는 자동 모니터링 금지 [확인] → 자동 감지 폐기. BigQuery는 가능
+- [x] 0-5 LinkedIn: API 약관 3.1(26)과 사용자 약관 13번이 자동 게시 금지 [확인]
+- [x] 0-6 GitHub: 통과(저장소 설정 2개 필요)
+- [x] 0-7 BigQuery 샌드박스: 조건부(스토리지 평생 10GiB)
+- [x] 0-8 보고서 `docs/02_phase0_report.md`
+
+### Phase 1: 가격 수집 + TCO 모델 + 정적 대시보드 (로컬). **일시 중단**
+상세: `docs/plans/phase1-tco-dashboard.md`. 괄호 안은 이전 1-x 번호다.
+
+**목표:** 로컬에서 명령 한 번으로 가격을 수집하고 월 비용을 계산해 `site/`를 만든다.
+- [ ] **Task 1 (1-0) 뼈대 + 공통 스키마.** 7단계 중 6단계 완료
+  - [x] 뼈대 파일(`requirements.txt`, `pytest.ini`, `.gitignore`)
+  - [x] venv 생성과 의존성 설치
+  - [x] git init(main)
+  - [x] 테스트 작성 → 실패 확인(`ModuleNotFoundError`)
+  - [x] `common/schema.py` 구현
+  - [x] 테스트 3개 통과
+  - [ ] 첫 커밋: **git 이메일 결정 대기**(규칙 11)
+- [ ] Task 2 (1-2) AWS Redshift 수집기: 서버리스 RPU, 관리형 스토리지. 선결제 함정을 막는 테스트 포함. 미착수
+- [ ] Task 3 (1-3) Azure 수집기: Databricks 서버리스 SQL DBU(AWS 직판과 같은 가격 [확인]), ADLS Gen2 Hot LRS. 미착수
+- [ ] Task 4 (1-1, 1-4 변경) 수동 가격표(Snowflake, BigQuery) + 로더. 미착수
+  - **(U) 원본을 브라우저로 확인한 뒤 `confirmed_on`을 입력한다. 비어 있으면 파이프라인이 멈춘다.**
+  - BigQuery는 가격 페이지가 SKU 이름 없이 위치 배열로만 되어 있어서 수동 가격표로 처리한다 [확인]. 자동 변경 감지는 Phase 2-6에서 한다.
+- [ ] Task 5 (1-5) 워크로드 가정 + 월 비용 계산: `workloads.yaml`, `model/tco.py`. 미착수
+  - (U) 가정값을 검토한다.
+- [ ] Task 6 (1-6) T1 순위·민감도, T2 서울 프리미엄 판정: `config/thresholds.yaml`. 미착수
+- [ ] Task 7 (1-7) 정적 대시보드: 판정표, 차트, 가정 공개, 가격 확인일. 미착수
+- [ ] Task 8 (1-8) `pipeline.py` 실제 실행과 검증. 미착수
+  - pytest 28개 통과
+  - (U) 화면 확인, 가격 3개 대조
+- **게이트:** (U) 화면 확인 → Phase 2 상세 계획 승인
+
+### Phase 2: 자동 수집 + 변동 감지 + 승인 흐름 + 아카이브 게시
+**목표:** 매일 자동 수집하고, 변동이 생기면 PR로 초안을 올리며, 머지하면 Pages에 게시된다.
+- [ ] 2-0 (U) GitHub 준비
+  - `gh auth refresh -s workflow` 실행
+  - 공개 저장소 생성
+  - Settings > Actions > General에서 워크플로 PR 생성 허용, GITHUB_TOKEN 쓰기 권한 설정
+  - Pages 소스를 GitHub Actions로 설정
+  - Secret `SEC_USER_AGENT` 등록
+- [ ] 2-1 (C) `.github/workflows/collect.yml`
+  - 매일 00:17 UTC(= 09:17 KST, 정각 혼잡 회피)
+  - 수집 → 스냅샷 커밋
+  - Actions 서버에서 AWS·Azure·SEC 호출이 되는지 여기서 확인
+- [ ] 2-2 (C) `detect/diff.py`
+  - 이전 스냅샷과 비교해 `events.json` 생성
+  - E1 기준: 월 비용 ±1% 이상 변동 또는 순위 변경. 수동 가격표 변경도 여기서 E1이 된다.
+  - 같은 날 이벤트는 합치고, 하루 최대 1건
+- [ ] 2-3 (C) 글 생성
+  - `templates/post_price_change.md.j2`, `publish/render_post.py`
+  - 숫자 일치 검사: 글에 나온 모든 숫자가 `events.json`에 있어야 하고, 아니면 중단
+- [ ] 2-4 (C) 이벤트가 있으면 `posts/`에 초안을 쓰고 PR 생성(라벨 `needs-approval`)
+- [ ] 2-5 (C) `.github/workflows/publish.yml`: main에 push되면 사이트와 아카이브를 빌드해 Pages에 배포
+- [ ] 2-6 (C) 가격 변경 감지와 알림
+  - **분기 1회** "Snowflake·Databricks 가격표 확인" Issue(공식 링크 + 체크리스트). 두 사이트에는 자동으로 접근하지 않는다.
+  - BigQuery 가격 페이지는 리전별 가격 문자열의 지문을 비교하고, 바뀌면 Issue를 연다(Google 약관 허용, robots.txt 준수, 하루 1회).
+- [ ] 2-7 (C+U) 검증
+  - 가짜 가격 변동 주입 → PR 생성 → **사람이 머지했을 때 publish.yml이 실행되는지 실측** → 게시
+  - 변동이 없으면 PR이 없는지(멱등성)
+  - `--dry-run` 모드 동작
+- **게이트:** (U) 첫 실제 게시 전 확인 → Phase 3 상세 계획 승인
+
+### Phase 3: LinkedIn (사용자 결정 대기)
+- **사용자 지시(2026-09-11):** aside cli로 API를 따서 자동 게시
+- **검토 결과:** Aside는 로그인 세션을 쓰는 브라우저 자동화다. 이 방식은 LinkedIn 사용자 약관 13번(봇·무단 자동화로 게시물 생성 금지)과 API 약관 3.1(26)에 해당하고, 사용자 계정이 제한될 위험이 있다 [확인].
+  - **Claude는 이 방식을 구현하지 않는다.**
+- **선택지**
+  - A' 공식 공유 링크(반자동, 추천): 게시 PR에 게시문 + `share-offsite` 공식 공유 링크를 넣고, 사용자가 눌러서 게시한다.
+  - A 수동 복사·붙여넣기
+  - B 공식 API + 매번 사용자가 직접 실행: 회색지대이고, 60일마다 토큰을 재발급해야 한다.
+  - C 제외
+- 결정이 나면 이 Phase의 작업 목록을 다시 쓴다.
+
+### Phase 4: 실적 코너(H1·H2) + 비용 설계 실험(H5 → T3)
+**목표:** 실적 공시 이벤트로 글이 생성되고, BigQuery 실측으로 T3를 판정한다.
+- [ ] 4-1 (C) `collectors/sec_filings.py`
+  - companyfacts에서 매출과 RPO
+  - submissions에서 8-K item 2.02 감지
+  - 본문에서 NRR과 $1M 초과 고객 수 파싱. 보도자료 파일명이 비표준이므로 인덱스의 EX-99.1 타입으로 찾는다 [확인]
+- [ ] 4-2 (C) E2 이벤트 처리 + `templates/post_earnings.md.j2`
+  - H1: 기존 고객 기여 비중
+  - H2: RPO 커버리지
+- [ ] 4-3 (C) 재현 검증: 2026-07 분기의 NRR 126%, RPO $9.0B, 커버리지 1.51 → 1.45 [확인]
+- [ ] 4-4 (U+C) 개인 Gmail로 BigQuery 샌드박스 준비
+  - 서비스 계정 키, JOBS 조회, CTAS·클러스터 테이블 생성이 되는지 실측
+  - 스토리지는 평생 10GiB이고 복구되지 않는다. 부족하면 결제 계정 연결 여부를 결정한다.
+- [ ] 4-5 (C) H5 실험
+  - V0(dry run 추정치만)부터 V4까지 실행
+  - 쿼리 캐시를 끄고, 결과 해시가 같은지 확인
+  - V3·V4 사본은 작게 한 번만 만들고, 60일 만료 때만 다시 만든다.
+  - `JOBS_BY_PROJECT` 수집 → T3 판정
+- [ ] 4-6 (C) BigQuery 실측으로 `workloads.yaml`의 플랫폼 간 환산값을 보정한다. Snowflake 30일 트라이얼로 1회 보정하는 것은 선택
+- [ ] 4-7 (C, 선택) E3 이벤트: H5/T3 실험 결과를 매달 요약하는 글 템플릿(`templates/post_experiment.md.j2`)
+- **게이트:** (U) 확인 → Phase 5 상세 계획 승인
+
+### Phase 5: 안정화와 자동 게시 전환 (아카이브 한정)
+- [ ] 5-1 (C) 승인 기록 집계. 연속 5건을 수정 없이 승인하면 전환을 제안한다.
+- [ ] 5-2 (C+U) 아카이브 자동 게시 모드로 전환
+  - 수집 워크플로 안에서 바로 배포한다.
+  - 이유: GITHUB_TOKEN으로 한 머지는 다른 워크플로를 트리거하지 않는다 [확인]
+  - LinkedIn은 약관상 자동으로 전환하지 않는다.
+- [ ] 5-3 (C) `docs/operations.md` 운영 점검표 작성
+  - 분기 1회 벤더 가격 확인
+  - 공개 저장소 60일 규칙과 재활성화 API
+  - (B안을 택한 경우) LinkedIn 토큰 재발급
+- [ ] 5-4 (C) 포트폴리오용 README 작성
+
+## 5. 확인된 사실 (재사용)
+**데이터 소스**
+- SEC EDGAR는 `User-Agent`에 연락처가 있어야 하고, 초당 10회까지 호출할 수 있다.
+  - companyfacts: 매출, RPO [확인]
+  - submissions: 공시 목록 [확인]
+  - NRR과 제품매출은 XBRL에 없다 [확인].
+- Snowflake 2026-07 분기 [확인]
+  - 총매출 $1.547B, NRR 126%, $1M 초과 고객 828곳, RPO $9.0B
+  - 보도자료 파일명은 `fy2027q2earnings.htm`이었다(`ex99` 패턴이 아니다).
+- AWS 가격 파일: 인증 없이 받을 수 있고, 리전별 파일은 0.1~0.5MB다. OnDemand 항목 안에 선결제 금액이 시간당 단가처럼 섞여 있다 [확인].
+- Azure Retail Prices API [확인]
+  - Databricks 서버리스 SKU는 `Azure Databricks Regional`이다. 클래식 DBU는 리전과 관계없이 가격이 같다.
+  - ADLS Gen2 Hot LRS 첫 구간은 eastus $0.0208, koreacentral $0.02로 서울이 더 싸다.
+- BigQuery 가격 페이지: HTML에 리전별 가격이 SKU 이름 없이 위치 배열로 들어 있다. nonce가 매번 바뀐다 [확인].
+- 가격 실측값과 서울 프리미엄 표는 `docs/02_phase0_report.md`에 있다.
+
+**약관**
+- Snowflake 사이트 약관 5(i)(2025-04-14)와 Databricks 이용약관(2018-05-25)은 수동·자동 도구로 사이트를 모니터링하는 것을 금지한다 [확인].
+- LinkedIn API 약관 3.1(26)은 API로 게시를 자동화하는 것을 금지한다 [확인]. 사용자 약관 13번(2025-11-03)은 봇·무단 자동화로 게시물을 생성하는 것을 금지한다 [확인].
+- Google 약관은 robots.txt 등 기계 판독 지침을 지키는 자동 접근을 허용한다 [확인].
+- Aside(aside.com)는 로그인된 브라우저를 CLI로 조종하는 자동화 플랫폼이다 [확인]. 도구를 바꿔도 위 약관의 적용은 같다.
+
+**플랫폼**
+- GitHub [확인]
+  - Pages는 Free 플랜에서 공개 저장소만 쓸 수 있다.
+  - GITHUB_TOKEN이 일으킨 이벤트는 새 실행을 만들지 않는다(workflow_dispatch·repository_dispatch 예외).
+  - 새 저장소는 워크플로 PR 생성이 금지돼 있고 토큰이 읽기 전용이다.
+- BigQuery 샌드박스: 스토리지는 평생 10GiB이고 삭제해도 복구되지 않는다. 쿼리는 월 1TiB, 테이블은 60일 뒤 만료되고 DML은 쓸 수 없다 [확인].
+
+**실행 환경 (Phase 1 Task 1에서 확인)**
+- 로컬: Python 3.11.7(Anaconda). gh 토큰에 `workflow` 권한이 없다 [확인].
+- venv에 설치된 버전 [확인]: requests 2.34.2, PyYAML 6.0.3, Jinja2 3.1.6, plotly 7.0.0, pytest 9.1.1 (pip 23.2.1)
+- plotly는 계획 기준(5.x)보다 새 버전(7.0.0)이 설치됐다. 그래도 Task 7에서 쓸 API(`get_plotlyjs_version`, `to_html`, `add_bar`)는 동작하고, JS 4.0.0 CDN 파일도 200 응답(약 4.3MB)을 확인했다 [확인].
+- git 전역 이메일은 GitHub noreply 주소가 아니다 [확인]. 결정 대기이며, 주소 자체는 기록하지 않는다(규칙 11).
+- PowerShell에서 `gh --jq` 식을 쓰면 따옴표가 깨진다. `gh api ... | ConvertFrom-Json`을 쓴다 [확인].
+- 커밋이 없는 새 저장소라 git worktree를 만들 수 없다. 그래서 승인된 계획대로 main에서 로컬 커밋만 한다.
+
+## 6. 결정 로그
+| 날짜 | 결정 | 이유 |
+|---|---|---|
+| 2026-09-10 | 고객별 소비량 대신 층위를 나눠 설계 | 고객별 소비량은 어디에도 공개되지 않는다 |
+| 2026-09-10 | 혼합안 채택: 가입 필요 서비스 최소화, 기간제 무료 체험은 계속 수집에 쓰지 않음 | 막힘(접근권한·무료 조건) 최소화 |
+| 2026-09-10 | v1 가설 설계(H1~H5, P) | `docs/00_hypotheses_v1.md` |
+| 2026-09-11 | 방향 전환: 같은 워크로드의 월 비용(TCO) 비교 + 변동 시 자동 게시 | 사용자 결정. 포트폴리오용 웹 아카이브 |
+| 2026-09-11 | 게시 위치는 GitHub Pages + LinkedIn, 글은 템플릿 문장, 처음엔 승인 후 안정되면 자동 | 사용자 결정 |
+| 2026-09-11 | 가설 v2: T1~T3 신규, H1·H2 유지, H3·H4 보류, P·합성 코호트 제외 | `docs/01_plan_v2.md` |
+| 2026-09-11 | 저장소를 비공개에서 공개로 변경 | GitHub Pages 무료 사용 조건 [확인] |
+| 2026-09-11 | 대시보드를 Streamlit에서 정적 HTML + Plotly로 변경 | Pages 배포와 아카이브를 한 사이트로 합치기 위해 |
+| 2026-09-11 | Snowflake·Databricks 가격은 스크래핑하지 않고 수동 가격표로 관리 | 공식 API가 없고, 약관이 자동 모니터링을 금지한다 [확인] |
+| 2026-09-11 | Snowflake·Databricks 가격 확인은 **분기 1회** 알림 + 사용자 확인 | 사용자 지정 대체안. aside 자동 감지는 약관상 불가 |
+| 2026-09-11 | LinkedIn 자동 게시(aside 세션 자동화)를 구현하지 않음. A'/A/B/C 중 결정 대기 | LinkedIn 사용자 약관 13번, API 약관 3.1(26) [확인]. 계정 제한 위험 |
+| 2026-09-11 | Phase 1: BigQuery는 수동 가격표, Databricks는 Azure API(서버리스 SQL + ADLS) | BigQuery 페이지 파싱이 불안정하다. Azure는 공식 API이고 AWS 직판과 같은 가격이다 [확인] |
+| 2026-09-11 | Phase 1에서 S3, duckdb, pandas, pyarrow를 제외하고 스냅샷은 CSV로 | YAGNI. Git 차이를 읽기 쉽다 |
+| 2026-09-11 | T2 판정 기준: 서울 프리미엄의 최대-최소 차이 10%p 이상이면 지지 | **주의:** Phase 0 초기 신호(0~37%)를 본 뒤 정한 값이라 사전 고정 원칙의 예외다. 공개한다 |
+| 2026-09-11 | Phase 1 실행 방식: 이 세션에서 Task별로 진행 | 사용자 무응답이라 기본값 적용. 과정을 따라가기 쉽다 |
+| 2026-09-11 | 진행 단위: Task 하나마다 멈추고 보고(규칙 10) | 사용자 지시("한 번에 모든 phase를 진행하려고 하지 말고 여기서 중단") |
+| 2026-09-11 | main 브랜치에 로컬 커밋 | 커밋 없는 새 저장소라 worktree가 불가하다. 승인된 계획 |
+
+## 7. 진행 로그
+- **2026-09-10:** 데이터 소스 조사. SEC와 pypistats를 직접 호출해 확인했다. 혼합안과 v1 가설 설계를 확정했다.
+- **2026-09-11:** 프로젝트 폴더 `C:\consumption-insights`를 만들었다. v2 방향 전환을 승인받았다. 이 마스터 계획(CLAUDE.md)을 작성했다.
+- **2026-09-11:** Phase 0 점검을 완료했다. 약관 막힘 2건(LinkedIn 자동 게시, Snowflake·Databricks 자동 감시)을 발견했다.
+- **2026-09-11:** 사용자 지시(aside cli)를 검토했다. Aside는 브라우저 자동화이고, 약관 적용이 같다는 것을 확인했다. Snowflake·Databricks는 사용자가 지정한 대체안(분기 1회)을 적용하고, LinkedIn은 자동 게시를 구현하지 않기로 하고 대안을 제시했다. Phase 1 상세 계획(Task 1~8, 테스트 28개)을 작성했다.
+- **2026-09-11:** Phase 1 승인 → Task 1의 1~6단계를 완료했다(venv·의존성·git init·스키마, 테스트 3개 통과). 커밋 전 git 이메일을 확인하던 중 사용자 지시로 중단했다. 이어서 진행 현황을 정리하고 규칙 10·11을 추가했다.

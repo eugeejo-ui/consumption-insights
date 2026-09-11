@@ -1,0 +1,25 @@
+# 데이터 플랫폼 월 비용 변동 · {{ e.day }}
+
+{{ e.compared_to }} 승인 가격과 비교해 바뀐 단가와 그 영향입니다. 플랫폼 간 비교는 가정 기반 모델 추정입니다.
+
+## 바뀐 단가
+{% for c in e.price_changes %}
+- {{ c.platform|platform }} {{ c.sku }} ({{ c.region|region }}): {{ c.before|price }} → {{ c.after|price }}{{ c.change_pct|pct }}
+{% endfor %}
+{% if e.cost_changes %}
+
+## 월 비용이 ±{{ e.min_cost_change_pct|num }}% 이상 바뀐 조합
+{% for c in e.cost_changes %}
+- {{ c.scenario }} {{ c.region|region }} {{ c.platform|platform }}: {{ c.before|usd0 }} → {{ c.after|usd0 }}{{ c.change_pct|pct }}
+{% endfor %}
+{% endif %}
+{% if e.rank_changes %}
+
+## 순위 변화 (싼 순서)
+{% for r in e.rank_changes %}
+- {{ r.scenario }} {{ r.region|region }}: {{ r.before|order }} → {{ r.after|order }}
+{% endfor %}
+{% endif %}
+
+---
+가정과 계산 방법은 대시보드의 "가정 공개"에 있습니다. 이 글은 템플릿으로 자동 생성했고, 게시 전에 사람이 검토합니다.

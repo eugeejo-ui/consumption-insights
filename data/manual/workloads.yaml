@@ -1,0 +1,30 @@
+# 모든 값은 [가정]이다. 대시보드의 "가정 공개" 섹션에 그대로 공개된다.
+storage_gb: 10000   # 공통 저장량 10TB (1TB = 1000GB로 계산)
+
+# "small" 1단위에 해당하는 플랫폼별 시간당 사용량 [가정]
+# 근거(모두 [지식], 사용자 검토 대상):
+#   Snowflake Small 웨어하우스 = 2 credits/h, Databricks SQL Small = 12 DBU/h,
+#   Redshift Serverless 최소 기본 용량 = 8 RPU, BigQuery = 100 slots
+capacity_per_small:
+  snowflake: {unit: credit, per_hour: 2}
+  databricks: {unit: DBU-hour, per_hour: 12}
+  redshift: {unit: RPU-hour, per_hour: 8}
+  bigquery: {unit: slot-hour, per_hour: 100}
+
+scenarios:
+  W1:
+    name: 소규모 BI 대시보드
+    mode: capacity
+    size: 1                 # small x1
+    hours_per_month: 220    # 평일 10시간 x 22일
+  W2:
+    name: 야간 배치 ETL
+    mode: capacity
+    size: 2                 # small x2
+    hours_per_month: 60     # 매일 2시간 x 30일
+  W3:
+    name: 비정기 대용량 탐색
+    mode: scan
+    tib_scanned_per_month: 20
+    size: 4                 # 용량 기반 플랫폼은 small x4로 처리한다고 가정
+    tib_per_hour: 2         # small x4가 시간당 2TiB를 스캔한다고 가정 → 10시간

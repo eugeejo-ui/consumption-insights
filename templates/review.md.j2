@@ -1,0 +1,56 @@
+# 중간 검토 보고서 · {{ day }}
+
+> **파이프라인은 여기서 멈춰 있습니다.** 아래 내용을 확인하고 판단해 주세요.
+> - **컨펌:** `.venv\Scripts\python.exe pipeline.py --confirm {{ day }}` → 화면 생성, 승인 기록(`approved.txt`) → 스냅샷 커밋
+> - **반려:** `data/raw/{{ day }}/` 폴더를 커밋하지 말고 지운 뒤, 원인을 고쳐 `pipeline.py`를 다시 실행
+
+## 1. 요약
+- 수집 가격: {{ records|length }}행{{ counts_text }}
+- 이전 승인 스냅샷 대비: {{ changes_summary }}
+{% for region, v in t1_by_region.items() %}
+- T1 ({{ region_labels[region] }}): {{ "지지" if v.supported else "기각" }}
+{% endfor %}
+- T2: {{ "지지" if t2.supported else "기각" }} (최대-최소 차이 {{ t2.spread_pp }}%p)
+
+## 2. 수집 가격
+| 플랫폼 | 항목 | SKU | 리전 | 단가(USD) | 단위 | 수집·확인일 | 출처 |
+|---|---|---|---|---|---|---|---|
+{% for r in records %}
+| {{ r.platform }} | {{ r.service }} | {{ r.sku }} | {{ r.region }} | {{ r.price_usd }} | {{ r.unit }} | {{ r.fetched_at }} | {{ r.source }} |
+{% endfor %}
+
+## 3. 이전 승인 스냅샷 대비 변화
+{% if changes is none %}
+첫 스냅샷이다. 비교할 승인 스냅샷이 없다.
+{% elif not changes %}
+변화 없음.
+{% else %}
+| 플랫폼 | 항목 | SKU | 리전 | 이전 | 현재 | 변동률 |
+|---|---|---|---|---|---|---|
+{% for c in changes %}
+| {{ c.platform }} | {{ c.service }} | {{ c.sku }} | {{ c.region }} | {{ c.before if c.before is not none else "(없음)" }} | {{ c.after if c.after is not none else "(삭제됨)" }} | {{ ("%+.1f"|format(c.change_pct)) ~ "%" if c.change_pct is not none else "-" }} |
+{% endfor %}
+{% endif %}
+
+## 4. 월 비용 순위 (USD/월, 싼 순서, 가정 기반 모델 추정)
+| 시나리오 | 리전 | 1위 | 2위 | 3위 | 4위 |
+|---|---|---|---|---|---|
+{% for sid, region, ranked in rankings %}
+| {{ sid }} | {{ region }} | {% for p, total in ranked %}{{ p }} {{ "{:,.0f}".format(total) }}{% if not loop.last %} | {% endif %}{% endfor %} |
+{% endfor %}
+
+## 5. 가설 판정
+| 가설 | 판정 | 근거 |
+|---|---|---|
+{% for region, v in t1_by_region.items() %}
+| T1 ({{ region_labels[region] }}) 월 비용 1위는 워크로드마다 다르다 | {{ "지지" if v.supported else "기각" }} | {% for sid, p in v.winners.items() %}{{ sid }}: {{ p }} ({{ v.robustness[sid] }}){% if not loop.last %}, {% endif %}{% endfor %} |
+{% endfor %}
+| T2 서울 프리미엄은 서비스마다 다르다 | {{ "지지" if t2.supported else "기각" }} | 최대-최소 차이 {{ t2.spread_pp }}%p |
+
+괄호 안의 견고/민감은 플랫폼 하나의 용량 가정을 ±50% 흔들었을 때 1위가 유지되는지를 뜻한다.
+
+## 6. 확인 체크리스트
+- [ ] 수집 가격이 공식 페이지 값과 맞는가 (자동 수집 AWS·Azure 8행. 수동 가격표는 확인일 참고)
+- [ ] 이전 대비 변화가 있다면 설명할 수 있는가
+- [ ] 월 비용 순위와 판정이 가정(`data/manual/workloads.yaml`)에 비추어 타당한가
+- [ ] 0, 극단값, 단위 오류 같은 이상한 값이 없는가

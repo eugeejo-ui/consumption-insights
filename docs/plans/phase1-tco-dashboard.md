@@ -54,6 +54,36 @@
   - `pipeline.py`는 `render()`를 부를 때 `t1_by_region={region: t1_verdict(book, workloads, thresholds["t1_sensitivity"], region) for region in REGIONS}`를 넘긴다.
   - **세 수집기가 모두 성공한 뒤에만 스냅샷을 쓴다.** 수동 가격표 게이트에서 멈추면 AWS·Azure만 들어간 반쪽 스냅샷이 남는데, 이것이 Phase 2 변동 감지를 오염시킬 수 있기 때문이다. 이를 검증하는 테스트 `test_live_mode_writes_nothing_when_manual_gate_fails`를 추가했다.
   - Task 8 테스트는 2개(오프라인 실행, 게이트 중단)이고, **Phase 1 전체 테스트는 30개**다.
+
+### Task 8b: 중간 검토 체크포인트 (2026-09-11 사용자 요청, **설계 승인 대기**)
+**목적:** 파이프라인이 중간 결과를 만든 뒤 멈춘다. 사용자가 판단하고 컨펌하면 나머지(화면 생성, 스냅샷 커밋, Phase 2의 게시·적재)가 진행된다.
+
+**Files:**
+- Create: `publish/review_report.py`, `templates/review.md.j2`, `tests/test_review_report.py`
+- Modify: `pipeline.py` (기본 실행은 검토 보고서까지만 하고 멈춘다. `--offline`을 `--confirm DAY`로 바꾼다), `tests/test_pipeline.py`
+
+**Interfaces:**
+- `previous_snapshot(day: str, root=Path("data/raw")) -> list[PriceRecord] | None`: `day`보다 앞선 가장 최근 **승인된** 스냅샷을 읽는다(`approved.txt`가 있는 폴더만). 없으면 None을 돌려준다.
+- `price_changes(current, previous) -> list[dict]`: (platform, service, sku, region)별로 이전·현재 단가와 변동률을 담는다. 새로 생긴 항목과 사라진 항목도 포함한다.
+- `build_review(day, records, changes, rows, t1_by_region, t2) -> str`: 검토 보고서 마크다운을 만든다. 들어가는 내용은 아래와 같다.
+  1. 요약: 날짜, 수집 건수(자동/수동), 이전 대비 변화 건수
+  2. 수집 가격 표: 플랫폼, 항목, 리전, 단가, 단위, 수집일·확인일
+  3. 이전 승인 스냅샷 대비 변화. 없으면 "첫 스냅샷"이라고 쓴다
+  4. 시나리오 × 리전별 월 비용 순위
+  5. T1(미국·서울), T2 판정
+  6. 확인 체크리스트: 공식값과 맞는가, 변화를 설명할 수 있는가, 순위 변화가 타당한가
+  7. 다음 명령: `pipeline.py --confirm <날짜>`, 반려 방법
+- `pipeline.main([])`: 수집(3개 모두 성공 시) → 스냅샷과 `data/raw/<날짜>/review.md` 작성 → 경로를 출력하고 **멈춘다**(`site/`를 만들지 않는다).
+- `pipeline.main(["--confirm", DAY])`: `data/raw/DAY/review.md`가 없으면 `SystemExit` 오류를 낸다. 있으면 사이트를 생성하고 `data/raw/DAY/approved.txt`(승인 시각)를 쓴다.
+
+**Tests (30개 → 33개):**
+- `test_review_lists_prices_costs_verdicts_and_next_command`
+- `test_review_lists_changes_against_previous_snapshot` (이전 스냅샷과 단가가 다른 항목과 변동률이 보이는지)
+- `test_default_run_stops_after_review` (스냅샷과 review.md는 생기고 `site/`는 생기지 않는지)
+- `test_confirm_requires_review` (기존 오프라인 테스트를 대체: review.md가 없으면 거부, 있으면 사이트와 approved.txt 생성)
+- 기존 `test_live_mode_writes_nothing_when_manual_gate_fails`는 유지한다.
+
+**반려 흐름:** 컨펌하지 않을 스냅샷 폴더는 커밋하지 않고 삭제한다. 원인을 고친 뒤 1단계를 다시 실행한다. 스냅샷은 컨펌한 뒤에만 커밋한다.
 - **디자인:** Phase 1의 `site/index.html`은 기능 확인용 임시 디자인이다. 공개 대시보드 디자인은 Phase 2-5a에서 사용자가 준 템플릿을 바탕으로 정한다.
 
 ## 한눈에 보기 (사용자용 요약)

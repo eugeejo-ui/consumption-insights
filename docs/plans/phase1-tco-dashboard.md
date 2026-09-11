@@ -50,7 +50,10 @@
   - 템플릿은 리전마다 T1 행을 하나씩 그린다.
   - 테스트는 2개다(`test_render_writes_page_with_disclaimer_numbers_and_dates`, `test_render_shows_t1_for_both_regions`). 그래서 **Phase 1 전체 테스트는 29개**가 된다.
   - 아래 Task 7 본문의 코드는 작성 당시 버전이고, 실제 코드는 `publish/render_site.py`와 `templates/site/index.html.j2`에 있다.
-- **Task 8 변경:** `pipeline.py`는 `render()`를 부를 때 `t1_by_region={region: t1_verdict(book, workloads, thresholds["t1_sensitivity"], region) for region in REGIONS}`를 넘긴다. 테스트 합계는 29개다.
+- **Task 8 변경 (2026-09-11)**
+  - `pipeline.py`는 `render()`를 부를 때 `t1_by_region={region: t1_verdict(book, workloads, thresholds["t1_sensitivity"], region) for region in REGIONS}`를 넘긴다.
+  - **세 수집기가 모두 성공한 뒤에만 스냅샷을 쓴다.** 수동 가격표 게이트에서 멈추면 AWS·Azure만 들어간 반쪽 스냅샷이 남는데, 이것이 Phase 2 변동 감지를 오염시킬 수 있기 때문이다. 이를 검증하는 테스트 `test_live_mode_writes_nothing_when_manual_gate_fails`를 추가했다.
+  - Task 8 테스트는 2개(오프라인 실행, 게이트 중단)이고, **Phase 1 전체 테스트는 30개**다.
 - **디자인:** Phase 1의 `site/index.html`은 기능 확인용 임시 디자인이다. 공개 대시보드 디자인은 Phase 2-5a에서 사용자가 준 템플릿을 바탕으로 정한다.
 
 ## 한눈에 보기 (사용자용 요약)

@@ -3,7 +3,7 @@
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
 > **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
-> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. **Task 1(변동 감지) 완료**(`5dcad55`, 테스트 38개). 다음은 Task 2(글 초안)이고, 지시를 기다린다.
+> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1(변동 감지, `5dcad55`)과 **Task 2(글 초안) 완료**(`72723d5`, 테스트 40개). 다음은 Task 3(파이프라인 개편)이고, 지시를 기다린다.
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -19,7 +19,7 @@
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 1 완료, Task 2 대기) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
+| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 2 완료, Task 3 대기) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
@@ -29,7 +29,7 @@
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 지시하면 Phase 2 Task 2(글 초안)를 한다(규칙 10).
+**다음 행동:** 사용자가 지시하면 Phase 2 Task 3(파이프라인 개편)을 한다(규칙 10).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -179,7 +179,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - Python + google-auth로 Sheets API `values.append`를 호출한다.
   - **PR 머지 후 publish 단계에서** 적재한다.
   - 실패해도 게시는 계속하고 Issue로 알린다.
-- [ ] 2-3 (C) 글 생성
+- [x] 2-3 (C) 글 생성 (코드 계획 Task 2, `72723d5`)
   - `templates/post_price_change.md.j2`, `publish/render_post.py`
   - 숫자 일치 검사: 글에 나온 모든 숫자가 `events.json`에 있어야 하고, 아니면 중단
 - [ ] 2-4 (C) **검토 PR 생성(체크포인트)**
@@ -370,3 +370,6 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - **2026-09-11:** Phase 2 Task 1을 완료했다(`5dcad55`, 테스트 38개).
   - 실제 승인 스냅샷을 자기 자신과 비교하면 `unchanged`가 나온다.
   - Redshift 미국 RPU를 +5% 올리면 E1 이벤트가 된다. 월 비용 변화는 W1 +3.7%, W2 +3.0%, W3 +1.7%이고 순위 변화는 없다.
+- **2026-09-11:** Phase 2 Task 2를 완료했다(`72723d5`, 테스트 40개).
+  - 글 초안 템플릿과 숫자 일치 검사를 만들었다. 글의 숫자 하나를 바꾸면 검사가 막는다.
+  - 실제 스냅샷에 +5% 시뮬레이션을 넣어 글 초안을 만들어 봤다. 바뀐 단가 1줄과 월 비용 변화 3줄이 나왔다.

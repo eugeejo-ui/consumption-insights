@@ -17,7 +17,7 @@
 
 **Spec:** `CLAUDE.md` Phase 2와 규칙 13·14, `docs/phases/phase-2-automation-publish.md`, `docs/plans/phase1-tco-dashboard.md`(Task 8b)
 
-**진행 현황:** Task 1 완료(`5dcad55`, 38 passed). 다음은 Task 2이고, 지시를 받으면 진행한다.
+**진행 현황:** Task 1 완료(`5dcad55`, 38 passed), Task 2 완료(`72723d5`, 40 passed). 다음은 Task 3이고, 지시를 받으면 진행한다.
 
 ## 결정 (2026-09-11 사용자 승인: 계획 승인, D1~D3 모두 추천안)
 | # | 결정 | 추천 | 이유 | 대안 |

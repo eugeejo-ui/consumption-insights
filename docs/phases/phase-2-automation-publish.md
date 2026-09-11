@@ -57,9 +57,12 @@
 - 활성 gcloud 프로젝트(강의용 기존 프로젝트)에서 **Sheets API는 이미 사용 설정돼 있다.** 따라서 1단계는 새 프로젝트를 쓸 때만 필요하다.
 - 이 프로젝트에 서비스 계정은 0개다.
 - Aside CLI는 계정 u0(Google 제공자)로 로그인돼 있다.
-- **결정 필요:** 기존 강의용 프로젝트를 쓸지, 이 프로젝트 전용 새 프로젝트를 만들지 정해야 한다. 서비스 계정 권한과 키의 범위를 분리할 수 있어서 전용 프로젝트를 권장한다. 프로젝트 ID는 공개 문서에 적지 않는다.
+- **결정(2026-09-11, 사용자): 이 프로젝트 전용 새 GCP 프로젝트를 만든다.** 서비스 계정 권한과 키의 범위를 기존 강의용 프로젝트와 분리하기 위해서다.
+  - 새 프로젝트에서는 Sheets API를 다시 활성화해야 한다. 아래 1단계가 필요하다.
+  - 프로젝트 ID는 공개 문서에 적지 않는다.
+  - 프로젝트 생성은 사용자가 콘솔(https://console.cloud.google.com/projectcreate)에서 하거나, `gcloud projects create`로 한다. 결제 계정 연결은 필요 없다(Sheets API는 무료).
 
-1. **Sheets API 활성화** (새 프로젝트를 쓸 때만 필요). 방법은 둘 중 하나다.
+1. **Sheets API 활성화** (새 전용 프로젝트에서 필요). 방법은 둘 중 하나다.
    - 콘솔: https://console.cloud.google.com/apis/library/sheets.googleapis.com 에서 프로젝트를 선택하고 "사용(Enable)"을 누른다.
    - CLI: `gcloud services enable sheets.googleapis.com --project <프로젝트ID>`
 2. **서비스 계정 생성.** https://console.cloud.google.com/iam-admin/serviceaccounts 에서 "서비스 계정 만들기"를 누른다. 프로젝트 역할은 주지 않아도 된다. Sheets 접근 권한은 시트 공유로 준다.

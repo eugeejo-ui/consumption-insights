@@ -2,7 +2,12 @@
 
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 승인을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 사용자의 Google 스프레드시트에도 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
-> **현재 위치:** Phase 1 진행 중. Task 1~4 완료(Task 4는 BigQuery 컴퓨트 4행 확인 대기), **Task 5 코드 완료. 사용자 가정 검토 대기**. 다음은 Task 6(T1·T2 판정)이고, 사용자 지시를 기다린다(규칙 10). Phase별 진행계획은 `docs/phases/`에 있다.
+> **현재 위치:** Phase 1 진행 중. Task 1~5 코드 완료.
+> - **가정 검토에서 변경 1건이 나와 Task 6을 보류했다.** BigQuery 스토리지를 논리 과금에서 물리 과금으로 바꿨다.
+> - 변경분은 **아직 커밋하지 않았다.** 사용자 검토를 기다린다.
+> - BigQuery 물리 스토리지 2행은 사용자 확인 대기다.
+> - Phase별 진행계획은 `docs/phases/`에 있다.
+>
 > **마지막 갱신:** 2026-09-11
 
 ---
@@ -15,22 +20,18 @@
 | 기획 2: v1 가설 (09-10) | 완료(보존) | H1~H5, P | `docs/00_hypotheses_v1.md` |
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
-| Phase 1: 가격·TCO·대시보드 | **진행 중** (Task 5/8 코드 완료) | 수집기 3종과 월 비용 모델 완료, 테스트 20/28 통과. 미리보기: W1·W2는 Redshift, W3은 BigQuery가 최저 | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·변동 감지·게시·Sheets 적재 | 대기 | Sheets 적재 방식 확정(Python + google-auth). Sheets API는 이미 사용 설정됨 | `docs/phases/phase-2-automation-publish.md` |
+| Phase 1: 가격·TCO·대시보드 | **진행 중** (Task 5/8 코드 완료, Task 6 보류) | 테스트 20/28 통과. 가정 검토로 BigQuery 스토리지를 물리 기준으로 바꿨다. 미리보기에서는 세 시나리오 모두 Redshift가 최저다 | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
+| Phase 2: 자동 수집·변동 감지·게시·Sheets 적재 | 대기 | Sheets 적재 방식 확정(Python + google-auth). **전용 새 GCP 프로젝트 사용 결정** | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. **`workloads.yaml` 가정 검토(Task 5).** small 1단위의 정의, 시나리오 시간과 규모, W3 스캔 속도, 스토리지 10TB를 본다.
-2. BigQuery 컴퓨트 4행 확인
-   - 주문형 섹션 1행, 용량 섹션의 Enterprise 종량제 1행을 US(us)·서울 두 리전에서 본다.
-   - Task 8 전까지만 하면 된다.
-3. Task 6 착수 지시
-4. Google Cloud 프로젝트: 기존 강의용 프로젝트를 쓸지, 전용 새 프로젝트를 만들지(Phase 2-0c. 전용 권장)
-5. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
+1. **가정 변경 검토:** BigQuery 스토리지를 논리 과금에서 물리 과금으로 바꾼 것과 그 영향(T1이 기각 쪽으로 기움)을 확인한다. 확인되면 변경분을 커밋하고 Task 6으로 간다.
+2. **BigQuery 물리 스토리지 2행 확인:** 스토리지 섹션의 "활성 물리적 스토리지", US(us) $0.000054795 / 서울 $0.000071233 per GiB-시간
+3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 지시하면 Task 6(T1 순위·민감도, T2 서울 프리미엄 판정)을 한다. 가정 검토에서 값이 바뀌면 `workloads.yaml`을 먼저 고친다. 끝나면 보고하고 멈춘다.
+**다음 행동:** 사용자가 1번을 확인하고 지시하면 변경분을 커밋한 뒤 Task 6(T1·T2 판정)을 한다. 끝나면 보고하고 멈춘다.
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -58,6 +59,7 @@
     - 승인된 계획이라도 Task 하나를 끝내면 결과를 보고하고, 다음 지시를 기다린다.
     - 여러 Task나 Phase를 이어서 실행하지 않는다.
     - 사용자가 다른 단위를 지정하면 그 단위를 따른다.
+    - 검토에서 변경이 필요하면 진행을 멈추고 문서에 먼저 반영한다(2026-09-11 사용자 지시).
 11. **공개될 수 있는 개인정보가 기록되는 행동은 먼저 묻는다.** 커밋 이메일 같은 것이 여기에 해당한다. 문서에는 실제 주소나 개인 프로젝트 ID를 적지 않는다.
     - 커밋 전에는 커밋할 파일에 이메일 주소, 로컬 사용자 경로, 개인 프로젝트 ID가 없는지 검사한다.
 12. **막히면 사용자 지시에 따라 Aside CLI(설치됨, 로그인됨)를 쓸 수 있는지 먼저 확인하고 보고한다** (2026-09-11 사용자 지시).
@@ -70,8 +72,8 @@
 |---|---|
 | `CLAUDE.md` (이 파일) | 전체 진행 마스터. 진행 현황, 규칙, 단계 요약, 결정 기록 |
 | `docs/phases/phase-0-access-check.md` | Phase 0 진행계획과 결과(완료). 이 Phase가 바꾼 계획, 남은 확인 항목 |
-| `docs/phases/phase-1-tco-dashboard.md` | Phase 1 진행계획. Task 표, 가격 확인 상태(BigQuery 컴퓨트 확인 위치 포함), 사용자 할 일, 가정, 위험, 진행 기록 |
-| `docs/phases/phase-2-automation-publish.md` | Phase 2 진행계획. 자동 수집, 이벤트 기준, 승인 흐름, Sheets 적재(2-2b)와 준비 방법(2-0c), 위험 |
+| `docs/phases/phase-1-tco-dashboard.md` | Phase 1 진행계획. Task 표, 가격 확인 상태, **가정 검토 결과**, 사용자 할 일, 가정, 위험, 진행 기록 |
+| `docs/phases/phase-2-automation-publish.md` | Phase 2 진행계획. 자동 수집, 이벤트 기준, 승인 흐름, Sheets 적재(2-2b)와 준비 방법(2-0c, 전용 새 프로젝트), 위험 |
 | `docs/phases/phase-3-linkedin.md` | Phase 3 진행계획. 약관 제약, 선택지 A'/A/B/C 비교 |
 | `docs/phases/phase-4-earnings-experiment.md` | Phase 4 진행계획. 실적 코너 판정 기준, H5/T3 실험 설계 |
 | `docs/phases/phase-5-stabilize.md` | Phase 5 진행계획. 자동 전환·복귀 조건, 운영 점검표 초안 |
@@ -133,21 +135,20 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - [x] **Task 3 (1-3) Azure 수집기.** 완료, 커밋 `4e2ef6c`
   - 테스트 3개 통과(누적 9개).
   - 실제 조회값은 Databricks 서버리스 SQL DBU $0.70/$0.95, ADLS Hot LRS $0.0208/$0.02(미국/서울)로 Phase 0 값과 같다 [확인].
-- [ ] **Task 4 (1-1, 1-4 변경) 수동 가격표 + 확인 게이트.** 코드 완료(커밋 `c8da16f`), 확인 대기
+- [ ] **Task 4 (1-1, 1-4 변경) 수동 가격표 + 확인 게이트.** 코드 완료(커밋 `c8da16f`), 확인 10행 중 8행 완료
   - [x] 테스트 4개 통과(누적 13개)
-  - [x] `collectors/manual_prices.py`, `data/manual/snowflake_prices.csv`, `data/manual/bigquery_prices.csv` 작성
   - [x] (U) Snowflake 4행 확인(2026-09-11)
-  - [x] (U) BigQuery 스토리지 2행 확인(2026-09-11. 페이지는 GiB-시간 단위라 ×730으로 변환)
-  - [ ] (U) BigQuery 컴퓨트 4행 확인
-    - 온디맨드: 주문형 컴퓨팅 섹션
-    - Enterprise 슬롯-시간: 용량 컴퓨팅 섹션의 **종량제** 열
-    - 비어 있으면 파이프라인이 멈춘다(동작 확인함).
-- [ ] **Task 5 (1-5) 워크로드 가정 + 월 비용 계산.** 코드 완료, 가정 검토 대기
+  - [x] (U) BigQuery 컴퓨트 4행 확인(2026-09-11): 온디맨드 $6.25/$7.50, 용량 컴퓨팅 기본값 $0.06/$0.0765
+  - [ ] (U) **BigQuery 물리 스토리지 2행 확인**(가정 검토로 논리 → 물리로 변경). 비어 있으면 파이프라인이 멈춘다.
+- [ ] **Task 5 (1-5) 워크로드 가정 + 월 비용 계산.** 코드 완료(커밋 `56e95fb`), 가정 검토 완료, 변경 1건(미커밋)
   - [x] `data/manual/workloads.yaml`, `tests/conftest.py`, `model/tco.py`
-  - [x] 테스트 7개 통과(누적 20개). W1 손계산 $1,550, GiB 변환, W3 스캔→시간 환산을 검증했다.
-  - [x] 미리보기: W1·W2는 Redshift, W3은 BigQuery가 최저(미국·서울 모두)
-  - [ ] (U) 가정 검토
-- [ ] Task 6 (1-6) T1 순위·민감도, T2 서울 프리미엄 판정: `config/thresholds.yaml`. **다음 차례**
+  - [x] 테스트 7개 통과(누적 20개). W1 손계산 $1,550, GiB 변환, W3 스캔 → 시간 환산을 검증했다.
+  - [x] 가정 검토
+    - 변경: 스토리지 기준을 "압축(물리) 후 10TB"로 통일하고, BigQuery는 물리 과금을 쓴다.
+    - 명시: W3 스캔량은 논리 바이트 기준이다.
+    - 나머지 가정은 유지한다.
+  - [ ] (U) 변경 검토 → 커밋
+- [ ] Task 6 (1-6) T1 순위·민감도, T2 서울 프리미엄 판정: `config/thresholds.yaml`. **보류**(1번 확인 후)
 - [ ] Task 7 (1-7) 정적 대시보드: 판정표, 차트, 가정 공개, 가격 확인일
 - [ ] Task 8 (1-8) `pipeline.py` 실제 실행과 검증
   - pytest 28개 통과
@@ -164,7 +165,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - Secret `SEC_USER_AGENT` 등록
 - [ ] 2-0b (C) `.gitattributes`(`* text=auto eol=lf`) 추가를 검토한다. Windows 작업 사본(CRLF)과 Linux CI의 줄바꿈을 맞추기 위해서다.
 - [ ] 2-0c (U, C 보조) Google Sheets 준비
-  - 프로젝트 결정(전용 권장). Sheets API는 기존 활성 프로젝트에서 이미 사용 설정돼 있다 [확인].
+  - **이 프로젝트 전용 새 GCP 프로젝트를 만든다(2026-09-11 사용자 결정).** 새 프로젝트에서 Sheets API를 활성화한다.
   - 서비스 계정과 JSON 키 발급 → Secret `GOOGLE_SA_KEY`
   - 스프레드시트를 만들어 서비스 계정에 편집 권한을 공유 → Secret `PRICE_SHEET_ID`
   - 키 발급과 열람은 사용자가 직접 한다.
@@ -255,11 +256,16 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - ADLS Gen2 Hot LRS 첫 구간은 eastus $0.0208, koreacentral $0.02로 서울이 더 싸다.
   - Task 3 수집기로 다시 확인했다.
 - BigQuery 가격 페이지: HTML에 리전별 가격이 SKU 이름 없이 위치 배열로 들어 있다. nonce가 매번 바뀐다 [확인].
-  - 스토리지는 GiB-시간 단위로 표시된다. Active logical storage는 US(us) $0.000027397, 서울 $0.000031507이다(사용자 확인). 매월 10GiB가 무료다.
-  - 컴퓨트 가격은 두 섹션에 나뉘어 있다. 온디맨드(TiB당)는 "주문형 컴퓨팅 가격 책정", 슬롯-시간은 "용량 컴퓨팅 가격 책정"에 있다.
-  - Enterprise 슬롯-시간은 US $0.06 / $0.048 / $0.036, 서울 $0.0765 / $0.0612 / $0.0459다(종량제 / 1년 / 3년 약정 순, 페이지 데이터). 가격표에는 종량제 값을 쓴다.
   - 리전 이름은 "US (us)"다.
+  - **스토리지**: GiB-시간 단위로 표시된다. 매월 10GiB가 무료다.
+    - Active logical: US $0.000027397, 서울 $0.000031507 (사용자 확인)
+    - Active physical: US $0.000054795, 서울 $0.000071233 (페이지 데이터에서 추출한 후보, 확인 대기)
+  - **주문형 컴퓨팅** 섹션: 쿼리(주문형)는 매월 1TiB 무료이고, 그 이상은 US $6.25 / 서울 $7.50 per TiB다(사용자 확인).
+  - **용량 컴퓨팅** 섹션: 기본값(종량제)은 US $0.06 / 서울 $0.0765 per slot-hour다(사용자 확인). 약정은 두 종류다.
+    - BigQuery CUD: 1년 $0.054 / 3년 $0.048 (서울 $0.06885 / $0.0612)
+    - 리소스 CUD: 1년 $0.048 / 3년 $0.036 (서울 $0.0612 / $0.0459)
 - Snowflake 서비스 소비표(2026-09-09 발효)는 Table 2(a)에 크레딧 단가, Table 3(a)에 스토리지 단가가 있다. AWS US East (N. Virginia)와 Seoul 값을 사용자가 확인했다.
+- 스토리지 과금 기준 [지식]: Snowflake·Redshift RMS·ADLS(Parquet/Delta)는 압축된 저장량으로 과금한다. BigQuery는 논리(압축 전) 과금과 물리(압축 후) 과금 중 하나를 고를 수 있다.
 - 가격 실측값과 서울 프리미엄 표는 `docs/02_phase0_report.md`에 있다.
 
 **약관**
@@ -277,7 +283,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - Google Sheets 연동 [확인]
   - `gcloud`에는 Sheets 명령이 없다 [지식].
   - `gws` CLI 0.22.5는 설치돼 있고, OAuth와 서비스 계정 인증을 지원한다. 다만 공식 지원 제품은 아니다.
-  - 활성 gcloud 프로젝트(강의용 기존 프로젝트)에서 Sheets API가 이미 사용 설정돼 있고, 서비스 계정은 0개다.
+  - 기존 강의용 gcloud 프로젝트에서 Sheets API가 사용 설정돼 있고, 서비스 계정은 0개다. 이 프로젝트에는 전용 새 프로젝트를 쓴다.
 
 **실행 환경 (Phase 1에서 확인)**
 - 로컬: Python 3.11.7(Anaconda). gh 토큰에 `workflow` 권한이 없다 [확인].
@@ -316,7 +322,9 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 | 2026-09-11 | 가격 변동 이력은 Google 스프레드시트에 적재한다: Python + google-auth + 서비스 계정, Phase 2-2b | 사용자 결정(권장안 채택). gcloud는 Sheets 명령이 없고, gws는 0.x 비공식 도구라 매일 도는 자동화에 쓰지 않는다 |
 | 2026-09-11 | Sheets 적재는 Phase 2에서 구현하고, 서비스 계정 키도 그때 발급한다 | Sheets API는 이미 사용 설정돼 있어서 Aside로 따로 확보할 것이 없다 [확인]. 쓰지 않는 장기 키를 미리 만들면 노출 기간만 늘어난다 |
 | 2026-09-11 | BigQuery 스토리지는 페이지의 GiB-시간 값에 730시간/월을 곱해 GiB-월로 저장 | 모델의 단위(GiB-월)에 맞춘다. 원래 표시값은 Phase 1 진행계획에 남긴다 |
-| 2026-09-11 | BigQuery 슬롯 단가는 용량 컴퓨팅의 Enterprise **종량제** 값을 쓴다(약정가 제외) | TCO 모델이 약정 할인을 제외하기 때문이다(가정 공개 항목) |
+| 2026-09-11 | BigQuery 슬롯 단가는 용량 컴퓨팅의 **기본값(종량제)**을 쓴다(약정가 제외) | TCO 모델이 약정 할인을 제외하기 때문이다(가정 공개 항목) |
+| 2026-09-11 | **이 프로젝트 전용 새 GCP 프로젝트를 쓴다**(Phase 2-0c) | 사용자 결정. 서비스 계정 권한과 키의 범위를 기존 강의용 프로젝트와 분리한다 |
+| 2026-09-11 | **가정 검토 결과: 스토리지 기준을 "압축(물리) 후 10TB"로 통일하고, BigQuery는 active physical storage 단가를 쓴다.** W3 스캔량은 논리 바이트 기준이라고 명시한다 | 사용자가 검토를 위임했다. BigQuery 논리 과금만 압축 전 기준이라 비용이 과소평가됐다. 이 변경으로 W3 1위가 BigQuery에서 Redshift로 바뀐다(미리보기). 사용자 검토 대기, 미커밋 |
 
 ## 7. 진행 로그
 - **2026-09-10:** 데이터 소스 조사. SEC와 pypistats를 직접 호출해 확인했다. 혼합안과 v1 가설 설계를 확정했다.
@@ -348,11 +356,17 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - **2026-09-11:** Task 4 코드를 완료했다(커밋 `c8da16f`).
   - `collectors/manual_prices.py`를 TDD로 구현하고, 가격표 2개를 작성했다.
   - 테스트는 누적 13개가 통과했다.
-  - 사용자 확인: Snowflake 4행과 BigQuery 스토리지 2행을 확인했다(2026-09-11).
-  - BigQuery 컴퓨트 4행은 확인 대기라 비워 두었다. 실제 가격표에서 게이트가 멈추는 것도 확인했다.
-- **2026-09-11:** BigQuery 컴퓨트 4행을 확인할 위치를 안내했다(주문형 섹션, 용량 섹션의 Enterprise 종량제).
-- **2026-09-11:** Task 5 코드를 완료했다.
-  - `workloads.yaml`, `tests/conftest.py`, `model/tco.py`를 TDD로 작성했다(ImportError로 실패 확인 → 구현 → 통과).
+  - 사용자 확인: Snowflake 4행과 BigQuery 논리 스토리지 2행을 확인했다.
+  - 실제 가격표에서 게이트가 멈추는 것을 확인했다.
+- **2026-09-11:** Task 5 코드를 완료했다(커밋 `56e95fb`).
+  - `workloads.yaml`, `tests/conftest.py`, `model/tco.py`를 TDD로 작성했다.
   - 테스트는 누적 20개가 통과했다.
-  - 미리보기: W1·W2는 Redshift, W3은 BigQuery가 최저다.
-  - 사용자 가정 검토와 Task 6 지시를 기다린다.
+- **2026-09-11:** 사용자 확인을 반영하고 가정을 검토했다(미커밋).
+  - BigQuery 컴퓨트 4행을 확인해 `confirmed_on`을 적었다.
+  - 전용 새 GCP 프로젝트를 쓰기로 했다.
+  - 가정 검토 결과 변경 1건이 나와 **Task 6을 보류했다**.
+    - 스토리지를 물리 기준으로 통일했다. BigQuery는 active physical이고, 후보값은 $0.04/$0.052(확인 대기)다.
+    - W3 스캔량은 논리 바이트 기준이라고 명시했다.
+  - 미리보기에서는 세 시나리오 모두 Redshift가 1위다(이전에는 W3가 BigQuery였다).
+  - 약정 가격 안내 오류(CUD 두 종류)를 바로잡았다.
+  - 사용자의 변경 검토를 기다린다.

@@ -2,6 +2,8 @@ import pytest
 
 from common.schema import PriceRecord
 
+# 로직 검증용 테스트 가격이다. 실제 가격표(data/manual, 수집기)와 다를 수 있다.
+# 예: BigQuery 스토리지는 여기서 논리 단가를 쓰지만, 실제 가격표는 물리 단가를 쓴다(2026-09-11 가정 검토).
 PRICES = {  # (platform, service, sku, unit): (us, seoul)
     ("snowflake", "compute", "enterprise-credit", "credit"): (3.00, 4.05),
     ("snowflake", "storage", "on-demand-storage", "TB-month"): (23.0, 25.0),

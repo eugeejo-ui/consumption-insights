@@ -1,10 +1,13 @@
 # 모든 값은 [가정]이다. 대시보드의 "가정 공개" 섹션에 그대로 공개된다.
-storage_gb: 10000   # 공통 저장량 10TB (1TB = 1000GB로 계산)
+# 2026-09-11 가정 검토: 스토리지 기준을 "압축(물리) 후 10TB"로 통일했다.
+#   BigQuery는 논리(압축 전) 과금 대신 물리 스토리지 과금 단가를 쓴다 (bigquery_prices.csv).
+storage_gb: 10000   # 공통 저장량 10TB, 압축(물리) 기준 (1TB = 1000GB로 계산)
 
 # "small" 1단위에 해당하는 플랫폼별 시간당 사용량 [가정]
-# 근거(모두 [지식], 사용자 검토 대상):
+# 근거(모두 [지식], 벤더의 크기 이름 기준이며 실제 성능 동등성은 검증되지 않았다):
 #   Snowflake Small 웨어하우스 = 2 credits/h, Databricks SQL Small = 12 DBU/h,
 #   Redshift Serverless 최소 기본 용량 = 8 RPU, BigQuery = 100 slots
+#   → Task 6의 ±50% 민감도와 Phase 4의 BigQuery 실측 보정으로 다룬다.
 capacity_per_small:
   snowflake: {unit: credit, per_hour: 2}
   databricks: {unit: DBU-hour, per_hour: 12}
@@ -25,6 +28,6 @@ scenarios:
   W3:
     name: 비정기 대용량 탐색
     mode: scan
-    tib_scanned_per_month: 20
+    tib_scanned_per_month: 20   # 논리(압축 전) 바이트 기준. BigQuery 온디맨드 과금 기준과 같다
     size: 4                 # 용량 기반 플랫폼은 small x4로 처리한다고 가정
-    tib_per_hour: 2         # small x4가 시간당 2TiB를 스캔한다고 가정 → 10시간
+    tib_per_hour: 2         # small x4가 시간당 2TiB(논리)를 스캔한다고 가정 → 10시간

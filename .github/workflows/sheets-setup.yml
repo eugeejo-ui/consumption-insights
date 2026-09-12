@@ -4,9 +4,6 @@ name: sheets-setup
 on:
   workflow_dispatch:
     inputs:
-      owner_email:
-        description: "시트를 받을 Google 계정(편집 권한을 준다)"
-        required: true
       baseline_day:
         description: "기준선으로 적을 승인 스냅샷 날짜(예: 2026-09-11). 비우면 건너뛴다"
         default: ""
@@ -34,8 +31,11 @@ jobs:
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
       - id: sheet
         name: create the spreadsheet and share it
+        # 받는 사람 계정은 공개 로그에 남지 않도록 Secret으로 받는다.
+        env:
+          OWNER_EMAIL: ${{ secrets.SHEET_OWNER_EMAIL }}
         run: |
-          python -m publish.sheets_log --create-sheet "${{ inputs.owner_email }}" | tee sheet.log
+          python -m publish.sheets_log --create-sheet "$OWNER_EMAIL" | tee sheet.log
           echo "id=$(sed -n 's/^sheet_id=//p' sheet.log)" >> "$GITHUB_OUTPUT"
       - name: write the baseline rows
         if: inputs.baseline_day != ''

@@ -70,14 +70,14 @@ jobs:
           PY
 
       - name: bake before installing fonts
-        run: python probe/bake.py before
+        run: PYTHONPATH=. python probe/bake.py before
 
       - name: install Korean fonts and bake again
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-noto-cjk
           fc-list :lang=ko | wc -l
-          python probe/bake.py after
+          PYTHONPATH=. python probe/bake.py after
 
       - run: python -m pytest tests/test_browser.py -q
 

@@ -50,6 +50,7 @@ def test_site_has_all_sections(tmp_path, workloads):
         assert anchor in html
     assert "consumption-insights" in html          # 사이드바 워드마크(타사 로고를 쓰지 않는다)
     assert "서울 프리미엄" in html and "가정 공개" in html
+    assert 'id="leave-modal"' in html and "외부 페이지로 이동합니다" in html   # 외부 링크는 확인 창을 거친다
 
 
 def test_site_has_a_panel_for_every_scenario_and_region(tmp_path, workloads):

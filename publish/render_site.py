@@ -17,6 +17,7 @@ TEMPLATES = Path(__file__).resolve().parent.parent / "templates" / "site"
 REGION_LABELS = {"us": "미국", "seoul": "서울"}
 PLATFORM_LABELS = {"snowflake": "Snowflake", "databricks": "Databricks", "redshift": "Redshift", "bigquery": "BigQuery"}
 PLATFORM_COLORS = {"snowflake": "#29B5E8", "databricks": "#E8442C", "redshift": "#8C4FFF", "bigquery": "#4285F4"}
+UNIT_LABELS = {"credit": "크레딧", "DBU-hour": "DBU", "RPU-hour": "RPU", "slot-hour": "슬롯"}   # "시간당 … -hour" 중복을 없앤다
 REPO_URL = "https://github.com/eugeejo-ui/consumption-insights"
 
 
@@ -80,6 +81,7 @@ def render(rows: list[CostRow], premiums: list[dict], t1_by_region: dict[str, di
         premium_max=max((abs(p["premium_pct"]) for p in ordered), default=1.0),
         t1_by_region=t1_by_region, t2=t2, workloads=workloads, price_dates=price_dates, built_on=built_on,
         region_labels=REGION_LABELS, platform_labels=PLATFORM_LABELS, platform_colors=PLATFORM_COLORS,
+        unit_labels=UNIT_LABELS,
         repo_url=REPO_URL, snapshot_url=f"{REPO_URL}/tree/main/data/raw/{built_on}")
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

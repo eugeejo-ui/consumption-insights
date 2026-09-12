@@ -122,14 +122,14 @@
   <div class="wordmark">consumption<span>-insights</span></div>
   <nav>
     <a class="nav active" href="#costs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M15 8h5v5"/></svg>월 비용</a>
-    <a class="nav" href="#verdicts"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>가설 판정</a>
+    <a class="nav" href="#verdicts"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>가설 검증</a>
     <a class="nav" href="#premium"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="17" rx="1"/></svg>서울 프리미엄</a>
     <a class="nav" href="#assumptions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>가정 공개</a>
   </nav>
   <div class="side-label">참고</div>
   <nav>
     <a class="nav" href="{{ repo_url }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>저장소</a>
-    <a class="nav" href="{{ snapshot_url }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>이 날짜 스냅샷</a>
+    <a class="nav" href="{{ snapshot_url }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>이 날짜의 스냅샷</a>
   </nav>
 </aside>
 
@@ -137,7 +137,7 @@
   <div class="topbar">
     <div>
       <h1>데이터 플랫폼 월 비용(TCO) 비교</h1>
-      <div class="sub">빌드일 {{ built_on }} · Snowflake, Databricks, BigQuery, Redshift · 미국과 서울</div>
+      <div class="sub">작성일 {{ built_on }} · Snowflake, Databricks, BigQuery, Redshift · 미국·서울 리전</div>
     </div>
     <a class="download" href="{{ snapshot_url }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
@@ -174,41 +174,41 @@
       <div class="top">
         <div class="kpis">
           <div class="kpi">
-            <div class="label">가장 싼 플랫폼</div>
+            <div class="label">월 비용이 가장 낮은 플랫폼</div>
             <div class="value">{{ p.cheapest.label }}</div>
             <div class="foot">${{ "{:,.0f}".format(p.cheapest.total) }} / 월</div>
           </div>
           <div class="kpi">
-            <div class="label">가장 비싼 플랫폼</div>
+            <div class="label">월 비용이 가장 높은 플랫폼</div>
             <div class="value">{{ p.priciest.label }}</div>
             <div class="foot">${{ "{:,.0f}".format(p.priciest.total) }} / 월</div>
           </div>
           <div class="kpi">
             <div class="label">1위와 4위 차이</div>
             <div class="value">+{{ "{:,.1f}".format(p.gap_pct) }}<small>%</small></div>
-            <div class="foot">{{ p.region_label }} · {{ p.scenario }}</div>
+            <div class="foot">{{ p.region_label }} 리전 · {{ p.scenario }}</div>
           </div>
           <div class="kpi">
-            <div class="label">T1 판정 ({{ p.region_label }})</div>
-            <div class="value">{{ "지지" if t1_by_region[p.region].supported else "기각" }}</div>
-            <div class="foot">{{ p.scenario }} 1위 {{ platform_labels[t1_by_region[p.region].winners[p.scenario]] }} · {{ t1_by_region[p.region].robustness[p.scenario] }}</div>
+            <div class="label">T1 결과 ({{ p.region_label }} 리전)</div>
+            <div class="value">{{ "채택" if t1_by_region[p.region].supported else "기각" }}</div>
+            <div class="foot">{{ "워크로드마다 1위가 다름" if t1_by_region[p.region].supported else "워크로드마다 1위가 달라지지 않음" }} · {{ p.scenario }} 1위 {{ platform_labels[t1_by_region[p.region].winners[p.scenario]] }} · {{ t1_by_region[p.region].robustness[p.scenario] }}</div>
           </div>
           <div class="kpi">
-            <div class="label">T2 판정</div>
-            <div class="value">{{ "지지" if t2.supported else "기각" }}</div>
-            <div class="foot">서울 프리미엄 차이 {{ t2.spread_pp }}%p</div>
+            <div class="label">T2 결과</div>
+            <div class="value">{{ "채택" if t2.supported else "기각" }}</div>
+            <div class="foot">{{ "서울 프리미엄은 서비스마다 다름" if t2.supported else "서울 프리미엄은 서비스마다 비슷함" }} · 최대-최소 차이 {{ t2.spread_pp }}%p</div>
           </div>
           <div class="kpi">
             <div class="label">가격 확인일</div>
             <div class="value">{{ price_dates.values()|max }}</div>
-            <div class="foot">수동 가격표는 사람이 확인한 날짜</div>
+            <div class="foot">수동 가격표는 사람이 직접 확인합니다</div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-head">
             <h2>{{ p.scenario }} · {{ p.scenario_name }}</h2>
-            <div class="chip">{{ p.region_label }}</div>
+            <div class="chip">{{ p.region_label }} 리전</div>
           </div>
           <div class="chart">
             <div class="yaxis">
@@ -235,7 +235,7 @@
           <div class="legend">
             <span><i class="dot" style="background:var(--blue)"></i>컴퓨트</span>
             <span><i class="dot" style="background:var(--blue-light)"></i>스토리지</span>
-            <span>막대 뒤 옅은 부분은 가장 비싼 플랫폼 기준입니다.</span>
+            <span>막대 뒤 옅은 부분은 월 비용이 가장 높은 플랫폼을 기준으로 삼습니다.</span>
           </div>
         </div>
       </div>
@@ -243,7 +243,7 @@
       <div class="grid2">
         {% for rank in p.rankings %}
         <div class="card">
-          <h2>{{ p.scenario }} 순위 · {{ rank.region_label }} (싼 순서)</h2>
+          <h2>{{ p.scenario }} 순위 · {{ rank.region_label }} 리전 (월 비용이 낮은 순서)</h2>
           {% for item in rank.rows %}
           <div class="rank" data-delta="{{ item.delta }}">
             <div class="badge" style="background:{{ item.color }}">{{ item.label[0] }}</div>
@@ -264,28 +264,28 @@
   </section>
 
   <section id="verdicts" class="card" style="margin-bottom:16px">
-    <h2>가설 판정</h2>
+    <h2>가설 검증 결과</h2>
     <table>
-      <tr><th>가설</th><th>판정</th><th>근거</th></tr>
+      <tr><th>가설</th><th>결과</th><th>근거</th></tr>
       {% for region, v in t1_by_region.items() %}
       <tr>
-        <td>T1 월 비용 1위는 워크로드마다 다르다 ({{ region_labels[region] }})</td>
-        <td class="verdict">{{ "지지" if v.supported else "기각" }}</td>
-        <td>{% for sid, p in v.winners.items() %}{{ sid }}: {{ p }} ({{ v.robustness[sid] }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
+        <td>T1 월 비용 1위는 워크로드마다 다르다 ({{ region_labels[region] }} 리전)</td>
+        <td class="verdict">{{ "채택" if v.supported else "기각" }}</td>
+        <td>{% for sid, p in v.winners.items() %}{{ sid }} {{ platform_labels[p] }} ({{ v.robustness[sid] }}){% if not loop.last %} · {% endif %}{% endfor %}</td>
       </tr>
       {% endfor %}
       <tr>
         <td>T2 서울 프리미엄은 서비스마다 다르다</td>
-        <td class="verdict">{{ "지지" if t2.supported else "기각" }}</td>
+        <td class="verdict">{{ "채택" if t2.supported else "기각" }}</td>
         <td>최대-최소 차이 {{ t2.spread_pp }}%p</td>
       </tr>
     </table>
-    <p class="note">괄호 안의 견고·민감은 플랫폼 하나의 용량 가정을 ±50% 흔들었을 때 1위가 유지되는지를 뜻합니다.</p>
+    <p class="note">괄호 안의 견고·민감은 플랫폼 하나의 용량 가정을 ±50% 조정했을 때 1위가 유지되는지를 뜻합니다.</p>
   </section>
 
   <section id="premium" class="grid2">
     <div class="card">
-      <h2>서울 프리미엄이 큰 항목</h2>
+      <h2>서울 리전 프리미엄이 큰 항목</h2>
       {% for item in premium_high %}
       <div class="item">
         <div class="badge" style="background:{{ platform_colors[item.platform] }}">{{ platform_labels[item.platform][0] }}</div>
@@ -293,12 +293,12 @@
           <div class="name">{{ platform_labels[item.platform] }} {{ item.sku }}</div>
           <div class="meter"><i style="width:{{ (item.premium_pct|abs / premium_max * 100)|round(1) }}%"></i></div>
         </div>
-        <div class="num">{{ "%+.1f"|format(item.premium_pct) }}% <em>서울</em></div>
+        <div class="num">{{ "%+.1f"|format(item.premium_pct) }}% <em>서울 리전</em></div>
       </div>
       {% endfor %}
     </div>
     <div class="card">
-      <h2>서울 프리미엄이 작거나 서울이 싼 항목</h2>
+      <h2>서울 프리미엄이 작거나 서울 리전 단가가 더 낮은 항목</h2>
       {% for item in premium_low %}
       <div class="item">
         <div class="badge" style="background:{{ platform_colors[item.platform] }}">{{ platform_labels[item.platform][0] }}</div>
@@ -306,7 +306,7 @@
           <div class="name">{{ platform_labels[item.platform] }} {{ item.sku }}</div>
           <div class="meter cool"><i style="width:{{ (item.premium_pct|abs / premium_max * 100)|round(1) }}%"></i></div>
         </div>
-        <div class="num">{{ "%+.1f"|format(item.premium_pct) }}% <em>서울</em></div>
+        <div class="num">{{ "%+.1f"|format(item.premium_pct) }}% <em>서울 리전</em></div>
       </div>
       {% endfor %}
     </div>
@@ -315,7 +315,7 @@
   <section class="card" style="margin-bottom:16px">
     <h2>전체 서울 프리미엄 (공시 단가 기준)</h2>
     <table>
-      <tr><th>플랫폼 / 항목</th><th>미국</th><th>서울</th><th>프리미엄</th></tr>
+      <tr><th>플랫폼 · 항목</th><th>미국 리전 단가</th><th>서울 리전 단가</th><th>프리미엄</th></tr>
       {% for item in premiums %}
       <tr>
         <td>{{ platform_labels[item.platform] }} · {{ item.service }} ({{ item.sku }})</td>
@@ -328,22 +328,22 @@
 
   <section id="assumptions" class="card">
     <h2>가정 공개</h2>
-    <div class="callout">플랫폼 간 비교는 가정 기반 모델 추정입니다. 실제 청구액과 다를 수 있습니다.</div>
+    <div class="callout">플랫폼 간 비교는 가정을 세워 모델로 추정한 값입니다. 실제 청구액과 다를 수 있습니다.</div>
     <ul class="plain" style="margin-top:16px">
       <li>공통 저장량: {{ workloads.storage_gb }} GB (압축 후 물리 기준)</li>
       {% for platform, capacity in workloads.capacity_per_small.items() %}
-      <li>{{ platform_labels[platform] }}: small 1단위 = 시간당 {{ capacity.per_hour }} {{ capacity.unit }}</li>
+      <li>{{ platform_labels[platform] }}: small 1단위 = 시간당 {{ capacity.per_hour }} {{ unit_labels.get(capacity.unit, capacity.unit) }}</li>
       {% endfor %}
       {% for sid, sc in workloads.scenarios.items() %}
-      <li>{{ sid }} {{ sc.name }}: {% if sc.mode == "scan" %}월 {{ sc.tib_scanned_per_month }} TiB 스캔(논리 바이트). BigQuery는 온디맨드, 나머지는 small×{{ sc.size }}가 시간당 {{ sc.tib_per_hour }} TiB를 처리한다고 봅니다{% else %}small×{{ sc.size }}로 월 {{ sc.hours_per_month }}시간{% endif %}</li>
+      <li>{{ sid }} {{ sc.name }}: {% if sc.mode == "scan" %}월 {{ sc.tib_scanned_per_month }} TiB 스캔(논리 바이트). BigQuery는 온디맨드, 나머지는 small×{{ sc.size }}가 시간당 {{ sc.tib_per_hour }} TiB를 처리한다고 가정합니다{% else %}small×{{ sc.size }}로 월 {{ sc.hours_per_month }}시간{% endif %}</li>
       {% endfor %}
       <li>제외 항목: 네트워크 송출, 무료 등급, 최소 과금 단위, 약정 할인</li>
       <li>가격 확인일: {% for platform, day in price_dates.items() %}{{ platform_labels[platform] }} {{ day }}{% if not loop.last %} · {% endif %}{% endfor %}</li>
     </ul>
-    <p class="note">가격은 사람이 검토한 스냅샷만 반영합니다. 자동 수집(AWS·Azure)과 수동 가격표(Snowflake·BigQuery)를 함께 씁니다.</p>
+    <p class="note">이 화면은 사람이 검토한 스냅샷의 가격만 반영합니다. 자동 수집(AWS·Azure)과 수동 가격표(Snowflake·BigQuery)를 함께 씁니다.</p>
   </section>
 
-  <footer>이 페이지는 승인된 가격 스냅샷으로 자동 생성했습니다. 순위 옆 삼각형은 이전 승인 스냅샷 대비 변동입니다.</footer>
+  <footer>이 페이지는 승인된 가격 스냅샷으로 자동 생성됐습니다. 순위 옆 삼각형은 이전 승인 스냅샷과 비교한 변동을 나타냅니다.</footer>
 </main>
 
 <script>

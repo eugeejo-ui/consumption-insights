@@ -29,7 +29,7 @@ def test_render_writes_page_with_disclaimer_numbers_and_dates(tmp_path, workload
     out = _render(tmp_path, workloads)
     html = out.read_text(encoding="utf-8")
     assert out == tmp_path / "index.html"
-    assert "모델 추정" in html
+    assert "모델로 추정한 값" in html
     assert "110" in html               # 합계 = 컴퓨트 100 + 스토리지 10
     assert "+16.8%" in html
     assert "2026-09-12" in html
@@ -38,10 +38,10 @@ def test_render_writes_page_with_disclaimer_numbers_and_dates(tmp_path, workload
 
 def test_render_shows_t1_for_both_regions(tmp_path, workloads):
     html = _render(tmp_path, workloads).read_text(encoding="utf-8")
-    assert "T1 월 비용 1위는 워크로드마다 다르다 (미국)" in html
-    assert "T1 월 비용 1위는 워크로드마다 다르다 (서울)" in html
-    assert "W1: redshift (민감)" in html   # 미국
-    assert "W1: redshift (견고)" in html   # 서울
+    assert "T1 월 비용 1위는 워크로드마다 다르다 (미국 리전)" in html
+    assert "T1 월 비용 1위는 워크로드마다 다르다 (서울 리전)" in html
+    assert "W1 Redshift (민감)" in html   # 미국
+    assert "W1 Redshift (견고)" in html   # 서울
 
 
 def test_site_has_all_sections(tmp_path, workloads):

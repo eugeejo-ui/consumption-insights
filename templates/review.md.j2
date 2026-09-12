@@ -11,9 +11,9 @@
 - 글 초안(E1): {{ "있음 (post.md)" if significant else "없음 (월 비용 변화가 기준 미만이고 순위 변화도 없다)" }}
 {% endif %}
 {% for region, v in t1_by_region.items() %}
-- T1 ({{ region_labels[region] }}): {{ "지지" if v.supported else "기각" }}
+- T1 ({{ region_labels[region] }}): {{ "채택" if v.supported else "기각" }}
 {% endfor %}
-- T2: {{ "지지" if t2.supported else "기각" }} (최대-최소 차이 {{ t2.spread_pp }}%p)
+- T2: {{ "채택" if t2.supported else "기각" }} (최대-최소 차이 {{ t2.spread_pp }}%p)
 
 ## 2. 수집 가격
 | 플랫폼 | 항목 | SKU | 리전 | 단가(USD) | 단위 | 수집·확인일 | 출처 |
@@ -35,22 +35,22 @@
 {% endfor %}
 {% endif %}
 
-## 4. 월 비용 순위 (USD/월, 싼 순서, 가정 기반 모델 추정)
+## 4. 월 비용 순위 (USD/월, 낮은 순서, 가정을 세워 모델로 추정한 값)
 | 시나리오 | 리전 | 1위 | 2위 | 3위 | 4위 |
 |---|---|---|---|---|---|
 {% for sid, region, ranked in rankings %}
 | {{ sid }} | {{ region }} | {% for p, total in ranked %}{{ p }} {{ "{:,.0f}".format(total) }}{% if not loop.last %} | {% endif %}{% endfor %} |
 {% endfor %}
 
-## 5. 가설 판정
-| 가설 | 판정 | 근거 |
+## 5. 가설 검증 결과
+| 가설 | 결과 | 근거 |
 |---|---|---|
 {% for region, v in t1_by_region.items() %}
-| T1 ({{ region_labels[region] }}) 월 비용 1위는 워크로드마다 다르다 | {{ "지지" if v.supported else "기각" }} | {% for sid, p in v.winners.items() %}{{ sid }}: {{ p }} ({{ v.robustness[sid] }}){% if not loop.last %}, {% endif %}{% endfor %} |
+| T1 ({{ region_labels[region] }}) 월 비용 1위는 워크로드마다 다르다 | {{ "채택" if v.supported else "기각" }} | {% for sid, p in v.winners.items() %}{{ sid }}: {{ p }} ({{ v.robustness[sid] }}){% if not loop.last %}, {% endif %}{% endfor %} |
 {% endfor %}
-| T2 서울 프리미엄은 서비스마다 다르다 | {{ "지지" if t2.supported else "기각" }} | 최대-최소 차이 {{ t2.spread_pp }}%p |
+| T2 서울 프리미엄은 서비스마다 다르다 | {{ "채택" if t2.supported else "기각" }} | 최대-최소 차이 {{ t2.spread_pp }}%p |
 
-괄호 안의 견고/민감은 플랫폼 하나의 용량 가정을 ±50% 흔들었을 때 1위가 유지되는지를 뜻한다.
+괄호 안의 견고·민감은 플랫폼 하나의 용량 가정을 ±50% 조정했을 때 1위가 유지되는지를 뜻합니다.
 
 ## 6. 확인 체크리스트
 - [ ] 수집 가격이 공식 페이지 값과 맞는가 (자동 수집 AWS·Azure 8행. 수동 가격표는 확인일 참고)

@@ -68,7 +68,7 @@ def test_confirm_requires_review(tmp_path, monkeypatch, price_records):
 
     html = out.read_text(encoding="utf-8")
     assert out == Path("site") / "index.html"
-    assert "(미국)" in html and "(서울)" in html               # T1을 두 리전 모두 표시
+    assert "(미국 리전)" in html and "(서울 리전)" in html      # T1을 두 리전 모두 표시
     assert Path("data/raw/2026-09-11/approved.txt").exists()
 
 

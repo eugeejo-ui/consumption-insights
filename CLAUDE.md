@@ -3,9 +3,8 @@
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
 > **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
-> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~4 완료(`5dcad55`, `72723d5`, `9a46707`, `802c126`, 테스트 47개). **Task 5(GitHub 연결) 진행 중.**
->   - 완료: 공개 저장소 `consumption-insights` 생성(push 전), `.gitattributes`와 `collect.yml` 로컬 커밋
->   - push 전 사용자 조치 대기: `workflow` 권한, Actions 설정 2개, push 승인
+> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~5 완료(테스트 47개). 공개 저장소에 push했고, 수집 워크플로를 실제로 돌려 검증했다.
+>   - **여기서 멈춘다: 2-5a 대시보드 디자인 게이트.** 사용자가 템플릿을 주면 디자인 적용 계획을 세워 승인받는다(규칙 13).
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -21,21 +20,19 @@
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 5: push 전 사용자 조치 대기) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
+| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 1~5 완료, 2-5a 디자인 게이트에서 멈춤) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. (U, Task 5 push 전) 남은 2-0 조치. 작성자 이름 공개 확인과 저장소 생성은 끝났다.
-   - ① `gh auth refresh -s workflow` 실행(브라우저 승인). 현재 토큰에 `workflow` 권한이 없다 [확인].
-   - ② Actions 설정 2개 변경 승인. 현재 값은 토큰 `read`, PR 승인 불가다 [확인].
-   - ③ push 승인
-   - 첫 실제 수집 실행은 UTC 2026-09-12 이후에 한다. 오늘(2026-09-11)은 승인 스냅샷이 있어 같은 날 재수집 가드가 막는다.
+1. **(U) 2-5a 대시보드 템플릿 전달.** 여기서 멈춰 있다. 템플릿을 받으면 디자인을 분석해 적용 계획을 세우고 승인받는다.
+   - 2-0 GitHub 준비는 끝났다(작성자 이름 공개 확인, 공개 저장소, `workflow` 권한, Actions 설정 2개, push).
+   - 남은 사용자 준비: Pages 소스 설정(2-5), Google Sheets 준비(2-0c), Secret `SEC_USER_AGENT`(Phase 4)
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자 조치 ①~③이 끝나면 push한다. UTC 2026-09-12 이후에 첫 실제 수집 실행과 시뮬레이션 실행을 한다(Task 5 Step 5~8, 규칙 10).
+**다음 행동:** 2-5a에서 멈춰 있다. 사용자가 대시보드 템플릿을 주면 디자인 적용 계획을 세워 승인받고, 그 뒤 Task 6(디자인 적용)부터 진행한다(규칙 10·13).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -159,10 +156,8 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 
 ### Phase 2: 자동 수집 + 변동 감지 + 검토 PR + 아카이브 게시 + Sheets 적재. 진행계획: `docs/phases/phase-2-automation-publish.md`
 **목표:** 매일 자동 수집한다. 변동이 생기면 중간 결과를 검토 PR로 올리고 멈춘다. 사용자가 머지(컨펌)하면 Pages 게시와 Sheets 적재가 진행된다.
-- [ ] 2-0 (U) GitHub 준비
-  - 2026-09-11 진행 상황
-    - 완료: 작성자 이름 공개 확인(사용자), 공개 저장소 `consumption-insights` 생성(사용자 승인, Claude 실행, push 전)
-    - 남은 것: `workflow` 권한, Actions 설정 2개, push
+- [x] 2-0 (U) GitHub 준비 (2026-09-12 완료). Pages 소스 설정은 2-5에서, Secret `SEC_USER_AGENT`는 Phase 4에서 한다.
+  - 작성자 이름 공개 확인, 공개 저장소 `consumption-insights`, `workflow` 권한, Actions 설정 2개(토큰 write, PR 생성 허용), 첫 push
   - `gh auth refresh -s workflow` 실행(브라우저 승인은 사용자가 직접)
   - 공개 저장소 생성
   - Settings > Actions > General에서 워크플로 PR 생성 허용, GITHUB_TOKEN 쓰기 권한 설정
@@ -174,7 +169,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 서비스 계정과 JSON 키 발급 → Secret `GOOGLE_SA_KEY`
   - 스프레드시트를 만들어 서비스 계정에 편집 권한을 공유 → Secret `PRICE_SHEET_ID`
   - 키 발급과 열람은 사용자가 직접 한다.
-- [ ] 2-1 (C) `.github/workflows/collect.yml`
+- [x] 2-1 (C) `.github/workflows/collect.yml` (2026-09-12, 실제 실행 검증 완료)
   - 매일 00:17 UTC(= 09:17 KST, 정각 혼잡 회피)
   - 변화가 없으면 `data/checks.csv`에 한 줄을 커밋하고(D1), 단가가 바뀌면 2-4의 검토 PR을 만든다(D2).
   - 매일 스케줄은 게시 워크플로(2-5)가 생긴 뒤에 켠다(D3). 그 전에는 수동 실행만 한다.
@@ -191,7 +186,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - [x] 2-3 (C) 글 생성 (코드 계획 Task 2, `72723d5`)
   - `templates/post_price_change.md.j2`, `publish/render_post.py`
   - 숫자 일치 검사: 글에 나온 모든 숫자가 `events.json`에 있어야 하고, 아니면 중단
-- [ ] 2-4 (C) **검토 PR 생성(체크포인트)**
+- [x] 2-4 (C) **검토 PR 생성(체크포인트)** (2026-09-12, 시뮬레이션으로 검증 완료)
   - PR에는 스냅샷, `review.md`, 글 초안이 들어간다.
   - 이미 열린 검토 PR이 있으면 새로 만들지 않고 그 PR을 갱신한다.
 - [ ] **2-5a (U → C) 대시보드 디자인 게이트** (규칙 13)
@@ -307,6 +302,8 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - git 줄바꿈: 커밋할 때 "LF will be replaced by CRLF" 경고가 나온다. 전역 autocrlf 설정 때문이며, 저장소에는 LF로 저장된다 [확인]. Phase 2 Task 5에서 `.gitattributes`(`* text=auto eol=lf`)를 추가했다(2-0b).
 - `.gitignore`: 패턴 `site/`는 모든 위치의 `site` 폴더를 제외한다. 루트 빌드 결과물만 제외하려면 `/site/`로 쓴다 [확인, Task 7 사고].
 - Aside CLI 1.26.906.1630이 설치돼 있고, 계정 u0(Google 제공자)로 로그인돼 있다 [확인]. `aside account`는 하위 명령(`list`, `status`)이 필요하다.
+- GitHub Actions 실측 [확인, 2026-09-12]: `actions/checkout@v7`과 `actions/setup-python@v7`이 동작하고, Actions 서버에서 AWS 가격 파일과 Azure API 호출이 성공한다. 봇(GITHUB_TOKEN)이 main에 커밋·push하고 PR을 만들고 닫을 수 있다.
+- 기기 인증(OAuth device flow)은 Bash 백그라운드로 띄워야 한다 [확인]. PowerShell `Start-Job`은 그 명령이 끝날 때 함께 종료돼 승인 결과를 받지 못한다.
 - humanize-korean 스킬: 스크립트 경로를 찾지 못한다(스킬 폴더 위쪽에 `.claude-plugin` 폴더가 없다) [확인]. 그래서 정량 점수 shim과 변경률 게이트 없이 에이전트 2콜(진단 → 윤문)로 실행한다. 변경률은 difflib로 대신 잰다(요약 블록을 반드시 떼고 비교).
 - PowerShell에서 `gh --jq` 식을 쓰면 따옴표가 깨진다. `gh api ... | ConvertFrom-Json`을 쓴다 [확인].
 - 첫 커밋 전에는 git worktree를 만들 수 없어서 main에서 진행했다. 이후 Task도 규칙 10(Task마다 확인)에 따라 main에 로컬 커밋한다.
@@ -415,3 +412,13 @@ SEC 실적 수집 (Phase 4) ─────────────────�
     - 전체 커밋 기록 개인정보 검사: 4건 모두 계획서의 검사 패턴 설명이라 오탐이다.
     - 작성자·커밋 이메일은 모두 GitHub noreply다.
   - 막힌 것: gh 토큰에 `workflow` 권한이 없다. Actions 설정은 기본값(토큰 read, PR 승인 불가)이다. 사용자 조치를 기다린다.
+- **2026-09-12:** Phase 2 Task 5를 완료했다.
+  - Actions 설정을 바꿨다(토큰 write, PR 생성 허용). 사용자가 `workflow` 권한을 승인했다.
+  - 권한 승인 과정: Aside CLI는 앱을 켠 뒤 정상 동작했지만 Aside 브라우저 프로필이 GitHub에 로그인돼 있지 않아 승인 화면까지 가지 못했다. 로그인은 하지 않고 멈췄다(규칙 12). 사용자가 자기 브라우저에서 기기 인증 코드를 승인했다.
+  - 배운 점: 기기 인증 흐름은 **Bash 백그라운드**로 띄워야 한다. PowerShell `Start-Job`은 명령이 끝날 때 함께 죽어서 승인 결과를 받지 못했다 [확인].
+  - 첫 push 완료. 실제 수집 실행 결과는 "변화 없음"이었고, 봇이 `data/checks.csv`를 main에 커밋했다(`6091c6a`).
+  - 시뮬레이션 실행 검증
+    - 검토 PR #1이 `review/simulated` 브랜치로 생성됐다(제목에 "머지 금지", 본문에 검토 보고서와 글 초안).
+    - 한 번 더 돌려도 새 PR이 생기지 않고 같은 PR이 갱신됐다.
+    - PR을 닫으니 브랜치가 지워지고 main은 그대로였다(반려 흐름 확인).
+  - **다음은 2-5a 디자인 게이트다. 여기서 멈춘다.**

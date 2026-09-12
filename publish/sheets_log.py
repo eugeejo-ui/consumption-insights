@@ -47,14 +47,19 @@ def append_rows(rows: list[list], sheet_id: str, session) -> int:
     return resp.json()["updates"]["updatedRows"]
 
 
+def _ok(response, what: str):
+    """실패하면 응답 본문까지 보여 준다. Google API는 이유를 본문에 적는다."""
+    if not response.ok:
+        raise SystemExit(f"{what} 실패 {response.status_code}: {response.text[:600]}")
+    return response
+
+
 def create_spreadsheet(title: str, owner_email: str, session) -> str:
     """시트를 만들고 사용자 계정에 편집 권한을 준다. 처음 한 번만 쓴다."""
-    created = session.post(CREATE_URL, json={"properties": {"title": title}}, timeout=30)
-    created.raise_for_status()
+    created = _ok(session.post(CREATE_URL, json={"properties": {"title": title}}, timeout=30), "시트 생성")
     sheet_id = created.json()["spreadsheetId"]
-    shared = session.post(PERMISSION_URL.format(sheet_id=sheet_id), params={"sendNotificationEmail": "false"},
-                          json={"type": "user", "role": "writer", "emailAddress": owner_email}, timeout=30)
-    shared.raise_for_status()
+    _ok(session.post(PERMISSION_URL.format(sheet_id=sheet_id), params={"sendNotificationEmail": "false"},
+                     json={"type": "user", "role": "writer", "emailAddress": owner_email}, timeout=30), "시트 공유")
     return sheet_id
 
 

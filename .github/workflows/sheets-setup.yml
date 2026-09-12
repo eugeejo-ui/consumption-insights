@@ -1,0 +1,48 @@
+name: sheets-setup
+# 처음 한 번만 돌린다. 가격 변동 이력을 적을 스프레드시트를 만들고, 사용자 Google 계정에 편집 권한을 준다.
+# 서비스 계정 키를 만들지 않는다. GitHub이 발급한 OIDC 토큰으로 워크로드 아이덴티티 인증을 받는다.
+on:
+  workflow_dispatch:
+    inputs:
+      owner_email:
+        description: "시트를 받을 Google 계정(편집 권한을 준다)"
+        required: true
+      baseline_day:
+        description: "기준선으로 적을 승인 스냅샷 날짜(예: 2026-09-11). 비우면 건너뛴다"
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - id: sheet
+        name: create the spreadsheet and share it
+        run: |
+          python -m publish.sheets_log --create-sheet "${{ inputs.owner_email }}" | tee sheet.log
+          echo "id=$(sed -n 's/^sheet_id=//p' sheet.log)" >> "$GITHUB_OUTPUT"
+      - name: write the baseline rows
+        if: inputs.baseline_day != ''
+        env:
+          PRICE_SHEET_ID: ${{ steps.sheet.outputs.id }}
+        run: python -m publish.sheets_log --baseline "${{ inputs.baseline_day }}"
+      - name: what to do next
+        run: |
+          echo "시트 ID: ${{ steps.sheet.outputs.id }}"
+          echo "저장소 변수 PRICE_SHEET_ID에 이 값을 등록하면 게시할 때마다 적재된다."

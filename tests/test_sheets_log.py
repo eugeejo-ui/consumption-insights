@@ -1,4 +1,4 @@
-from publish.sheets_log import HEADER, append_rows, baseline_rows, rows_from_events
+from publish.sheets_log import HEADER, append_rows, baseline_rows, create_spreadsheet, rows_from_events
 
 
 class FakeResponse:
@@ -38,6 +38,35 @@ def test_append_posts_raw_values_to_first_sheet():
     assert kw["params"] == {"valueInputOption": "RAW", "insertDataOption": "INSERT_ROWS"}
     assert kw["json"] == {"values": [["a", 1]]}
     assert append_rows([], "SHEET_ID", s) == 0 and len(s.calls) == 1   # 적재할 행이 없으면 호출하지 않는다
+
+
+class FakeCreateSession:
+    def __init__(self):
+        self.calls = []
+
+    def post(self, url, **kw):
+        self.calls.append((url, kw))
+        return FakeCreateResponse({"spreadsheetId": "SHEET_ID"} if "permissions" not in url else {"id": "perm"})
+
+
+class FakeCreateResponse:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.payload
+
+
+def test_create_sheet_shares_it_with_the_user():
+    s = FakeCreateSession()
+    assert create_spreadsheet("가격 변동 이력", "someone@example.invalid", s) == "SHEET_ID"
+    (create_url, create_kw), (share_url, share_kw) = s.calls
+    assert create_url.endswith("/v4/spreadsheets") and create_kw["json"]["properties"]["title"] == "가격 변동 이력"
+    assert share_url.endswith("/files/SHEET_ID/permissions")
+    assert share_kw["json"] == {"type": "user", "role": "writer", "emailAddress": "someone@example.invalid"}
 
 
 def test_baseline_starts_with_header_and_lists_every_price(price_records):

@@ -12,8 +12,10 @@ from urllib.parse import quote
 
 from common.schema import PriceRecord, read_snapshot
 
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file"]
 APPEND_URL = "https://sheets.googleapis.com/v4/spreadsheets/{sheet_id}/values/{range}:append"
+CREATE_URL = "https://sheets.googleapis.com/v4/spreadsheets"
+PERMISSION_URL = "https://www.googleapis.com/drive/v3/files/{sheet_id}/permissions"
 RANGE = "A:J"
 HEADER = ["감지일", "비교 기준일", "플랫폼", "항목", "SKU", "리전", "이전 단가", "새 단가", "변동률(%)", "커밋"]
 
@@ -45,12 +47,30 @@ def append_rows(rows: list[list], sheet_id: str, session) -> int:
     return resp.json()["updates"]["updatedRows"]
 
 
-def session_from_env():
-    from google.auth.transport.requests import AuthorizedSession
-    from google.oauth2 import service_account
+def create_spreadsheet(title: str, owner_email: str, session) -> str:
+    """시트를 만들고 사용자 계정에 편집 권한을 준다. 처음 한 번만 쓴다."""
+    created = session.post(CREATE_URL, json={"properties": {"title": title}}, timeout=30)
+    created.raise_for_status()
+    sheet_id = created.json()["spreadsheetId"]
+    shared = session.post(PERMISSION_URL.format(sheet_id=sheet_id), params={"sendNotificationEmail": "false"},
+                          json={"type": "user", "role": "writer", "emailAddress": owner_email}, timeout=30)
+    shared.raise_for_status()
+    return sheet_id
 
-    info = json.loads(os.environ["GOOGLE_SA_KEY"])
-    return AuthorizedSession(service_account.Credentials.from_service_account_info(info, scopes=SCOPES))
+
+def session_from_env():
+    """GitHub Actions에서는 워크로드 아이덴티티가 준 자격을 쓴다(키 파일 없음).
+    GOOGLE_SA_KEY가 있으면 그 서비스 계정 키를 쓴다(로컬 점검용)."""
+    from google.auth.transport.requests import AuthorizedSession
+
+    key = os.environ.get("GOOGLE_SA_KEY")
+    if key:
+        from google.oauth2 import service_account
+        credentials = service_account.Credentials.from_service_account_info(json.loads(key), scopes=SCOPES)
+    else:
+        import google.auth
+        credentials, _ = google.auth.default(scopes=SCOPES)
+    return AuthorizedSession(credentials)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -58,8 +78,14 @@ def main(argv: list[str] | None = None) -> int:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--events", type=Path, help="승인된 스냅샷의 events.json")
     group.add_argument("--baseline", metavar="DAY", help="처음 한 번: 승인 스냅샷 DAY의 단가를 기준선으로 기록")
+    group.add_argument("--create-sheet", metavar="EMAIL", help="처음 한 번: 시트를 만들고 이 계정에 편집 권한을 준다")
+    parser.add_argument("--title", default="consumption-insights 가격 변동 이력")
     parser.add_argument("--commit-url", default="")
     args = parser.parse_args(argv)
+    if args.create_sheet:
+        sheet_id = create_spreadsheet(args.title, args.create_sheet, session_from_env())
+        print(f"sheet_id={sheet_id}")
+        return sheet_id
     if args.events:
         rows = rows_from_events(json.loads(args.events.read_text(encoding="utf-8")), args.commit_url)
     else:

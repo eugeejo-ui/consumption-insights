@@ -81,10 +81,14 @@ jobs:
   log:
     needs: [build, deploy]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      issues: write
     env:
       PYTHONIOENCODING: utf-8
       DAY: ${{ needs.build.outputs.day }}
-      PRICE_SHEET_ID: ${{ secrets.PRICE_SHEET_ID }}
+      PRICE_SHEET_ID: ${{ vars.PRICE_SHEET_ID }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -93,12 +97,16 @@ jobs:
           cache: pip
       - if: env.PRICE_SHEET_ID != ''
         run: pip install -r requirements.txt
+      # 키 파일을 쓰지 않는다. GitHub OIDC 토큰으로 워크로드 아이덴티티 인증을 받는다.
+      - if: env.PRICE_SHEET_ID != ''
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
       - id: sheet
         name: append approved price changes to the sheet
         if: env.PRICE_SHEET_ID != ''
         continue-on-error: true
-        env:
-          GOOGLE_SA_KEY: ${{ secrets.GOOGLE_SA_KEY }}
         run: |
           if [ -f "data/raw/$DAY/events.json" ]; then
             python -m publish.sheets_log --events "data/raw/$DAY/events.json" \

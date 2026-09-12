@@ -3,9 +3,9 @@
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
 > **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
-> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~7 완료(테스트 51개). **대시보드가 GitHub Pages에 게시됐다: https://eugeejo-ui.github.io/consumption-insights/**
->   - 매일 수집 스케줄(00:17 UTC)을 켰다. 검토 PR을 머지하면 게시까지 자동으로 이어진다.
->   - 다음은 Task 8(가격 확인 알림)과 Task 9(종단 검증)다. 시트 적재는 사용자의 2-0c 준비를 기다린다.
+> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~8 완료(테스트 55개). **대시보드가 GitHub Pages에 게시됐다: https://eugeejo-ui.github.io/consumption-insights/**
+>   - 매일 수집(00:17 UTC)과 가격 확인 감시(01:37 UTC)가 돌고 있다. 검토 PR을 머지하면 게시까지 이어진다.
+>   - 다음은 Task 9(종단 검증)다. 시트 적재는 사용자의 2-0c 준비를 기다린다.
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -21,7 +21,7 @@
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 7 완료, Pages 게시됨) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
+| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 8 완료, 종단 검증만 남음) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
@@ -33,7 +33,7 @@
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 지시하면 Task 8(가격 확인 알림: 분기 1회 Issue + BigQuery 가격 지문 비교)을 한다(규칙 10).
+**다음 행동:** 사용자가 지시하면 Task 9(종단 검증: 가짜 변동 → 검토 PR → 머지 → 게시까지 한 번에 실측)를 한다(규칙 10).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -206,7 +206,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - [x] 2-5 (C) `.github/workflows/publish.yml` (2026-09-12 완료. 첫 게시 확인)
   - PR 머지(컨펌)로 main에 push되면 Pages 배포와 Sheets 적재를 한다.
   - 2-5a 디자인이 반영된 뒤에 한다.
-- [ ] 2-6 (C) 가격 변경 감지와 알림
+- [x] 2-6 (C) 가격 변경 감지와 알림 (2026-09-12 완료. `detect/price_watch.py`, `.github/workflows/watch.yml`)
   - **분기 1회** "Snowflake·Databricks 가격표 확인" Issue(공식 링크 + 체크리스트). 두 사이트에는 자동으로 접근하지 않는다.
   - BigQuery 가격 페이지는 리전별 가격 문자열의 지문을 비교하고, 바뀌면 Issue를 연다(Google 약관 허용, robots.txt 준수, 하루 1회).
 - [ ] 2-7 (C+U) 검증
@@ -315,6 +315,8 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - Aside CLI 1.26.906.1630이 설치돼 있고, 계정 u0(Google 제공자)로 로그인돼 있다 [확인]. `aside account`는 하위 명령(`list`, `status`)이 필요하다.
 - GitHub Pages [확인, 2026-09-12]: 주소는 https://eugeejo-ui.github.io/consumption-insights/ 다. 액션 버전은 `upload-pages-artifact@v5`, `deploy-pages@v5`다.
 - GitHub Actions 실측 [확인, 2026-09-12]: `actions/checkout@v7`과 `actions/setup-python@v7`이 동작하고, Actions 서버에서 AWS 가격 파일과 Azure API 호출이 성공한다. 봇(GITHUB_TOKEN)이 main에 커밋·push하고 PR을 만들고 닫을 수 있다.
+- Windows PowerShell 5.1의 `Set-Content -Encoding utf8`은 **BOM을 붙인다** [확인]. 저장소 파일은 Write 도구로 쓴다. 읽는 쪽은 `utf-8-sig`로 열어 BOM을 견딘다.
+- BigQuery 가격 페이지: `cloud.google.com/robots.txt`가 `/bigquery/pricing`을 막지 않는다 [확인 2026-09-12]. 가격 문자열만 뽑아 해시하면 nonce가 바뀌어도 지문이 같다(문자열 825개) [확인].
 - 기기 인증(OAuth device flow)은 Bash 백그라운드로 띄워야 한다 [확인]. PowerShell `Start-Job`은 그 명령이 끝날 때 함께 종료돼 승인 결과를 받지 못한다.
 - humanize-korean 스킬: 스크립트 경로를 찾지 못한다(스킬 폴더 위쪽에 `.claude-plugin` 폴더가 없다) [확인]. 그래서 정량 점수 shim과 변경률 게이트 없이 에이전트 2콜(진단 → 윤문)로 실행한다. 변경률은 difflib로 대신 잰다(요약 블록을 반드시 떼고 비교).
 - PowerShell에서 `gh --jq` 식을 쓰면 따옴표가 깨진다. `gh api ... | ConvertFrom-Json`을 쓴다 [확인].
@@ -468,3 +470,9 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - `publish.yml`: 머지된 스냅샷에 승인 기록을 남기고(`--confirm`) 사이트를 빌드해 Pages에 올린다. 시트 적재는 Secret이 있을 때만 돌고, 실패하면 Issue를 연다.
   - 매일 수집 스케줄(00:17 UTC)을 켰다(D3 조건 충족).
   - 실제 게시 확인: HTTP 200, 사이드바 스크롤 이동, 외부 이동 확인 창, 판정 용어가 모두 정상이다.
+- **2026-09-12:** Task 8(가격 확인 알림)을 완료했다(테스트 55개).
+  - `detect/price_watch.py`: BigQuery 가격 페이지의 **가격 문자열 지문**만 비교한다. 실측에서 두 번 받아도 지문이 같고(가격 문자열 825개), nonce 차이는 걸러진다 [확인].
+  - 수동 가격표는 확인일이 90일을 넘으면 "직접 확인" Issue를 만든다. Snowflake·Databricks 사이트에는 접근하지 않는다(약관).
+  - `.github/workflows/watch.yml`: 매일 01:37 UTC. 라벨(`price-watch`, `vendor-check`)로 중복 Issue를 막고, 새 지문을 저장소에 커밋한다.
+  - 검증: 지문을 일부러 가짜 값으로 바꿔 실행 → Issue #2 생성 → 봇이 실제 지문으로 복구 → Issue를 닫았다.
+  - 사고: PowerShell `Set-Content -Encoding utf8`이 BOM을 붙여 JSON 파싱이 깨졌다. 읽는 쪽을 `utf-8-sig`로 바꿔 사람이 고친 CSV·JSON도 견디게 했다.

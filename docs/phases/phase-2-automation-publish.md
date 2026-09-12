@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **진행 중** (2026-09-11): 계획 승인, 결정 D1~D3 확정. Task 1~7 완료(테스트 51개). **게시 완료**: https://eugeejo-ui.github.io/consumption-insights/ · 매일 스케줄 켜짐. 남은 것은 2-6 알림, 2-7 종단 검증, 2-0c 시트 준비 |
+| 상태 | **진행 중** (2026-09-11): 계획 승인, 결정 D1~D3 확정. Task 1~8 완료(테스트 55개). **게시 완료**: https://eugeejo-ui.github.io/consumption-insights/ · 매일 수집·감시 스케줄 켜짐. 남은 것은 2-7 종단 검증과 2-0c 시트 준비 |
 | 목표 | 매일 자동으로 가격을 모은다. 단가가 바뀌면 **중간 결과(스냅샷, 검토 보고서, 글 초안)를 PR로 올리고 멈춘다.** 사용자가 판단해 머지(컨펌)하면 GitHub Pages 게시와 Google 스프레드시트 적재가 진행된다 |
 | 선행 조건 | Phase 1 완료, 사용자의 GitHub 준비(2-0), Google Sheets 준비(2-0c) |
 | 코드 단위 계획 | `docs/plans/phase2-automation-publish.md`. Task 1~5까지 다루고 2-5a 전에 멈춘다. 그 이후(Task 6~9)는 템플릿을 받은 뒤 상세화한다 |
@@ -167,6 +167,10 @@
 - **2026-09-12 Task 7 완료** (2-5): Pages를 Actions 소스로 켜고 `publish.yml`을 만들었다. 머지된 스냅샷 승인 기록 → 사이트 빌드 → Pages 배포 → (Secret이 있으면) 시트 적재 순이다. 매일 수집 스케줄도 켰다
   - `pipeline.py --build` 추가: 승인 기록을 건드리지 않고 최근 승인 스냅샷으로 화면만 그린다
   - 첫 게시 확인: HTTP 200, 사이드바 스크롤 이동, 외부 이동 확인 창 정상
+- **2026-09-12 Task 8 완료** (2-6): `detect/price_watch.py` + `watch.yml`(매일 01:37 UTC)
+  - BigQuery: 가격 문자열 지문 비교. 바뀌면 `price-watch` Issue를 열고 새 지문을 커밋한다
+  - Snowflake·Databricks: 접근하지 않는다. 수동 가격표 확인일이 90일을 넘으면 `vendor-check` Issue로 알린다
+  - 검증: 가짜 지문으로 Issue 생성 → 지문 자동 복구 → Issue 닫음. 테스트 누적 55개
 - **2026-09-12 2-5a 통과 + Task 6 완료**: 사용자 Figma 템플릿 → 적용 계획(`docs/plans/phase2-5a-dashboard-design.md`) 승인 → 구현. 테스트 누적 50개
   - 결정 D4 CSS 막대(Plotly 제거), D5 시스템 글꼴, D6 바닐라 JS 필터
   - 외부 요청·외부 이미지 없음. 타사 로고 대신 워드마크와 색 배지

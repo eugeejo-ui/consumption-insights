@@ -1,0 +1,45 @@
+{
+  "day": "2026-09-12",
+  "compared_to": "2026-09-11",
+  "min_cost_change_pct": 1.0,
+  "price_changes": [
+    {
+      "platform": "redshift",
+      "service": "compute",
+      "sku": "serverless-rpu",
+      "region": "us",
+      "before": 0.375,
+      "after": 0.39375,
+      "change_pct": 5.0
+    }
+  ],
+  "cost_changes": [
+    {
+      "scenario": "W1",
+      "region": "us",
+      "platform": "redshift",
+      "before": 900.0,
+      "after": 933.0,
+      "change_pct": 3.7
+    },
+    {
+      "scenario": "W2",
+      "region": "us",
+      "platform": "redshift",
+      "before": 600.0,
+      "after": 618.0,
+      "change_pct": 3.0
+    },
+    {
+      "scenario": "W3",
+      "region": "us",
+      "platform": "redshift",
+      "before": 360.0,
+      "after": 366.0,
+      "change_pct": 1.7
+    }
+  ],
+  "rank_changes": [],
+  "status": "changed",
+  "significant": true
+}

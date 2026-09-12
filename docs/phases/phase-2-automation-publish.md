@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **진행 중** (2026-09-11): 계획 승인, 결정 D1~D3 확정. **Task 1~9 완료**(테스트 56개). 게시: https://eugeejo-ui.github.io/consumption-insights/ · 매일 수집·감시 스케줄 켜짐 · 종단 검증 완료. 남은 것은 2-0c 시트 준비와 적재 확인뿐이다 |
+| 상태 | **진행 중** (2026-09-11): 계획 승인, 결정 D1~D3 확정. **완료 (2026-09-12)**. 테스트 57개. 게시: https://eugeejo-ui.github.io/consumption-insights/ · 매일 수집·감시 스케줄 · 검토 PR 체크포인트 · 시트 적재(키 없이 워크로드 아이덴티티) |
 | 목표 | 매일 자동으로 가격을 모은다. 단가가 바뀌면 **중간 결과(스냅샷, 검토 보고서, 글 초안)를 PR로 올리고 멈춘다.** 사용자가 판단해 머지(컨펌)하면 GitHub Pages 게시와 Google 스프레드시트 적재가 진행된다 |
 | 선행 조건 | Phase 1 완료, 사용자의 GitHub 준비(2-0), Google Sheets 준비(2-0c) |
 | 코드 단위 계획 | `docs/plans/phase2-automation-publish.md`. Task 1~5까지 다루고 2-5a 전에 멈춘다. 그 이후(Task 6~9)는 템플릿을 받은 뒤 상세화한다 |
@@ -177,6 +177,12 @@
   - 반려·멱등성은 앞서 확인. `--dry-run` 추가
   - 가짜 스냅샷은 main에서 삭제(`a3b5395`)
   - 남은 것: 시트 적재(2-0c 준비 뒤)
+- **2026-09-12 Phase 2 완료** (2-0c, 2-2b 연결)
+  - 전용 GCP 프로젝트 + 서비스 계정 생성, Sheets API 활성화. **서비스 계정 키는 만들지 않았다**
+  - GitHub OIDC → 워크로드 아이덴티티로 인증(`google-github-actions/auth@v3`). 저장소 변수 `GCP_WIF_PROVIDER`, `GCP_SERVICE_ACCOUNT`
+  - 시트는 사용자 Drive에 만들고 서비스 계정을 편집자로 초대(Aside CLI). 서비스 계정은 Drive 저장 공간이 없어 스스로 시트를 만들지 못한다 [확인]
+  - `sheets-baseline.yml`로 기준선 19행 적재 후 시트에서 값 확인. 게시 워크플로의 적재 단계도 인증 통과
+  - Secret: `PRICE_SHEET_ID`, `SHEET_OWNER_EMAIL` (공개 로그 노출 방지)
 - **2026-09-12 2-5a 통과 + Task 6 완료**: 사용자 Figma 템플릿 → 적용 계획(`docs/plans/phase2-5a-dashboard-design.md`) 승인 → 구현. 테스트 누적 50개
   - 결정 D4 CSS 막대(Plotly 제거), D5 시스템 글꼴, D6 바닐라 JS 필터
   - 외부 요청·외부 이미지 없음. 타사 로고 대신 워드마크와 색 배지

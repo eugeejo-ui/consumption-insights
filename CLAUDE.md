@@ -3,10 +3,10 @@
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
 > **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
-> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. **Phase 2 Task 1~9 완료**(테스트 56개). **대시보드 게시: https://eugeejo-ui.github.io/consumption-insights/**
->   - 매일 수집(00:17 UTC)과 가격 확인 감시(01:37 UTC)가 돌고, 검토 PR을 머지하면 게시까지 이어진다. 종단 검증을 실측으로 마쳤다.
->   - 남은 것은 **시트 적재 연결뿐이다.** 사용자의 2-0c 준비(GCP 프로젝트·서비스 계정 키·시트 ID)를 기다린다.
->   - 그다음은 Phase 3(LinkedIn 방식 결정)과 Phase 4(실적 코너·비용 실험)다.
+> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. **Phase 2 완료**(테스트 57개). **대시보드 게시: https://eugeejo-ui.github.io/consumption-insights/**
+>   - 매일 수집(00:17 UTC)과 가격 확인 감시(01:37 UTC)가 돌고, 검토 PR을 머지하면 게시와 시트 적재까지 이어진다.
+>   - 시트 적재는 **서비스 계정 키 없이** 워크로드 아이덴티티로 연결했다. 기준선 18행을 적재해 확인했다.
+>   - 다음은 Phase 3(LinkedIn 방식 결정)과 Phase 4(실적 코너·비용 실험)다.
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -22,19 +22,19 @@
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **거의 완료** (시트 적재 연결만 남음) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
+| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **완료** (2026-09-12) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. **(U) Google Sheets 준비(2-0c).** 전용 GCP 프로젝트, 서비스 계정 키 → Secret `GOOGLE_SA_KEY`, 시트 ID → Secret `PRICE_SHEET_ID`. 등록 전까지 게시 워크플로의 적재 단계는 건너뛴다.
-   - 2-0 GitHub 준비, 2-5a 디자인 게이트, Pages 설정은 끝났다.
-   - Secret `SEC_USER_AGENT`는 Phase 4에서 등록한다.
+1. **Phase 3 또는 Phase 4를 시작할지 결정한다.** Phase 2는 끝났다.
+   - Phase 3: LinkedIn 게시 방식(A' 공식 공유 링크 추천)
+   - Phase 4: 실적 코너(SEC)와 BigQuery 비용 실험. 시작할 때 Secret `SEC_USER_AGENT`를 등록한다.
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 2-0c(Google Sheets)를 준비하면 시트 적재를 확인한다. 그 전에 지시하면 Phase 3 또는 Phase 4 계획을 쓴다(규칙 10).
+**다음 행동:** 사용자가 고른 Phase(3 또는 4)의 진행계획과 코드 계획을 쓰고 승인을 받는다(규칙 1·10).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -176,7 +176,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - Pages 소스를 GitHub Actions로 설정
   - Secret `SEC_USER_AGENT` 등록
 - [x] 2-0b (C) `.gitattributes`(`* text=auto eol=lf`)를 추가했다. Windows 작업 사본(CRLF)과 Linux CI의 줄바꿈을 맞추기 위해서다. 재정규화해 보니 기존 파일은 바뀌지 않았다 [확인].
-- [ ] 2-0c (U, C 보조) Google Sheets 준비
+- [x] 2-0c Google Sheets 준비 (2026-09-12 완료. **서비스 계정 키를 만들지 않았다** — 워크로드 아이덴티티로 연결)
   - **이 프로젝트 전용 새 GCP 프로젝트를 만든다(2026-09-11 사용자 결정).** 새 프로젝트에서 Sheets API를 활성화한다.
   - 서비스 계정과 JSON 키 발급 → Secret `GOOGLE_SA_KEY`
   - 스프레드시트를 만들어 서비스 계정에 편집 권한을 공유 → Secret `PRICE_SHEET_ID`
@@ -191,7 +191,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - E1 기준: 월 비용 ±1% 이상 변동 또는 순위 변경이면 글 초안을 만든다. 수동 가격표 변경도 포함한다.
   - 검토 PR은 단가가 하나라도 바뀌면 연다(D2).
   - 같은 날 이벤트는 합치고, 하루 최대 1건
-- [ ] 2-2b (C) **가격 변동 이력 Google Sheets 적재(컨펌 이후)** `publish/sheets_log.py`. 모듈은 완료(코드 계획 Task 4), 워크플로 연결은 2-5
+- [x] 2-2b (C) **가격 변동 이력 Google Sheets 적재(컨펌 이후)** `publish/sheets_log.py` (2026-09-12 연결 완료. 기준선 18행 적재 확인)
   - Python + google-auth로 Sheets API `values.append`를 호출한다.
   - **PR 머지 후 publish 단계에서** 적재한다.
   - 실패해도 게시는 계속하고 Issue로 알린다.
@@ -486,3 +486,11 @@ SEC 실적 수집 (Phase 4) ─────────────────�
     - 반려(PR 닫기) 시 아무것도 진행되지 않는 것과, 같은 날 재실행 시 같은 PR을 갱신하고 확인 기록이 한 줄만 남는 것은 앞서 확인했다.
   - 정리: 머지된 가짜 스냅샷 폴더를 main에서 지웠다(`a3b5395`). 승인 기록이 없어 비교 기준으로 쓰이지는 않았다.
   - 남은 것: Google Sheets 적재(2-0c 준비 뒤 확인).
+- **2026-09-12: Phase 2 완료.** Google Sheets 적재를 **서비스 계정 키 없이** 연결했다(테스트 57개).
+  - 전용 GCP 프로젝트와 서비스 계정을 `gcloud`로 만들고, Sheets API를 켰다. **키는 발급하지 않았다.**
+  - GitHub Actions의 OIDC 토큰으로 워크로드 아이덴티티 인증을 받도록 했다(`google-github-actions/auth@v3`). 저장소 변수 2개(`GCP_WIF_PROVIDER`, `GCP_SERVICE_ACCOUNT`)만 쓴다.
+  - **서비스 계정은 자기 이름으로 시트를 만들 수 없다**(403 The caller does not have permission) [확인]. Drive 저장 공간이 없어서다. 그래서 시트는 사용자 Drive에 만들고 서비스 계정을 편집자로 초대했다(Aside CLI로 진행).
+  - 시트 ID와 받는 사람 이메일은 공개 로그에 남지 않도록 Secret으로 뒀다(`PRICE_SHEET_ID`, `SHEET_OWNER_EMAIL`).
+  - `sheets-baseline.yml`로 기준선 19행(머리글 + 단가 18행)을 적재하고, 시트에서 값을 직접 확인했다.
+  - 게시 워크플로의 적재 단계도 인증까지 통과했다(첫 스냅샷이라 적재는 건너뜀).
+  - 사고: `python … | tee` 때문에 파이썬 실패가 묻혔다. `set -o pipefail`을 넣었다.

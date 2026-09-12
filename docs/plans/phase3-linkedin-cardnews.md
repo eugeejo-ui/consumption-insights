@@ -16,7 +16,7 @@
 
 **Tech Stack:** Python 3.11, Jinja2, pytest, 설치된 Chromium 계열 브라우저(Edge·Chrome), GitHub Actions. **새 의존성 없음.**
 
-**Spec:** `CLAUDE.md` Phase 3과 규칙 4·9·10·11·13·14·15·16, `docs/phases/phase-3-linkedin.md`, `docs/plans/phase3-card-design.md`
+**Spec:** `CLAUDE.md` Phase 3과 규칙 4·9·10·11·13·14·15·16·17, `docs/phases/phase-3-linkedin.md`, `docs/plans/phase3-card-design.md`
 
 ## 결정 (2026-09-12 사용자 확인)
 
@@ -34,14 +34,15 @@
 
 | Task | 만드는 것 | 테스트(누적) | 사용자가 할 일 |
 |---|---|---|---|
-| 1 | **실측.** 브라우저로 PNG·PDF 굽기, 한글 표시, CI 서버 확인 | +2 → 59 | — |
-| 2 | 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +9 → 68 | 문구 확인(선택) |
-| 3 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 74 | **카드 실물 확인** |
-| 4 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 78 | — |
-| 5 | 워크플로: 검토 PR에 카드 표시, 머지 후 사이트 게시 | 워크플로 실측 | 시뮬레이션 PR 확인 |
-| 6 | 소개 카드 5장 | +4 → 82 | 소개 문구 확인 |
-| 7 | 종단 검증 | — | — |
-| 8 | **첫 게시** | — | **LinkedIn에 직접 게시** |
+| 1 | **실측.** 브라우저로 PNG·PDF 굽기, 한글 표시, CI 서버 확인 | +3 → 60 | — |
+| 2 | **카드 스크립트 작성**(규칙 16). 확정 문안 + `/humanize-korean` 점검 | — | **문안 승인** |
+| 3 | 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +9 → 69 | — |
+| 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 75 | **카드 실물 확인** |
+| 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 79 | — |
+| 6 | 워크플로: 검토 PR에 카드 표시, 머지 후 사이트 게시 | 워크플로 실측 | 시뮬레이션 PR 확인 |
+| 7 | 소개 카드 구현 | +4 → 83 | — |
+| 8 | 종단 검증 | — | — |
+| 9 | **첫 게시** | — | **LinkedIn에 직접 게시** |
 
 ## Global Constraints
 
@@ -50,7 +51,7 @@
 - 카드 HTML에 **외부 요청이 하나도 없어야 한다.** `<img>`, `<link>`, `@import`, `url()`을 쓰지 않는다. 글꼴은 시스템 글꼴 스택만 쓴다.
 - 타사 로고와 원본 템플릿의 사진·일러스트를 쓰지 않는다. `_workspace/card-template/`의 파일을 저장소로 옮기지 않는다.
 - 카드와 게시문의 모든 숫자는 `events.json`에 있어야 한다(표시 반올림 허용).
-- 사용자에게 보이는 한국어는 격식 있는 문어체다(규칙 16). 용어 고정: 채택·기각, 작성일, 미국 리전·서울 리전, 월 비용이 낮은 순서.
+- 사용자에게 보이는 한국어는 격식 있는 문어체다(규칙 17). 문안은 규칙 16의 스크립트 단계를 거친다. 용어 고정: 채택·기각, 작성일, 미국 리전·서울 리전, 월 비용이 낮은 순서.
 - 카드 생성이 실패해도 **검토 PR은 열려야 한다.** 카드는 부가물이고 검토를 막으면 안 된다.
 - 커밋 메시지 끝에 `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`을 붙인다. 한 번에 Task 하나만 하고 보고한 뒤 멈춘다(규칙 10).
 
@@ -58,19 +59,19 @@
 
 ```
 publish/browser.py                 # Task 1: 브라우저 탐색, 스크린샷·PDF 호출
-publish/card_data.py               # Task 2: events → 카드 장별 데이터 / Task 6: 소개 카드
-publish/render_linkedin.py         # Task 2: 게시문
-templates/post_linkedin.md.j2      # Task 2
-templates/cards/cards.html.j2      # Task 3: 카드 HTML(모든 장)
-publish/render_cards.py            # Task 3: HTML 생성 + 굽기
-pipeline.py                        # Task 4: --cards 추가, 1단계 연결 / Task 5: --build에서 site/cards 복사
-.github/workflows/collect.yml      # Task 5: 카드 생성 단계, PR 본문에 카드 표시
-.github/workflows/publish.yml      # Task 5: (변경 없음. --build가 복사를 맡는다)
+publish/card_data.py               # Task 3: events → 카드 장별 데이터 / Task 7: 소개 카드
+publish/render_linkedin.py         # Task 3: 게시문
+templates/post_linkedin.md.j2      # Task 3
+templates/cards/cards.html.j2      # Task 4: 카드 HTML(모든 장)
+publish/render_cards.py            # Task 4: HTML 생성 + 굽기
+pipeline.py                        # Task 5: --cards 추가, 1단계 연결 / Task 6: --build에서 site/cards 복사
+.github/workflows/collect.yml      # Task 6: 카드 생성 단계, PR 본문에 카드 표시
+.github/workflows/publish.yml      # Task 6: (변경 없음. --build가 복사를 맡는다)
 tests/test_browser.py              # Task 1
-tests/test_card_data.py            # Task 2, 6
-tests/test_render_linkedin.py      # Task 2
-tests/test_render_cards.py         # Task 3
-tests/test_pipeline.py             # Task 4: 단언 추가
+tests/test_card_data.py            # Task 3, 6
+tests/test_render_linkedin.py      # Task 3
+tests/test_render_cards.py         # Task 4
+tests/test_pipeline.py             # Task 5: 단언 추가
 ```
 
 ## 산출물 폴더
@@ -81,7 +82,7 @@ data/raw/<날짜>/cards/
     01-cover.png … 05-closing.png
     cards.pdf         # 같은 장을 묶은 캐러셀용 문서
 data/raw/<날짜>/linkedin.md        # 게시문
-data/cards/intro/                  # 소개 카드(날짜와 무관). Task 6
+data/cards/intro/                  # 소개 카드(날짜와 무관). Task 7
 site/cards/<날짜>/                 # 게시 후 복사본(빌드 산출물, 커밋하지 않는다)
 site/cards/intro/
 ```
@@ -196,7 +197,37 @@ def print_pdf(html: Path, out: Path) -> Path:
 
 ---
 
-### Task 2: 카드 데이터와 게시문 (디자인과 무관한 부분)
+### Task 2: 카드 스크립트 작성 (규칙 16)
+
+**이 Task에는 코드가 없다.** 사람이 읽을 문장을 먼저 확정한다. 문안을 확정하지 않은 채 템플릿을 만들면 어조가 어긋난 문장이 코드에 박힌 뒤에 발견된다.
+
+**Files:** Create `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md`
+
+**담을 것**
+- 소개 5장과 정기 4~5장의 **장별 확정 문안**
+- 고정 문안과 **자리표시자**(`{작성일}`, `{플랫폼}`, `{전}`, `{후}`, `{변화율}`)를 구분해 표기
+- 표지 제목 생성 규칙 세 가지 경우의 실제 문장
+- 넘치는 항목의 `외 N건` 문구
+- LinkedIn 게시문 전문
+- 장 종류별 **제목 최대 글자 수**. Task 1에서 104px 제목이 카드 폭을 거의 채우는 것을 확인했다
+
+**어조 규정 (규칙 16)**
+- executive 보고체. 결론을 먼저, 근거를 뒤에 둔다.
+- 구어체를 배제한다. 말 걸기, 감탄, 권유형 어미, 대화체 연결어를 쓰지 않는다.
+- 한 문장에 한 가지 사실만 담는다.
+- 용어 고정(규칙 17): 채택·기각, 작성일, 미국 리전·서울 리전, 월 비용이 낮은 순서.
+
+- [ ] **Step 1** 초안을 쓴다
+- [ ] **Step 2** `/humanize-korean`으로 점검하고 결과를 문서에 남긴다
+- [ ] **Step 3** 시험 카드로 구워 글자가 넘치지 않는지 확인한다
+- [ ] **Step 4** **사용자 승인.** 승인 전에는 Task 3으로 넘어가지 않는다
+- [ ] **Step 5** 커밋 — `docs: fix the card script before automating it`
+
+**완료 기준:** 모든 장의 문안이 확정되고, 구어체가 없으며, 사용자가 승인했다.
+
+---
+
+### Task 3: 카드 데이터와 게시문 (디자인과 무관한 부분)
 
 **Files:**
 - Create: `publish/card_data.py`, `publish/render_linkedin.py`, `templates/post_linkedin.md.j2`, `tests/test_card_data.py`, `tests/test_render_linkedin.py`
@@ -282,7 +313,7 @@ def test_a_number_that_is_not_in_events_is_rejected(sample_events, sample_cards)
         render_linkedin(sample_events, sample_cards)
 ```
 
-테스트 픽스처 `sample_events`, `sample_cards`를 `tests/conftest.py`에 추가한다. `price_records`·`workloads` 픽스처로 Redshift 미국 RPU를 0.80으로 올린 이벤트와 그 카드다. 카드 템플릿 테스트(Task 3)와 게시문 테스트가 같은 것을 쓴다.
+테스트 픽스처 `sample_events`, `sample_cards`를 `tests/conftest.py`에 추가한다. `price_records`·`workloads` 픽스처로 Redshift 미국 RPU를 0.80으로 올린 이벤트와 그 카드다. 카드 템플릿 테스트(Task 4)와 게시문 테스트가 같은 것을 쓴다.
 
 - [ ] **Step 2: 실패 확인** → `ModuleNotFoundError`
 
@@ -324,7 +355,7 @@ def test_a_number_that_is_not_in_events_is_rejected(sample_events, sample_cards)
 
 ---
 
-### Task 3: 카드 HTML 템플릿과 굽기
+### Task 4: 카드 HTML 템플릿과 굽기
 
 디자인은 **`docs/plans/phase3-card-design.md`를 그대로 따른다.** 이 Task에서 디자인을 새로 정하지 않는다.
 
@@ -409,7 +440,7 @@ def bake(cards, out_dir, eyebrow):
 
 ---
 
-### Task 4: `pipeline.py` 연결
+### Task 5: `pipeline.py` 연결
 
 **Files:** Modify `pipeline.py`, `tests/test_pipeline.py`
 
@@ -423,14 +454,14 @@ def bake(cards, out_dir, eyebrow):
   - `collect_and_review()`의 `if events["significant"]:` 블록에 카드와 게시문 생성을 넣는다.
   - 순서가 중요하다. `price_change_cards()`가 `events`를 보강하므로 **카드 데이터를 먼저 만들고 그 다음에 `events.json`을 쓴다**(D13).
   - 굽기는 `try/except`로 감싸고, 실패하면 경고만 출력한다. 검토 자료는 그대로 남는다.
-  - `--cards DAY` 인자를 추가한다. `DAY`가 `intro`면 소개 카드를 굽는다(Task 6).
+  - `--cards DAY` 인자를 추가한다. `DAY`가 `intro`면 소개 카드를 굽는다(Task 7).
   - `build_site()`에서 `data/raw/<승인일>/cards/`와 `data/cards/intro/`를 `site/cards/`로 복사한다.
 
 - [ ] **Step 3: 커밋** — `feat: make cards as part of the daily pipeline`
 
 ---
 
-### Task 5: 워크플로 연결
+### Task 6: 워크플로 연결
 
 **Files:** Modify `.github/workflows/collect.yml`
 
@@ -452,13 +483,13 @@ def bake(cards, out_dir, eyebrow):
 
 ---
 
-### Task 6: 소개 카드 5장
+### Task 7: 소개 카드 5장
 
 **Files:** Modify `publish/card_data.py`, `templates/cards/cards.html.j2`, `tests/test_card_data.py`
 
 - [ ] **Step 1: 테스트 작성**
   - `intro_cards(analysis, day)`가 5장을 돌려주고 종류가 `["cover", "chips", "flow", "bullets", "closing"]`이다
-  - 4장의 판정 문구가 **채택 / 기각**을 쓴다(규칙 16). "지지"라는 낱말이 들어가면 실패한다
+  - 4장의 판정 문구가 **채택 / 기각**을 쓴다(규칙 17). "지지"라는 낱말이 들어가면 실패한다
   - 시나리오별 1위가 최신 승인 스냅샷의 계산 결과와 같다
   - 소개 카드에는 `events.json`이 없으므로, 숫자 검사는 **계산 결과로 만든 사전**을 기준으로 한다
 
@@ -472,7 +503,7 @@ def bake(cards, out_dir, eyebrow):
 
 ---
 
-### Task 7: 종단 검증
+### Task 8: 종단 검증
 
 - [ ] 시뮬레이션 변동 주입 → 검토 PR에 카드 5장과 게시문이 보인다
 - [ ] PR을 닫으면 아무것도 진행되지 않는다
@@ -484,7 +515,7 @@ def bake(cards, out_dir, eyebrow):
 
 ---
 
-### Task 8: 첫 게시 (사용자)
+### Task 9: 첫 게시 (사용자)
 
 - [ ] 소개 카드 5장을 굽는다(`pipeline.py --cards intro`)
 - [ ] 사용자가 게시된 주소에서 이미지 또는 PDF를 받는다

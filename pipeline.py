@@ -84,6 +84,20 @@ def simulate_change(records: list[PriceRecord], factor: float = 1.05) -> list[Pr
             if (r.platform, r.service, r.region) == SIMULATED else r for r in records]
 
 
+def dry_run() -> dict:
+    """아무것도 쓰지 않고 오늘 가격과 판정만 확인한다(점검용)."""
+    day = dt.date.today().isoformat()
+    records = aws_prices.collect(day) + azure_prices.collect(day) + manual_prices.collect()
+    result = analyze(records)
+    compared_to = latest_approved_day(day, RAW)
+    events = detect(day, records, previous_snapshot(day, RAW), compared_to, result["workloads"], result["thresholds"])
+    print(f"[점검] {day} · 수집 {len(records)}행 · 비교 기준 {compared_to or '없음'} · 상태 {events['status']}"
+          f" · 글 초안 대상 {'예' if events['significant'] else '아니오'}")
+    for change in events["price_changes"] or []:
+        print(f"  - {change['platform']} {change['sku']} {change['region']}: {change['before']} → {change['after']}")
+    return events
+
+
 def collect_and_review(simulate: bool = False) -> Path:
     """1단계: 변화가 있으면 검토 자료까지만 만들고 멈춘다. 화면 생성과 커밋은 컨펌 이후에 한다."""
     day = dt.date.today().isoformat()
@@ -183,7 +197,10 @@ def main(argv: list[str] | None = None) -> Path:
     parser.add_argument("--simulate", action="store_true", help="검증용 가짜 변동을 넣는다(검토 PR 흐름 확인용, 머지 금지)")
     parser.add_argument("--build", nargs="?", const="", metavar="DAY",
                         help="승인된 스냅샷(생략하면 가장 최근)으로 사이트만 다시 그린다. 게시 워크플로가 쓴다")
+    parser.add_argument("--dry-run", action="store_true", help="아무것도 쓰지 않고 오늘 가격과 판정만 확인한다")
     args = parser.parse_args(argv)
+    if args.dry_run:
+        return dry_run()
     if args.confirm:
         return confirm(args.confirm)
     if args.build is not None:

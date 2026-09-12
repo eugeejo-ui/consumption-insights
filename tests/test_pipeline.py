@@ -137,6 +137,19 @@ def test_simulated_snapshot_is_marked_and_cannot_be_confirmed(tmp_path, monkeypa
     assert not Path("data/raw", TODAY, "approved.txt").exists()
 
 
+def test_dry_run_writes_nothing(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _fake_collectors(monkeypatch, price_records)
+    _approved([replace(r, price_usd=0.30) if (r.platform, r.service, r.region) == ("redshift", "compute", "us") else r
+               for r in price_records])
+
+    events = pipeline.main(["--dry-run"])
+
+    assert events["status"] == "changed" and events["significant"]
+    assert not Path("data/raw", TODAY).exists() and not Path("data/checks.csv").exists() and not Path("site").exists()
+
+
 def test_build_renders_the_latest_approved_snapshot(tmp_path, monkeypatch, price_records):
     monkeypatch.chdir(tmp_path)
     _copy_config(tmp_path)

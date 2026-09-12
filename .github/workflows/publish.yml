@@ -50,7 +50,8 @@ jobs:
             day=$(basename "$dir")
             if [ -f "$dir/review.md" ] && [ ! -f "$dir/approved.txt" ]; then
               echo "confirming $day"
-              python pipeline.py --confirm "$day"
+              # 시뮬레이션 스냅샷은 파이프라인이 거부한다. 그때는 건너뛰고 게시는 계속한다.
+              python pipeline.py --confirm "$day" || echo "::warning::$day 스냅샷은 반영하지 않았다(시뮬레이션이거나 검토 자료가 불완전하다)."
             fi
           done
           git add data/raw

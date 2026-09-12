@@ -23,7 +23,8 @@
 - Task 5 완료(2026-09-12): push, 실제 실행(변화 없음 → checks.csv 봇 커밋), 시뮬레이션 2회(PR 생성 → 같은 PR 갱신) → PR 닫기(반려 흐름)
 - 2-5a 디자인 게이트 통과(2026-09-12): 계획 `docs/plans/phase2-5a-dashboard-design.md` 승인
 - Task 6 완료(2026-09-12): 템플릿 기반 대시보드. CSS 막대, 시스템 글꼴, JS 필터. Plotly 제거. 테스트 50개
-- **다음은 Task 7(`publish.yml` + Pages 배포 + 시트 적재)이다. Pages 소스 설정(사용자)이 필요하다.**
+- Task 7 완료(2026-09-12): Pages 설정, `publish.yml`, `pipeline.py --build`, 매일 스케줄 활성화. 게시 주소는 https://eugeejo-ui.github.io/consumption-insights/ 다. 테스트 51개
+- **다음은 Task 8(2-6 가격 확인 알림)과 Task 9(2-7 종단 검증)다. 시트 적재 연결은 사용자의 2-0c 준비 뒤에 확인한다.**
 - Task 4 Step 6(실제 기준선 적재, 선택)은 2-0c 전이라 2-7로 미뤘다.
 - Task 3 Step 5(실제 실행): 오늘(2026-09-11)은 승인 스냅샷이 있어 같은 날 재수집 가드가 막았다. 그래서 `data/checks.csv`는 아직 없다. 파일을 쓰지 않은 실제 수집·비교에서는 18행이 승인본과 같았다.
 

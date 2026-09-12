@@ -3,8 +3,9 @@
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
 > **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
-> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~6 완료(테스트 50개). 공개 저장소 push와 워크플로 검증을 마쳤고, 사용자 템플릿을 바탕으로 대시보드를 새로 만들었다.
->   - 다음은 Task 7(`publish.yml` + Pages 배포)이다. 사용자에게 Pages 소스 설정을 받아야 한다.
+> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~7 완료(테스트 51개). **대시보드가 GitHub Pages에 게시됐다: https://eugeejo-ui.github.io/consumption-insights/**
+>   - 매일 수집 스케줄(00:17 UTC)을 켰다. 검토 PR을 머지하면 게시까지 자동으로 이어진다.
+>   - 다음은 Task 8(가격 확인 알림)과 Task 9(종단 검증)다. 시트 적재는 사용자의 2-0c 준비를 기다린다.
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -20,19 +21,19 @@
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 6 완료, Task 7 대기) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
+| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 7 완료, Pages 게시됨) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. **(U) Task 7 전 준비:** GitHub Pages 소스를 "GitHub Actions"로 설정. Google Sheets 준비(2-0c)는 시트 적재를 켤 때 필요하다.
-   - 2-0 GitHub 준비와 2-5a 디자인 게이트는 끝났다.
+1. **(U) Google Sheets 준비(2-0c).** 전용 GCP 프로젝트, 서비스 계정 키 → Secret `GOOGLE_SA_KEY`, 시트 ID → Secret `PRICE_SHEET_ID`. 등록 전까지 게시 워크플로의 적재 단계는 건너뛴다.
+   - 2-0 GitHub 준비, 2-5a 디자인 게이트, Pages 설정은 끝났다.
    - Secret `SEC_USER_AGENT`는 Phase 4에서 등록한다.
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 화면을 확인하고 지시하면 Task 7(`publish.yml` + Pages 배포 + 시트 적재)을 한다(규칙 10).
+**다음 행동:** 사용자가 지시하면 Task 8(가격 확인 알림: 분기 1회 Issue + BigQuery 가격 지문 비교)을 한다(규칙 10).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -202,7 +203,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - [x] **2-5a (U → C) 대시보드 디자인 게이트** (규칙 13). 2026-09-12 완료: 사용자 Figma 템플릿 → 적용 계획 승인 → 구현(코드 계획 Task 6)
   - 공개 대시보드를 만들기 전에 **멈추고 보고한다**.
   - 사용자가 템플릿을 주면 디자인을 분석하고, 적용 계획을 세워 승인받은 뒤 구축한다.
-- [ ] 2-5 (C) `.github/workflows/publish.yml`
+- [x] 2-5 (C) `.github/workflows/publish.yml` (2026-09-12 완료. 첫 게시 확인)
   - PR 머지(컨펌)로 main에 push되면 Pages 배포와 Sheets 적재를 한다.
   - 2-5a 디자인이 반영된 뒤에 한다.
 - [ ] 2-6 (C) 가격 변경 감지와 알림
@@ -312,6 +313,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - git 줄바꿈: 커밋할 때 "LF will be replaced by CRLF" 경고가 나온다. 전역 autocrlf 설정 때문이며, 저장소에는 LF로 저장된다 [확인]. Phase 2 Task 5에서 `.gitattributes`(`* text=auto eol=lf`)를 추가했다(2-0b).
 - `.gitignore`: 패턴 `site/`는 모든 위치의 `site` 폴더를 제외한다. 루트 빌드 결과물만 제외하려면 `/site/`로 쓴다 [확인, Task 7 사고].
 - Aside CLI 1.26.906.1630이 설치돼 있고, 계정 u0(Google 제공자)로 로그인돼 있다 [확인]. `aside account`는 하위 명령(`list`, `status`)이 필요하다.
+- GitHub Pages [확인, 2026-09-12]: 주소는 https://eugeejo-ui.github.io/consumption-insights/ 다. 액션 버전은 `upload-pages-artifact@v5`, `deploy-pages@v5`다.
 - GitHub Actions 실측 [확인, 2026-09-12]: `actions/checkout@v7`과 `actions/setup-python@v7`이 동작하고, Actions 서버에서 AWS 가격 파일과 Azure API 호출이 성공한다. 봇(GITHUB_TOKEN)이 main에 커밋·push하고 PR을 만들고 닫을 수 있다.
 - 기기 인증(OAuth device flow)은 Bash 백그라운드로 띄워야 한다 [확인]. PowerShell `Start-Job`은 그 명령이 끝날 때 함께 종료돼 승인 결과를 받지 못한다.
 - humanize-korean 스킬: 스크립트 경로를 찾지 못한다(스킬 폴더 위쪽에 `.claude-plugin` 폴더가 없다) [확인]. 그래서 정량 점수 shim과 변경률 게이트 없이 에이전트 2콜(진단 → 윤문)로 실행한다. 변경률은 difflib로 대신 잰다(요약 블록을 반드시 떼고 비교).
@@ -460,3 +462,9 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - **2026-09-12:** 외부 링크(저장소·스냅샷)를 누르면 대시보드 안에서 이동 여부를 묻는 창을 띄우게 했다(사용자 요청).
   - 사고: `.modal`에 `display:flex`를 줘서 `hidden` 속성이 덮였다. 처음부터 창이 열린 채 닫히지 않았다. `.modal[hidden]{display:none}`으로 고쳤고, 이 규칙이 남아 있는지 테스트로 확인한다.
   - 교훈: 화면 요소는 속성값(`element.hidden`)이 아니라 **실제 표시 상태(`getComputedStyle`)와 눈으로** 확인한다.
+- **2026-09-12:** Task 7을 완료했다. 대시보드를 게시했다(테스트 51개).
+  - Pages를 Actions 소스로 켰다(`gh api -X POST .../pages -f build_type=workflow`). 주소는 https://eugeejo-ui.github.io/consumption-insights/ 다.
+  - `pipeline.py --build`를 추가했다. 승인 기록은 그대로 두고 가장 최근 승인 스냅샷으로 화면만 그린다. 이전 승인 스냅샷과 비교한 순위 변동도 함께 표시한다.
+  - `publish.yml`: 머지된 스냅샷에 승인 기록을 남기고(`--confirm`) 사이트를 빌드해 Pages에 올린다. 시트 적재는 Secret이 있을 때만 돌고, 실패하면 Issue를 연다.
+  - 매일 수집 스케줄(00:17 UTC)을 켰다(D3 조건 충족).
+  - 실제 게시 확인: HTTP 200, 사이드바 스크롤 이동, 외부 이동 확인 창, 판정 용어가 모두 정상이다.

@@ -51,6 +51,7 @@ def test_site_has_all_sections(tmp_path, workloads):
     assert "consumption-insights" in html          # 사이드바 워드마크(타사 로고를 쓰지 않는다)
     assert "서울 프리미엄" in html and "가정 공개" in html
     assert 'id="leave-modal"' in html and "외부 페이지로 이동합니다" in html   # 외부 링크는 확인 창을 거친다
+    assert ".modal[hidden]{display:none}" in html   # 처음에는 닫혀 있어야 한다(display:flex가 hidden을 덮지 않게)
 
 
 def test_site_has_a_panel_for_every_scenario_and_region(tmp_path, workloads):

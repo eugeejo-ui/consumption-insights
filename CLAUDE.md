@@ -23,18 +23,18 @@
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
 | Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **완료** (2026-09-12) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
-| Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
+| Phase 3: LinkedIn 카드뉴스 | **새 대화에서 진행** | 카드뉴스 이미지 + 게시문 자동 생성, 게시는 사람이 한다 | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. **Phase 3 또는 Phase 4를 시작할지 결정한다.** Phase 2는 끝났다.
-   - Phase 3: LinkedIn 게시 방식(A' 공식 공유 링크 추천)
-   - Phase 4: 실적 코너(SEC)와 BigQuery 비용 실험. 시작할 때 Secret `SEC_USER_AGENT`를 등록한다.
+1. **Phase 3(LinkedIn 카드뉴스)은 같은 폴더의 새 Claude Code 대화에서 진행한다**(2026-09-12 사용자 결정). 인수인계 내용은 `docs/phases/phase-3-linkedin.md`에 있다.
+   - 요구사항: 새 정보를 반영한 카드뉴스 이미지를 자동으로 만들고, 게시문과 함께 LinkedIn에 올린다. 게시 버튼은 사람이 누른다(약관).
+2. Phase 4(실적 코너·BigQuery 비용 실험)는 이 대화에서 이어갈 수 있다. 시작할 때 Secret `SEC_USER_AGENT`를 등록한다.
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 고른 Phase(3 또는 4)의 진행계획과 코드 계획을 쓰고 승인을 받는다(규칙 1·10).
+**다음 행동:** Phase 3은 새 대화로 넘겼다. 이 대화에서는 사용자가 지시하면 Phase 4 계획을 쓴다(규칙 1·10).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 

@@ -12,10 +12,8 @@ from urllib.parse import quote
 
 from common.schema import PriceRecord, read_snapshot
 
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file"]
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 APPEND_URL = "https://sheets.googleapis.com/v4/spreadsheets/{sheet_id}/values/{range}:append"
-CREATE_URL = "https://sheets.googleapis.com/v4/spreadsheets"
-PERMISSION_URL = "https://www.googleapis.com/drive/v3/files/{sheet_id}/permissions"
 RANGE = "A:J"
 HEADER = ["감지일", "비교 기준일", "플랫폼", "항목", "SKU", "리전", "이전 단가", "새 단가", "변동률(%)", "커밋"]
 
@@ -41,9 +39,8 @@ def append_rows(rows: list[list], sheet_id: str, session) -> int:
     if not rows:
         return 0
     url = APPEND_URL.format(sheet_id=quote(sheet_id, safe=""), range=quote(RANGE, safe=""))
-    resp = session.post(url, params={"valueInputOption": "RAW", "insertDataOption": "INSERT_ROWS"},
-                        json={"values": rows}, timeout=30)
-    resp.raise_for_status()
+    resp = _ok(session.post(url, params={"valueInputOption": "RAW", "insertDataOption": "INSERT_ROWS"},
+                            json={"values": rows}, timeout=30), "시트 적재")
     return resp.json()["updates"]["updatedRows"]
 
 
@@ -52,15 +49,6 @@ def _ok(response, what: str):
     if not response.ok:
         raise SystemExit(f"{what} 실패 {response.status_code}: {response.text[:600]}")
     return response
-
-
-def create_spreadsheet(title: str, owner_email: str, session) -> str:
-    """시트를 만들고 사용자 계정에 편집 권한을 준다. 처음 한 번만 쓴다."""
-    created = _ok(session.post(CREATE_URL, json={"properties": {"title": title}}, timeout=30), "시트 생성")
-    sheet_id = created.json()["spreadsheetId"]
-    _ok(session.post(PERMISSION_URL.format(sheet_id=sheet_id), params={"sendNotificationEmail": "false"},
-                     json={"type": "user", "role": "writer", "emailAddress": owner_email}, timeout=30), "시트 공유")
-    return sheet_id
 
 
 def session_from_env():
@@ -83,14 +71,8 @@ def main(argv: list[str] | None = None) -> int:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--events", type=Path, help="승인된 스냅샷의 events.json")
     group.add_argument("--baseline", metavar="DAY", help="처음 한 번: 승인 스냅샷 DAY의 단가를 기준선으로 기록")
-    group.add_argument("--create-sheet", metavar="EMAIL", help="처음 한 번: 시트를 만들고 이 계정에 편집 권한을 준다")
-    parser.add_argument("--title", default="consumption-insights 가격 변동 이력")
     parser.add_argument("--commit-url", default="")
     args = parser.parse_args(argv)
-    if args.create_sheet:
-        sheet_id = create_spreadsheet(args.title, args.create_sheet, session_from_env())
-        print(f"sheet_id={sheet_id}")
-        return sheet_id
     if args.events:
         rows = rows_from_events(json.loads(args.events.read_text(encoding="utf-8")), args.commit_url)
     else:

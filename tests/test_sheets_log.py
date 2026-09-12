@@ -1,24 +1,24 @@
-from publish.sheets_log import HEADER, append_rows, baseline_rows, create_spreadsheet, rows_from_events
+import pytest
+
+from publish.sheets_log import HEADER, append_rows, baseline_rows, rows_from_events
 
 
 class FakeResponse:
-    def __init__(self, n):
-        self.n = n
-
-    def raise_for_status(self):
-        pass
+    def __init__(self, rows=0, ok=True, status=200, text=""):
+        self.rows, self.ok, self.status_code, self.text = rows, ok, status, text
 
     def json(self):
-        return {"updates": {"updatedRows": self.n}}
+        return {"updates": {"updatedRows": self.rows}}
 
 
 class FakeSession:
-    def __init__(self):
+    def __init__(self, response=None):
         self.calls = []
+        self.response = response
 
     def post(self, url, **kw):
         self.calls.append((url, kw))
-        return FakeResponse(len(kw["json"]["values"]))
+        return self.response or FakeResponse(len(kw["json"]["values"]))
 
 
 def test_rows_from_events_one_row_per_price_change():
@@ -40,33 +40,10 @@ def test_append_posts_raw_values_to_first_sheet():
     assert append_rows([], "SHEET_ID", s) == 0 and len(s.calls) == 1   # 적재할 행이 없으면 호출하지 않는다
 
 
-class FakeCreateSession:
-    def __init__(self):
-        self.calls = []
-
-    def post(self, url, **kw):
-        self.calls.append((url, kw))
-        return FakeCreateResponse({"spreadsheetId": "SHEET_ID"} if "permissions" not in url else {"id": "perm"})
-
-
-class FakeCreateResponse:
-    def __init__(self, payload):
-        self.payload = payload
-
-    def raise_for_status(self):
-        pass
-
-    def json(self):
-        return self.payload
-
-
-def test_create_sheet_shares_it_with_the_user():
-    s = FakeCreateSession()
-    assert create_spreadsheet("가격 변동 이력", "someone@example.invalid", s) == "SHEET_ID"
-    (create_url, create_kw), (share_url, share_kw) = s.calls
-    assert create_url.endswith("/v4/spreadsheets") and create_kw["json"]["properties"]["title"] == "가격 변동 이력"
-    assert share_url.endswith("/files/SHEET_ID/permissions")
-    assert share_kw["json"] == {"type": "user", "role": "writer", "emailAddress": "someone@example.invalid"}
+def test_append_failure_shows_the_google_message():
+    denied = FakeResponse(ok=False, status=403, text='{"error": {"message": "The caller does not have permission"}}')
+    with pytest.raises(SystemExit, match="The caller does not have permission"):
+        append_rows([["a"]], "SHEET_ID", FakeSession(denied))
 
 
 def test_baseline_starts_with_header_and_lists_every_price(price_records):

@@ -40,9 +40,10 @@
 | 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 75 | **카드 실물 확인** |
 | 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 79 | — |
 | 6 | 워크플로: 검토 PR에 카드 표시, 머지 후 사이트 게시 | 워크플로 실측 | 시뮬레이션 PR 확인 |
-| 7 | 소개 카드 구현 | +4 → 83 | — |
-| 8 | 종단 검증 | — | — |
-| 9 | **첫 게시** | — | **LinkedIn에 직접 게시** |
+| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 81 | 반려 시 라벨 1개 |
+| 8 | 소개 카드 구현 | +4 → 85 | — |
+| 9 | 종단 검증 | — | — |
+| 10 | **첫 게시** | — | **LinkedIn에 직접 게시** |
 
 ## Global Constraints
 
@@ -59,7 +60,7 @@
 
 ```
 publish/browser.py                 # Task 1: 브라우저 탐색, 스크린샷·PDF 호출
-publish/card_data.py               # Task 3: events → 카드 장별 데이터 / Task 7: 소개 카드
+publish/card_data.py               # Task 3: events → 카드 장별 데이터 / Task 8: 소개 카드
 publish/render_linkedin.py         # Task 3: 게시문
 templates/post_linkedin.md.j2      # Task 3
 templates/cards/cards.html.j2      # Task 4: 카드 HTML(모든 장)
@@ -82,7 +83,7 @@ data/raw/<날짜>/cards/
     01-cover.png … 05-closing.png
     cards.pdf         # 같은 장을 묶은 캐러셀용 문서
 data/raw/<날짜>/linkedin.md        # 게시문
-data/cards/intro/                  # 소개 카드(날짜와 무관). Task 7
+data/cards/intro/                  # 소개 카드(날짜와 무관). Task 8
 site/cards/<날짜>/                 # 게시 후 복사본(빌드 산출물, 커밋하지 않는다)
 site/cards/intro/
 ```
@@ -454,7 +455,7 @@ def bake(cards, out_dir, eyebrow):
   - `collect_and_review()`의 `if events["significant"]:` 블록에 카드와 게시문 생성을 넣는다.
   - 순서가 중요하다. `price_change_cards()`가 `events`를 보강하므로 **카드 데이터를 먼저 만들고 그 다음에 `events.json`을 쓴다**(D13).
   - 굽기는 `try/except`로 감싸고, 실패하면 경고만 출력한다. 검토 자료는 그대로 남는다.
-  - `--cards DAY` 인자를 추가한다. `DAY`가 `intro`면 소개 카드를 굽는다(Task 7).
+  - `--cards DAY` 인자를 추가한다. `DAY`가 `intro`면 소개 카드를 굽는다(Task 8).
   - `build_site()`에서 `data/raw/<승인일>/cards/`와 `data/cards/intro/`를 `site/cards/`로 복사한다.
 
 - [ ] **Step 3: 커밋** — `feat: make cards as part of the daily pipeline`
@@ -483,7 +484,58 @@ def bake(cards, out_dir, eyebrow):
 
 ---
 
-### Task 7: 소개 카드 5장
+### Task 7: 문구 반려 재작성 루프 (규칙 16)
+
+**목적:** 사용자가 게시물 문구를 반려하면 자동으로 다듬어 다시 제출한다. 사용자가 할 일은 라벨 하나를 붙이는 것뿐이다.
+
+**Files:**
+- Create: `.github/workflows/revise.yml`, `docs/scripts/revise-loop.md`(재작성 절차서)
+- Modify: `.github/workflows/collect.yml`(라벨 안내 문구), `tests/test_render_linkedin.py`(회차 표기 테스트)
+
+**반려 채널**
+
+| 사용자 행동 | 의미 | 결과 |
+|---|---|---|
+| PR 머지 | 승인 | 게시와 적재가 진행된다 |
+| PR에 `revise-copy` 라벨 | **문구 반려** | 게시가 진행되지 않는다. 재작성 요청 Issue가 열린다 |
+| PR 닫기 | 전면 반려 | 아무것도 진행되지 않는다 |
+
+**흐름**
+
+```
+검토 PR ── revise-copy 라벨 ──→ [revise.yml] 재작성 요청 Issue 생성
+                                        │  현재 문안 + PR 코멘트의 반려 사유 + 회차
+                                        ▼
+                        [Claude] /humanize-korean (반려 사유를 추가 지시로 투입)
+                                        │
+                        docs/scripts/ 갱신 → 카드·게시문 재생성 → 같은 PR 갱신
+                                        │  라벨 제거, Issue 종료
+                                        ▼
+                                  사용자 재확인
+```
+
+**상한 3회.** 3회를 넘기면 자동 재작성을 멈추고 사람이 직접 문안을 고친다. 같은 지적이 세 번 반복되면 스킬로 풀리는 문제가 아니다. 회차는 Issue 제목(`문구 재작성 요청 <날짜> (N회차)`)과 `docs/scripts/`의 점검 기록으로 센다.
+
+**한계 (명시):** `/humanize-korean`은 Claude 스킬이라 GitHub Actions 안에서 실행되지 않는다. 워크플로가 맡는 범위는 **반려 감지와 요청 생성까지**다. 재작성은 Claude 대화에서 수행한다. 전면 자동화는 Actions에 Anthropic API 키를 등록해야 가능하며, 이 프로젝트의 무키 방침과 충돌한다.
+
+- [ ] **Step 1** `revise.yml` 작성. `pull_request.labeled` 이벤트에서 `revise-copy`만 받는다
+  - Issue 본문: 대상 날짜, 회차, 현재 게시문 전문, 현재 카드 문안, PR 코멘트에서 수집한 반려 사유
+  - 회차가 3을 넘으면 Issue 대신 `사람이 직접 수정 필요` 라벨을 붙이고 종료한다
+- [ ] **Step 2** `docs/scripts/revise-loop.md` 작성. Claude가 따라야 할 재작성 절차와 금지 사항
+  - 숫자와 자리표시자를 바꾸지 않는다
+  - 반려 사유에서 요구하지 않은 부분은 손대지 않는다
+  - 변경률이 30%를 넘으면 중단하고 보고한다
+- [ ] **Step 3** 테스트 2개
+  - 게시문에 회차 표기가 들어가고, 회차가 숫자 검사를 통과한다
+  - 회차 4에서는 재작성을 시도하지 않는다
+- [ ] **Step 4** 시뮬레이션 검증. 라벨을 붙여 Issue가 열리는지, 재작성 후 같은 PR이 갱신되는지 확인한다
+- [ ] **Step 5** 커밋 — `ci: reopen the copy for revision when it is rejected`
+
+**완료 기준:** 라벨을 붙이면 재작성 요청이 열린다. 재작성 후 같은 PR이 갱신된다. 3회를 넘기면 자동 재작성이 멈춘다.
+
+---
+
+### Task 8: 소개 카드 5장
 
 **Files:** Modify `publish/card_data.py`, `templates/cards/cards.html.j2`, `tests/test_card_data.py`
 
@@ -503,7 +555,7 @@ def bake(cards, out_dir, eyebrow):
 
 ---
 
-### Task 8: 종단 검증
+### Task 9: 종단 검증
 
 - [ ] 시뮬레이션 변동 주입 → 검토 PR에 카드 5장과 게시문이 보인다
 - [ ] PR을 닫으면 아무것도 진행되지 않는다
@@ -515,7 +567,7 @@ def bake(cards, out_dir, eyebrow):
 
 ---
 
-### Task 9: 첫 게시 (사용자)
+### Task 10: 첫 게시 (사용자)
 
 - [ ] 소개 카드 5장을 굽는다(`pipeline.py --cards intro`)
 - [ ] 사용자가 게시된 주소에서 이미지 또는 PDF를 받는다

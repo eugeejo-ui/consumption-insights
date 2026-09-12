@@ -3,9 +3,10 @@
 데이터 플랫폼(Snowflake, Databricks, BigQuery, Redshift)에서 **같은 워크로드를 돌릴 때 드는 월 비용(TCO)** 을 추정해 비교하는 대시보드를 만든다. 파이프라인은 중간 결과를 만든 뒤 멈추고, 사용자가 판단해 컨펌해야 나머지가 진행된다. 비용이나 실적에 의미 있는 변동이 생기면 글을 자동으로 생성하고, 사용자 컨펌을 거쳐 웹 아카이브(GitHub Pages)에 게시한다. 가격 변동 이력은 컨펌 후 사용자의 Google 스프레드시트에 쌓는다. LinkedIn 게시 방식은 결정 대기 중이다. 포트폴리오용 프로젝트다.
 
 > **현재 위치:** **Phase 1 완료**(2026-09-11). Task 1~8, 8b, 테스트 33개. 첫 승인 스냅샷 커밋 `60520ee`. 사용자가 화면을 확인하고 가격 3개를 대조했다.
-> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. Task 1~8 완료(테스트 55개). **대시보드가 GitHub Pages에 게시됐다: https://eugeejo-ui.github.io/consumption-insights/**
->   - 매일 수집(00:17 UTC)과 가격 확인 감시(01:37 UTC)가 돌고 있다. 검토 PR을 머지하면 게시까지 이어진다.
->   - 다음은 Task 9(종단 검증)다. 시트 적재는 사용자의 2-0c 준비를 기다린다.
+> - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. **Phase 2 Task 1~9 완료**(테스트 56개). **대시보드 게시: https://eugeejo-ui.github.io/consumption-insights/**
+>   - 매일 수집(00:17 UTC)과 가격 확인 감시(01:37 UTC)가 돌고, 검토 PR을 머지하면 게시까지 이어진다. 종단 검증을 실측으로 마쳤다.
+>   - 남은 것은 **시트 적재 연결뿐이다.** 사용자의 2-0c 준비(GCP 프로젝트·서비스 계정 키·시트 ID)를 기다린다.
+>   - 그다음은 Phase 3(LinkedIn 방식 결정)과 Phase 4(실적 코너·비용 실험)다.
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-11
@@ -21,7 +22,7 @@
 | 기획 3: v2 방향 전환 (09-11) | 완료 | TCO 비교 + 변동 게시. T1~T3, H1·H2 | `docs/01_plan_v2.md` |
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
-| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **진행 중** (Task 8 완료, 종단 검증만 남음) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
+| Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **거의 완료** (시트 적재 연결만 남음) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
 | Phase 3: LinkedIn | 대기 (방식 결정 필요) | — | `docs/phases/phase-3-linkedin.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
@@ -33,7 +34,7 @@
 2. (Phase 2-5a) 마음에 드는 대시보드 템플릿
 3. LinkedIn 방식: Phase 3에서 결정한다. A' 공식 공유 링크를 추천한다.
 
-**다음 행동:** 사용자가 지시하면 Task 9(종단 검증: 가짜 변동 → 검토 PR → 머지 → 게시까지 한 번에 실측)를 한다(규칙 10).
+**다음 행동:** 사용자가 2-0c(Google Sheets)를 준비하면 시트 적재를 확인한다. 그 전에 지시하면 Phase 3 또는 Phase 4 계획을 쓴다(규칙 10).
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -209,7 +210,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - [x] 2-6 (C) 가격 변경 감지와 알림 (2026-09-12 완료. `detect/price_watch.py`, `.github/workflows/watch.yml`)
   - **분기 1회** "Snowflake·Databricks 가격표 확인" Issue(공식 링크 + 체크리스트). 두 사이트에는 자동으로 접근하지 않는다.
   - BigQuery 가격 페이지는 리전별 가격 문자열의 지문을 비교하고, 바뀌면 Issue를 연다(Google 약관 허용, robots.txt 준수, 하루 1회).
-- [ ] 2-7 (C+U) 검증
+- [x] 2-7 (C+U) 검증 (2026-09-12 완료. 시트 적재만 2-0c 이후로 남음)
   - 가짜 가격 변동 주입 → 검토 PR 생성 → **사람이 머지했을 때 publish.yml이 실행되는지 실측** → 게시와 적재
   - PR을 닫으면(반려) 아무것도 진행되지 않는지
   - 멱등성, `--dry-run`
@@ -476,3 +477,12 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - `.github/workflows/watch.yml`: 매일 01:37 UTC. 라벨(`price-watch`, `vendor-check`)로 중복 Issue를 막고, 새 지문을 저장소에 커밋한다.
   - 검증: 지문을 일부러 가짜 값으로 바꿔 실행 → Issue #2 생성 → 봇이 실제 지문으로 복구 → Issue를 닫았다.
   - 사고: PowerShell `Set-Content -Encoding utf8`이 BOM을 붙여 JSON 파싱이 깨졌다. 읽는 쪽을 `utf-8-sig`로 바꿔 사람이 고친 CSV·JSON도 견디게 했다.
+- **2026-09-12:** Task 9(종단 검증)를 완료했다(테스트 56개).
+  - `pipeline.py --dry-run`을 추가했다. 아무것도 쓰지 않고 오늘 가격과 판정만 확인한다.
+  - 게시 워크플로가 승인할 수 없는 스냅샷(시뮬레이션 등)을 만나면 경고만 남기고 게시를 계속한다.
+  - **실측 결과**
+    - 시뮬레이션 검토 PR #3을 사용자 승인 아래 머지했더니 게시 워크플로가 트리거됐다 [확인]. GITHUB_TOKEN이 아니라 사용자 계정 토큰으로 머지하면 웹에서 누른 것과 같다.
+    - 시뮬레이션 스냅샷은 승인되지 않고 경고만 남았다. 화면은 2026-09-11 승인 스냅샷으로 그려졌고, 게시된 페이지에 가짜 단가(0.39375)가 없다 [확인].
+    - 반려(PR 닫기) 시 아무것도 진행되지 않는 것과, 같은 날 재실행 시 같은 PR을 갱신하고 확인 기록이 한 줄만 남는 것은 앞서 확인했다.
+  - 정리: 머지된 가짜 스냅샷 폴더를 main에서 지웠다(`a3b5395`). 승인 기록이 없어 비교 기준으로 쓰이지는 않았다.
+  - 남은 것: Google Sheets 적재(2-0c 준비 뒤 확인).

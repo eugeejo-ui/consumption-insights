@@ -3,66 +3,366 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>데이터 플랫폼 월 비용 비교</title>
-<script src="{{ plotly_cdn }}"></script>
+<title>데이터 플랫폼 월 비용(TCO) 비교</title>
 <style>
-  body { font-family: system-ui, -apple-system, "Malgun Gothic", sans-serif; max-width: 960px; margin: 0 auto; padding: 24px; color: #1f2328; }
-  .notice { background: #fff8e1; border-left: 4px solid #f5a623; padding: 12px 16px; }
-  table { border-collapse: collapse; width: 100%; margin: 12px 0 24px; }
-  th, td { border-bottom: 1px solid #d0d7de; padding: 6px 8px; text-align: right; }
-  th:first-child, td:first-child { text-align: left; }
-  .verdict { font-weight: 600; }
+  :root{
+    --bg:#F4F5F7; --card:#FFFFFF; --line:#EFEFF2; --ink:#111827; --muted:#8E9296;
+    --blue:#2F6BF6; --blue-soft:#EAF1FE; --track:#EDF2FE; --blue-light:#A9C4FD;
+    --green:#22C55E; --green-soft:#C9F5DC; --up:#16C784; --down:#F04438;
+    --warm-a:#FBA94C; --warm-b:#F0473E; --warm-soft:#FDE5E2;
+    --radius:16px; --radius-sm:10px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); display:flex; min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit; text-decoration:none}
+
+  /* 사이드바 */
+  .sidebar{width:240px; flex:none; background:var(--card); border-right:1px solid var(--line); padding:28px 20px; position:sticky; top:0; height:100vh}
+  .wordmark{font-size:15px; font-weight:700; letter-spacing:.02em; margin:0 8px 28px}
+  .wordmark span{color:var(--muted); font-weight:600}
+  .nav{display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:var(--radius-sm); color:#3A3F45; font-weight:600; margin-bottom:4px}
+  .nav:hover{background:#F7F8FA}
+  .nav.active{background:var(--blue-soft); color:var(--blue)}
+  .nav svg{width:18px; height:18px; flex:none}
+  .side-label{color:var(--muted); font-weight:700; margin:28px 14px 10px; font-size:13px}
+
+  /* 본문 */
+  .main{flex:1; min-width:0; padding:26px 32px 48px}
+  .topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding-bottom:18px; border-bottom:1px solid var(--line)}
+  .topbar h1{font-size:26px; font-weight:700; margin:0}
+  .topbar .sub{color:var(--muted); margin-top:6px}
+  .download{display:inline-flex; align-items:center; gap:8px; font-weight:600; color:#3A3F45; white-space:nowrap}
+  .download svg{width:16px; height:16px}
+
+  .filters{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:20px 0}
+  .pill{background:var(--card); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 16px; display:flex; align-items:center; gap:8px}
+  .pill span{color:var(--muted)}
+  .pill select{border:0; background:transparent; font:inherit; font-weight:700; color:var(--ink); flex:1; outline:none; appearance:none; cursor:pointer}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px}
+  .card h2{font-size:15px; font-weight:600; color:var(--muted); margin:0 0 16px}
+  .card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px}
+  .card-head h2{margin:0}
+  .chip{color:var(--blue); font-weight:700}
+
+  .top{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:16px; margin-bottom:16px}
+  .kpis{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px}
+  .kpi .label{color:var(--muted); font-size:13px}
+  .kpi .value{font-size:24px; font-weight:700; margin-top:8px; letter-spacing:-.01em}
+  .kpi .value small{font-size:14px; color:var(--muted); font-weight:600}
+  .kpi .foot{color:var(--muted); font-size:12px; margin-top:6px}
+
+  /* 막대 차트 */
+  .chart{display:flex; align-items:stretch; gap:8px; height:250px; margin-top:6px}
+  .yaxis{display:flex; flex-direction:column; justify-content:space-between; color:var(--muted); font-size:12px; padding:2px 6px 20px 0; text-align:right; min-width:52px}
+  .bars{flex:1; display:flex; align-items:flex-end; gap:10px}
+  .barbox{flex:1; display:flex; flex-direction:column; align-items:center; height:100%}
+  .track{position:relative; width:12px; height:100%; background:var(--track); border-radius:999px; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden}
+  .fill{width:100%; background:var(--blue); border-radius:999px}
+  .seg-compute{width:100%; background:var(--blue); border-radius:999px 999px 0 0}
+  .seg-storage{width:100%; background:var(--blue-light); border-radius:0 0 999px 999px}
+  .split{display:none; flex-direction:column; justify-content:flex-end; width:100%; height:100%}
+  body.mode-split .fill{display:none}
+  body.mode-split .split{display:flex}
+  .barlabel{color:var(--muted); font-size:11px; letter-spacing:.04em; text-transform:uppercase; margin-top:10px; text-align:center}
+  .barvalue{font-weight:700; font-size:13px; margin-top:2px}
+  .legend{display:flex; gap:16px; color:var(--muted); font-size:12px; margin-top:12px}
+  .dot{display:inline-block; width:8px; height:8px; border-radius:999px; margin-right:6px}
+
+  /* 목록(프리미엄) */
+  .grid2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:16px}
+  .item{display:flex; align-items:center; gap:14px; padding:10px 0}
+  .badge{width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex:none}
+  .item .body{flex:1; min-width:0}
+  .item .name{font-weight:600; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .meter{height:8px; border-radius:999px; background:var(--warm-soft)}
+  .meter.cool{background:var(--green-soft)}
+  .meter i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--warm-a),var(--warm-b))}
+  .meter.cool i{background:linear-gradient(90deg,#4ADE80,var(--green))}
+  .item .num{font-weight:700; white-space:nowrap}
+  .item .num em{color:var(--muted); font-style:normal; font-weight:600}
+
+  /* 순위 */
+  .rank{display:flex; align-items:center; gap:14px; padding:12px 0; border-top:1px solid var(--line)}
+  .rank:first-of-type{border-top:0}
+  .rank .body{flex:1; min-width:0}
+  .rank .name{font-weight:700}
+  .rank .meta{color:var(--muted); font-size:13px}
+  .rank .pos{font-weight:700}
+  .delta{margin-left:8px; font-size:12px}
+  [data-delta="up"] .delta{color:var(--up)}
+  [data-delta="down"] .delta{color:var(--down)}
+  [data-delta="flat"] .delta,[data-delta="none"] .delta{color:var(--muted)}
+
+  table{width:100%; border-collapse:collapse}
+  th,td{padding:9px 6px; text-align:right; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums}
+  th{color:var(--muted); font-weight:600; font-size:13px}
+  th:first-child,td:first-child{text-align:left}
+  tr:last-child td{border-bottom:0}
+  .verdict{font-weight:700}
+  .note{color:var(--muted); font-size:13px; margin-top:12px}
+  .callout{background:var(--blue-soft); color:#1F3F91; border-radius:var(--radius-sm); padding:12px 16px; margin-top:16px; font-weight:600}
+  ul.plain{margin:0; padding-left:18px; color:#3A3F45}
+  ul.plain li{margin-bottom:6px}
+  footer{color:var(--muted); font-size:13px; margin-top:24px}
+  @media (max-width:1100px){
+    body{display:block}
+    .sidebar{width:auto; height:auto; position:static; border-right:0; border-bottom:1px solid var(--line)}
+    .top,.grid2,.filters{grid-template-columns:minmax(0,1fr)}
+  }
 </style>
 </head>
 <body>
-<h1>데이터 플랫폼 월 비용(TCO) 비교</h1>
-<p>빌드일 {{ built_on }}</p>
-<p class="notice">플랫폼 간 비교는 <strong>가정 기반 모델 추정</strong>입니다. 모든 가정은 맨 아래에 공개합니다.</p>
+<aside class="sidebar">
+  <div class="wordmark">consumption<span>-insights</span></div>
+  <nav>
+    <a class="nav active" href="#costs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M15 8h5v5"/></svg>월 비용</a>
+    <a class="nav" href="#verdicts"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>가설 판정</a>
+    <a class="nav" href="#premium"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="17" rx="1"/></svg>서울 프리미엄</a>
+    <a class="nav" href="#assumptions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>가정 공개</a>
+  </nav>
+  <div class="side-label">참고</div>
+  <nav>
+    <a class="nav" href="{{ repo_url }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>저장소</a>
+    <a class="nav" href="{{ snapshot_url }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>이 날짜 스냅샷</a>
+  </nav>
+</aside>
 
-<h2>가설 판정</h2>
-<table>
-  <tr><th>가설</th><th>판정</th><th>근거</th></tr>
-  {% for region, v in t1_by_region.items() %}
-  <tr><td>T1 월 비용 1위는 워크로드마다 다르다 ({{ region_labels[region] }})</td>
-      <td class="verdict">{{ "지지" if v.supported else "기각" }}</td>
-      <td>{% for sid, p in v.winners.items() %}{{ sid }}: {{ p }} ({{ v.robustness[sid] }}){% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
-  {% endfor %}
-  <tr><td>T2 서울 프리미엄은 서비스마다 다르다</td>
-      <td class="verdict">{{ "지지" if t2.supported else "기각" }}</td>
-      <td>최대-최소 차이 {{ t2.spread_pp }}%p</td></tr>
-</table>
-<p>괄호 안의 견고/민감은 플랫폼 하나의 용량 가정을 ±50% 흔들었을 때 1위가 유지되는지를 뜻합니다.</p>
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>데이터 플랫폼 월 비용(TCO) 비교</h1>
+      <div class="sub">빌드일 {{ built_on }} · Snowflake, Databricks, BigQuery, Redshift · 미국과 서울</div>
+    </div>
+    <a class="download" href="{{ snapshot_url }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+      가격 스냅샷
+    </a>
+  </div>
 
-{% for sid, sc in workloads.scenarios.items() %}
-<h2>{{ sid }} · {{ sc.name }}</h2>
-{{ charts[sid] | safe }}
-<table>
-  <tr><th>플랫폼</th><th>리전</th><th>컴퓨트</th><th>스토리지</th><th>합계 (USD/월)</th></tr>
-  {% for r in rows if r.scenario == sid %}
-  <tr><td>{{ r.platform }}</td><td>{{ region_labels[r.region] }}</td><td>{{ "%.2f"|format(r.compute_usd) }}</td>
-      <td>{{ "%.2f"|format(r.storage_usd) }}</td><td>{{ "%.2f"|format(r.total_usd) }}</td></tr>
-  {% endfor %}
-</table>
-{% endfor %}
+  <section id="costs">
+    <div class="filters">
+      <label class="pill"><span>시나리오:</span>
+        <select id="f-scenario">
+          {% for sid, sc in workloads.scenarios.items() %}
+          <option value="{{ sid }}">{{ sid }} · {{ sc.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="pill"><span>리전:</span>
+        <select id="f-region">
+          {% for key, label in region_labels.items() %}
+          <option value="{{ key }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="pill"><span>보기:</span>
+        <select id="f-mode">
+          <option value="total">합계</option>
+          <option value="split">컴퓨트·스토리지 분해</option>
+        </select>
+      </label>
+    </div>
 
-<h2>서울 프리미엄 (공시 단가 기준)</h2>
-<table>
-  <tr><th>플랫폼 / 항목</th><th>미국</th><th>서울</th><th>프리미엄</th></tr>
-  {% for p in premiums %}
-  <tr><td>{{ p.platform }} / {{ p.service }} ({{ p.sku }})</td><td>{{ p.us }}</td><td>{{ p.seoul }}</td>
-      <td>{{ "%+.1f"|format(p.premium_pct) }}%</td></tr>
-  {% endfor %}
-</table>
+    {% for p in panels %}
+    <section class="panel" data-panel="{{ p.id }}"{% if not loop.first %} hidden{% endif %}>
+      <div class="top">
+        <div class="kpis">
+          <div class="kpi">
+            <div class="label">가장 싼 플랫폼</div>
+            <div class="value">{{ p.cheapest.label }}</div>
+            <div class="foot">${{ "{:,.0f}".format(p.cheapest.total) }} / 월</div>
+          </div>
+          <div class="kpi">
+            <div class="label">가장 비싼 플랫폼</div>
+            <div class="value">{{ p.priciest.label }}</div>
+            <div class="foot">${{ "{:,.0f}".format(p.priciest.total) }} / 월</div>
+          </div>
+          <div class="kpi">
+            <div class="label">1위와 4위 차이</div>
+            <div class="value">+{{ "{:,.1f}".format(p.gap_pct) }}<small>%</small></div>
+            <div class="foot">{{ p.region_label }} · {{ p.scenario }}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">T1 판정 ({{ p.region_label }})</div>
+            <div class="value">{{ "지지" if t1_by_region[p.region].supported else "기각" }}</div>
+            <div class="foot">{{ p.scenario }} 1위 {{ platform_labels[t1_by_region[p.region].winners[p.scenario]] }} · {{ t1_by_region[p.region].robustness[p.scenario] }}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">T2 판정</div>
+            <div class="value">{{ "지지" if t2.supported else "기각" }}</div>
+            <div class="foot">서울 프리미엄 차이 {{ t2.spread_pp }}%p</div>
+          </div>
+          <div class="kpi">
+            <div class="label">가격 확인일</div>
+            <div class="value">{{ price_dates.values()|max }}</div>
+            <div class="foot">수동 가격표는 사람이 확인한 날짜</div>
+          </div>
+        </div>
 
-<h2>가정 공개</h2>
-<ul>
-  <li>공통 저장량: {{ workloads.storage_gb }} GB (압축 후 물리 기준)</li>
-  {% for p, c in workloads.capacity_per_small.items() %}<li>{{ p }}: small 1단위 = 시간당 {{ c.per_hour }} {{ c.unit }}</li>{% endfor %}
-  {% for sid, sc in workloads.scenarios.items() %}<li>{{ sid }} {{ sc.name }}: {{ sc }}</li>{% endfor %}
-  <li>제외 항목: 네트워크 송출, 무료 등급, 최소 과금 단위, 약정 할인</li>
-</ul>
+        <div class="card">
+          <div class="card-head">
+            <h2>{{ p.scenario }} · {{ p.scenario_name }}</h2>
+            <div class="chip">{{ p.region_label }}</div>
+          </div>
+          <div class="chart">
+            <div class="yaxis">
+              {% for t in p.ticks %}
+              <div>${{ "{:,.0f}".format(t) }}</div>
+              {% endfor %}
+            </div>
+            <div class="bars">
+              {% for item in p.bars %}
+              <div class="barbox">
+                <div class="track">
+                  <div class="fill" style="height:{{ item.total_pct }}%"></div>
+                  <div class="split">
+                    <div class="seg-storage" style="height:{{ item.storage_pct }}%"></div>
+                    <div class="seg-compute" style="height:{{ item.compute_pct }}%"></div>
+                  </div>
+                </div>
+                <div class="barlabel">{{ item.label }}</div>
+                <div class="barvalue">${{ "{:,.0f}".format(item.total) }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--blue)"></i>컴퓨트</span>
+            <span><i class="dot" style="background:var(--blue-light)"></i>스토리지</span>
+            <span>막대 뒤 옅은 부분은 가장 비싼 플랫폼 기준입니다.</span>
+          </div>
+        </div>
+      </div>
 
-<h2>가격 확인일</h2>
-<ul>{% for p, d in price_dates.items() %}<li>{{ p }}: {{ d }}</li>{% endfor %}</ul>
+      <div class="grid2">
+        {% for rank in p.rankings %}
+        <div class="card">
+          <h2>{{ p.scenario }} 순위 · {{ rank.region_label }} (싼 순서)</h2>
+          {% for item in rank.rows %}
+          <div class="rank" data-delta="{{ item.delta }}">
+            <div class="badge" style="background:{{ item.color }}">{{ item.label[0] }}</div>
+            <div class="body">
+              <div class="name">{{ item.label }}</div>
+              <div class="meta">${{ "{:,.0f}".format(item.total) }} / 월 · 컴퓨트 ${{ "{:,.0f}".format(item.compute) }} + 스토리지 ${{ "{:,.0f}".format(item.storage) }}</div>
+            </div>
+            <div class="pos">{{ item.rank }}
+              <span class="delta">{% if item.delta == "up" %}▲{% elif item.delta == "down" %}▼{% else %}–{% endif %}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </section>
+
+  <section id="verdicts" class="card" style="margin-bottom:16px">
+    <h2>가설 판정</h2>
+    <table>
+      <tr><th>가설</th><th>판정</th><th>근거</th></tr>
+      {% for region, v in t1_by_region.items() %}
+      <tr>
+        <td>T1 월 비용 1위는 워크로드마다 다르다 ({{ region_labels[region] }})</td>
+        <td class="verdict">{{ "지지" if v.supported else "기각" }}</td>
+        <td>{% for sid, p in v.winners.items() %}{{ sid }}: {{ p }} ({{ v.robustness[sid] }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td>T2 서울 프리미엄은 서비스마다 다르다</td>
+        <td class="verdict">{{ "지지" if t2.supported else "기각" }}</td>
+        <td>최대-최소 차이 {{ t2.spread_pp }}%p</td>
+      </tr>
+    </table>
+    <p class="note">괄호 안의 견고·민감은 플랫폼 하나의 용량 가정을 ±50% 흔들었을 때 1위가 유지되는지를 뜻합니다.</p>
+  </section>
+
+  <section id="premium" class="grid2">
+    <div class="card">
+      <h2>서울 프리미엄이 큰 항목</h2>
+      {% for item in premium_high %}
+      <div class="item">
+        <div class="badge" style="background:{{ platform_colors[item.platform] }}">{{ platform_labels[item.platform][0] }}</div>
+        <div class="body">
+          <div class="name">{{ platform_labels[item.platform] }} {{ item.sku }}</div>
+          <div class="meter"><i style="width:{{ (item.premium_pct|abs / premium_max * 100)|round(1) }}%"></i></div>
+        </div>
+        <div class="num">{{ "%+.1f"|format(item.premium_pct) }}% <em>서울</em></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="card">
+      <h2>서울 프리미엄이 작거나 서울이 싼 항목</h2>
+      {% for item in premium_low %}
+      <div class="item">
+        <div class="badge" style="background:{{ platform_colors[item.platform] }}">{{ platform_labels[item.platform][0] }}</div>
+        <div class="body">
+          <div class="name">{{ platform_labels[item.platform] }} {{ item.sku }}</div>
+          <div class="meter cool"><i style="width:{{ (item.premium_pct|abs / premium_max * 100)|round(1) }}%"></i></div>
+        </div>
+        <div class="num">{{ "%+.1f"|format(item.premium_pct) }}% <em>서울</em></div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card" style="margin-bottom:16px">
+    <h2>전체 서울 프리미엄 (공시 단가 기준)</h2>
+    <table>
+      <tr><th>플랫폼 / 항목</th><th>미국</th><th>서울</th><th>프리미엄</th></tr>
+      {% for item in premiums %}
+      <tr>
+        <td>{{ platform_labels[item.platform] }} · {{ item.service }} ({{ item.sku }})</td>
+        <td>{{ item.us }}</td><td>{{ item.seoul }}</td>
+        <td>{{ "%+.1f"|format(item.premium_pct) }}%</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <section id="assumptions" class="card">
+    <h2>가정 공개</h2>
+    <div class="callout">플랫폼 간 비교는 가정 기반 모델 추정입니다. 실제 청구액과 다를 수 있습니다.</div>
+    <ul class="plain" style="margin-top:16px">
+      <li>공통 저장량: {{ workloads.storage_gb }} GB (압축 후 물리 기준)</li>
+      {% for platform, capacity in workloads.capacity_per_small.items() %}
+      <li>{{ platform_labels[platform] }}: small 1단위 = 시간당 {{ capacity.per_hour }} {{ capacity.unit }}</li>
+      {% endfor %}
+      {% for sid, sc in workloads.scenarios.items() %}
+      <li>{{ sid }} {{ sc.name }}: {% if sc.mode == "scan" %}월 {{ sc.tib_scanned_per_month }} TiB 스캔(논리 바이트). BigQuery는 온디맨드, 나머지는 small×{{ sc.size }}가 시간당 {{ sc.tib_per_hour }} TiB를 처리한다고 봅니다{% else %}small×{{ sc.size }}로 월 {{ sc.hours_per_month }}시간{% endif %}</li>
+      {% endfor %}
+      <li>제외 항목: 네트워크 송출, 무료 등급, 최소 과금 단위, 약정 할인</li>
+      <li>가격 확인일: {% for platform, day in price_dates.items() %}{{ platform_labels[platform] }} {{ day }}{% if not loop.last %} · {% endif %}{% endfor %}</li>
+    </ul>
+    <p class="note">가격은 사람이 검토한 스냅샷만 반영합니다. 자동 수집(AWS·Azure)과 수동 가격표(Snowflake·BigQuery)를 함께 씁니다.</p>
+  </section>
+
+  <footer>이 페이지는 승인된 가격 스냅샷으로 자동 생성했습니다. 순위 옆 삼각형은 이전 승인 스냅샷 대비 변동입니다.</footer>
+</main>
+
+<script>
+  (function () {
+    var scenario = document.getElementById('f-scenario');
+    var region = document.getElementById('f-region');
+    var mode = document.getElementById('f-mode');
+    var panels = document.querySelectorAll('.panel');
+    function apply() {
+      var id = scenario.value + '|' + region.value;
+      panels.forEach(function (panel) { panel.hidden = panel.dataset.panel !== id; });
+    }
+    scenario.addEventListener('change', apply);
+    region.addEventListener('change', apply);
+    mode.addEventListener('change', function () {
+      document.body.classList.toggle('mode-split', mode.value === 'split');
+    });
+    apply();
+  })();
+</script>
 </body>
 </html>

@@ -1,6 +1,5 @@
 requests>=2.31
 PyYAML>=6.0
 Jinja2>=3.1
-plotly>=5.9
 pytest>=7.4
 google-auth>=2.30

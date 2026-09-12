@@ -22,7 +22,7 @@ import yaml
 from collectors import aws_prices, azure_prices, manual_prices
 from common.schema import REGIONS, PriceRecord, read_snapshot, write_snapshot
 from detect.events import detect
-from model.tco import PriceBook, estimate, seoul_premiums, t1_verdict, t2_verdict
+from model.tco import PriceBook, estimate, ranking, seoul_premiums, t1_verdict, t2_verdict
 from publish.render_post import render_post
 from publish.render_site import render
 from publish.review_report import (APPROVED_FILE, REVIEW_FILE, build_review, latest_approved_day,
@@ -126,12 +126,43 @@ def collect_and_review(simulate: bool = False) -> Path:
     return review
 
 
+def snapshot_records(day: str) -> list[PriceRecord]:
+    return [r for p in sorted((RAW / day).glob("*.csv")) for r in read_snapshot(p)]
+
+
+def previous_ranks(day: str, workloads: dict) -> dict:
+    """이전 승인 스냅샷의 순위. 화면의 순위 변동 삼각형에 쓴다."""
+    previous = previous_snapshot(day, RAW)
+    if previous is None:
+        return {}
+    rows = estimate(PriceBook(previous), workloads)
+    return {sid: {region: ranking(rows, sid, region) for region in REGIONS} for sid in workloads["scenarios"]}
+
+
+def build_site(day: str | None = None) -> Path:
+    """승인된 스냅샷으로 사이트만 다시 그린다. 승인 기록은 건드리지 않는다(게시 워크플로용)."""
+    day = day or latest_approved_day("9999-12-31", RAW)
+    if day is None:
+        raise SystemExit("승인된 스냅샷이 없다. 검토 PR을 머지한 뒤에 게시한다.")
+    if not (RAW / day / APPROVED_FILE).exists():
+        raise SystemExit(f"{day}는 승인된 스냅샷이 아니다.")
+    records = snapshot_records(day)
+    result = analyze(records)
+    price_dates: dict[str, str] = {}
+    for r in records:
+        price_dates[r.platform] = max(price_dates.get(r.platform, ""), r.fetched_at)
+    out = render(result["rows"], result["premiums"], result["t1_by_region"], result["t2"], result["workloads"],
+                 price_dates, built_on=day, prev_ranks=previous_ranks(day, result["workloads"]))
+    print(f"site written: {out} ({day} 승인 스냅샷)")
+    return out
+
+
 def confirm(day: str) -> Path:
     """2단계: 검토 보고서가 있는 스냅샷만 반영한다. 사이트를 만들고 승인 기록을 남긴다."""
     snapshot = RAW / day
     if not (snapshot / REVIEW_FILE).exists():
         raise SystemExit(f"{snapshot / REVIEW_FILE}가 없다. 검토 보고서가 없는 스냅샷은 반영하지 않는다(먼저 pipeline.py 실행).")
-    records = [r for p in sorted(snapshot.glob("*.csv")) for r in read_snapshot(p)]
+    records = snapshot_records(day)
     if any(r.source.endswith(SIMULATED_TAG) for r in records):
         raise SystemExit(f"{day}는 시뮬레이션 스냅샷이다. 반영하지 않는다.")
     result = analyze(records)
@@ -139,7 +170,7 @@ def confirm(day: str) -> Path:
     for r in records:
         price_dates[r.platform] = max(price_dates.get(r.platform, ""), r.fetched_at)
     out = render(result["rows"], result["premiums"], result["t1_by_region"], result["t2"], result["workloads"],
-                 price_dates, built_on=day)
+                 price_dates, built_on=day, prev_ranks=previous_ranks(day, result["workloads"]))
     (snapshot / APPROVED_FILE).write_text(f"approved_at: {dt.datetime.now().isoformat(timespec='seconds')}\n",
                                           encoding="utf-8")
     print(f"site written: {out}")
@@ -150,8 +181,14 @@ def main(argv: list[str] | None = None) -> Path:
     parser = argparse.ArgumentParser(description="1단계: 수집·비교·검토 자료 작성 후 멈춤 / 2단계: --confirm으로 반영")
     parser.add_argument("--confirm", metavar="DAY", help="검토 보고서를 컨펌한 스냅샷(DAY)으로 사이트를 만든다")
     parser.add_argument("--simulate", action="store_true", help="검증용 가짜 변동을 넣는다(검토 PR 흐름 확인용, 머지 금지)")
+    parser.add_argument("--build", nargs="?", const="", metavar="DAY",
+                        help="승인된 스냅샷(생략하면 가장 최근)으로 사이트만 다시 그린다. 게시 워크플로가 쓴다")
     args = parser.parse_args(argv)
-    return confirm(args.confirm) if args.confirm else collect_and_review(simulate=args.simulate)
+    if args.confirm:
+        return confirm(args.confirm)
+    if args.build is not None:
+        return build_site(args.build or None)
+    return collect_and_review(simulate=args.simulate)
 
 
 if __name__ == "__main__":

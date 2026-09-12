@@ -137,6 +137,25 @@ def test_simulated_snapshot_is_marked_and_cannot_be_confirmed(tmp_path, monkeypa
     assert not Path("data/raw", TODAY, "approved.txt").exists()
 
 
+def test_build_renders_the_latest_approved_snapshot(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    with pytest.raises(SystemExit, match="승인된 스냅샷이 없다"):
+        pipeline.main(["--build"])
+
+    _approved([replace(r, price_usd=0.30) if (r.platform, r.service, r.region) == ("redshift", "compute", "us") else r
+               for r in price_records], day="2000-01-01")
+    _approved(price_records, day="2000-01-02")
+
+    out = pipeline.main(["--build"])
+
+    html = out.read_text(encoding="utf-8")
+    assert out == Path("site") / "index.html"
+    assert "2000-01-02" in html                       # 가장 최근 승인 스냅샷으로 그린다
+    assert 'data-delta="' in html                     # 이전 승인 스냅샷과 비교한 순위 변동을 표시한다
+    assert Path("data/raw/2000-01-02/approved.txt").read_text(encoding="utf-8") == "approved"   # 승인 기록은 그대로다
+
+
 def test_rerun_after_same_day_approval_is_refused(tmp_path, monkeypatch, price_records):
     monkeypatch.chdir(tmp_path)
     _copy_config(tmp_path)

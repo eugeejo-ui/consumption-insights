@@ -1,0 +1,115 @@
+name: publish
+# 사람이 검토 PR을 머지하면(= 컨펌) 승인 기록을 남기고, 대시보드를 GitHub Pages에 올린다.
+# 시트 적재는 Secret(GOOGLE_SA_KEY, PRICE_SHEET_ID)이 등록된 뒤에만 실행된다(2-0c).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/raw/**"
+      - "data/manual/**"
+      - "templates/**"
+      - "publish/**"
+      - "model/**"
+      - "pipeline.py"
+      - ".github/workflows/publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  issues: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONIOENCODING: utf-8
+    outputs:
+      day: ${{ steps.site.outputs.day }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+      - name: git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: record approval for merged snapshots
+        run: |
+          for dir in data/raw/*/; do
+            day=$(basename "$dir")
+            if [ -f "$dir/review.md" ] && [ ! -f "$dir/approved.txt" ]; then
+              echo "confirming $day"
+              python pipeline.py --confirm "$day"
+            fi
+          done
+          git add data/raw
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: record approval for merged snapshots"
+            git push origin HEAD:main
+          fi
+      - id: site
+        name: build the dashboard
+        run: |
+          python pipeline.py --build | tee build.log
+          echo "day=$(sed -n 's/.*(\(.*\) 승인 스냅샷)/\1/p' build.log)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  log:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      DAY: ${{ needs.build.outputs.day }}
+      PRICE_SHEET_ID: ${{ secrets.PRICE_SHEET_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - if: env.PRICE_SHEET_ID != ''
+        run: pip install -r requirements.txt
+      - id: sheet
+        name: append approved price changes to the sheet
+        if: env.PRICE_SHEET_ID != ''
+        continue-on-error: true
+        env:
+          GOOGLE_SA_KEY: ${{ secrets.GOOGLE_SA_KEY }}
+        run: |
+          if [ -f "data/raw/$DAY/events.json" ]; then
+            python -m publish.sheets_log --events "data/raw/$DAY/events.json" \
+              --commit-url "${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+          else
+            echo "events.json이 없다(첫 스냅샷). 적재를 건너뛴다."
+          fi
+      - name: open an issue when the sheet write fails
+        if: steps.sheet.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "시트 적재 실패 ($DAY)" \
+            --body "게시는 끝났지만 Google 스프레드시트 적재가 실패했다. 실행 기록: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

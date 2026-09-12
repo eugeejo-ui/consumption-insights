@@ -1,6 +1,6 @@
 name: collect
 # 매일 가격 수집 → 이전 승인 스냅샷과 비교 → 변화가 있으면 검토 PR을 올리고 멈춘다(CLAUDE.md 규칙 14).
-# 매일 스케줄은 게시 워크플로(2-5)가 준비된 뒤에 켠다(결정 D3). 그 전에는 수동 실행만 한다.
+# 매일 00:17 UTC에 돌고, 수동 실행도 된다. 검토 PR을 머지하면 publish 워크플로가 게시한다.
 on:
   workflow_dispatch:
     inputs:
@@ -8,8 +8,8 @@ on:
         description: "검증용 가짜 변동(Redshift 미국 RPU +5%). 이 PR은 머지하지 말고 닫는다"
         type: boolean
         default: false
-  # schedule:
-  #   - cron: "17 0 * * *"   # 00:17 UTC = 09:17 KST, 정각 혼잡 회피 (2-5 이후 활성화)
+  schedule:
+    - cron: "17 0 * * *"   # 00:17 UTC = 09:17 KST, 정각 혼잡 회피 (게시 워크플로 준비 후 활성화, D3)
 
 permissions:
   contents: write

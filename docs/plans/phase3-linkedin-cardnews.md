@@ -54,7 +54,8 @@
 - 타사 로고와 원본 템플릿의 사진·일러스트를 쓰지 않는다. `_workspace/card-template/`의 파일을 저장소로 옮기지 않는다.
 - 카드와 게시문의 모든 숫자는 `events.json`에 있어야 한다(표시 반올림 허용).
 - **항목을 생략하지 않는다**(규칙 18). 한 장에 담기지 않으면 장을 늘린다. 누락 검사를 코드로 강제한다.
-- 사용자에게 보이는 한국어는 격식 있는 문어체다(규칙 17). 문안은 규칙 16의 스크립트 단계를 거친다. 용어 고정: 채택·기각, 작성일, 미국 리전·서울 리전, 월 비용이 낮은 순서.
+- 사용자에게 보이는 한국어는 격식 있는 문어체다(규칙 17). 문안은 규칙 16의 스크립트 단계를 거친다. 용어 고정: 채택·기각, 작성일, 미국 리전·서울 리전.
+- **카드 문안에 한해 `월 사용료`를 쓴다**(D17). 게시문·대시보드·규칙 17의 `월 비용`은 다른 대화에서 바꾼다.
 - 카드 생성이 실패해도 **검토 PR은 열려야 한다.** 카드는 부가물이고 검토를 막으면 안 된다.
 - 커밋 메시지 끝에 `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`을 붙인다. 한 번에 Task 하나만 하고 보고한 뒤 멈춘다(규칙 10).
 
@@ -274,8 +275,8 @@ def test_five_cards_when_ranking_changes(price_records, workloads):
     events, rows = _events(price_records, workloads, {("redshift", "compute", "us"): 0.80})
     cards = price_change_cards(events, rows, workloads)
     assert [c["kind"] for c in cards] == ["cover", "bullets", "chart", "bullets", "banners"]
-    assert cards[0]["title"] == [{"text": "월 비용 ", "accent": False},
-                                 {"text": "순위가 바뀌었습니다", "accent": True}]
+    assert cards[0]["title"] == [{"text": "월 사용료 ", "accent": False},
+                                 {"text": "순위 변동", "accent": True}]
     assert len(cards[4]["banners"]) == 2          # 미국 리전, 서울 리전
 
 
@@ -326,7 +327,7 @@ def test_post_has_the_archive_link_and_stays_under_the_limit(sample_events, samp
 
 
 def test_a_number_that_is_not_in_events_is_rejected(sample_events, sample_cards):
-    sample_cards[0]["lead"] = "월 비용이 999.9% 올랐습니다"
+    sample_cards[0]["lead"] = "월 사용료가 999.9% 올랐습니다"
     with pytest.raises(ValueError):
         render_linkedin(sample_events, sample_cards)
 ```
@@ -338,10 +339,11 @@ def test_a_number_that_is_not_in_events_is_rejected(sample_events, sample_cards)
 - [ ] **Step 3: `publish/card_data.py` 구현**
 
 - 표지 제목 규칙은 `docs/plans/phase3-card-design.md` 3-2를 따른다.
-- `chart` 장은 `cost_changes`에서 변화율 절댓값이 가장 큰 시나리오·리전을 고르고, 그 조합의 플랫폼 4개 월 비용을 막대로 만든다. 막대 길이 비율은 최댓값 기준이다.
+- `chart` 장은 `cost_changes`에서 변화율 절댓값이 가장 큰 시나리오·리전을 고르고, 그 조합의 플랫폼 4개 월 사용료를 막대로 만든다. 막대 길이 비율은 최댓값 기준이다.
 - `banners` 장은 `rank_changes`를 리전별로 묶는다. 순위가 바뀐 리전만 넣는다.
 - 상수: `PER_PAGE = {"price": 5, "cost": 6, "rank": 2}` (디자인 계획 4-1절)
-- **`가정과 산출 근거` 장을 만들지 않는다**(D16). 고지는 월 비용 장의 각주에 넣는다
+- **`가정과 산출 근거` 장을 만들지 않는다**(D16). 고지는 월 사용료 영향 장의 각주에 넣는다
+- **카드 문안은 `월 사용료`를 쓴다**(D17). 게시문과 대시보드는 아직 `월 비용`이다
 - 장수는 고정하지 않는다. 항목을 전부 실을 때까지 늘린다. 10장을 넘으면 경고를 남긴다
 
 - [ ] **Step 4: 게시문 템플릿과 렌더러**
@@ -422,7 +424,7 @@ def test_accent_is_applied_only_to_the_marked_part(sample_cards):
 
 def test_a_number_outside_events_is_rejected(sample_cards, sample_events):
     from publish.render_cards import check_cards
-    sample_cards[0]["lead"] = "월 비용 777% 변동"
+    sample_cards[0]["lead"] = "월 사용료 777% 변동"
     with pytest.raises(ValueError):
         check_cards(sample_cards, sample_events)
 ```

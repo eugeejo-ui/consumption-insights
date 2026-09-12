@@ -6,7 +6,7 @@
 **Goal:** 가격이 의미 있게 바뀐 날(E1) 카드뉴스 이미지와 LinkedIn 게시문을 자동으로 만든다. 검토 PR에서 카드를 미리 보고, 머지(컨펌)하면 사이트에 게시된다. **게시 버튼은 사람이 누른다**(LinkedIn 약관).
 
 **Architecture:**
-- `publish/card_data.py`가 `events.json`과 계산 결과를 카드 장별 데이터(사전 목록)로 바꾼다. **장수는 고정하지 않는다.** 변동 항목을 전부 실을 때까지 늘린다(규칙 18). 최소 4장이다.
+- `publish/card_data.py`가 `events.json`과 계산 결과를 카드 장별 데이터(사전 목록)로 바꾼다. **장수는 고정하지 않는다.** 변동 항목을 전부 실을 때까지 늘린다(규칙 18). 최소 4장이다. `가정과 산출 근거` 장은 만들지 않는다(D16).
 - `templates/cards/cards.html.j2`가 한 파일 안에 모든 장을 그린다. 한 장은 1080×1350 블록이다. 디자인은 `docs/plans/phase3-card-design.md`를 따른다.
 - `publish/browser.py`가 설치된 브라우저를 명령줄로 호출해 PNG와 PDF를 굽는다. **새 파이썬 패키지를 추가하지 않는다.**
 - `publish/render_cards.py`가 위를 엮어 `data/raw/<날짜>/cards/`를 채운다.
@@ -26,7 +26,7 @@
 | D8 | 카드는 **설치된 브라우저를 직접 호출**해 굽는다(`--screenshot`, `--print-to-pdf`) | 새 파이썬 패키지가 없고, PNG와 PDF를 한 도구로 만든다. 임의의 디자인을 HTML/CSS로 재현할 수 있다 | Playwright + Chromium(확실하지만 로컬·CI에 100~150MB), Pillow 직접 그리기(재현도가 낮다) |
 | D9 | 카드는 **수집 단계에서 만들어 검토 PR에 보여 주고**, 머지 후 사이트에 게시한다 | 사용자가 머지 전에 문구와 그림을 함께 확인한다. 게시(공개)는 컨펌 이후라 규칙 14를 지킨다 | 머지 후에만 생성(미리 볼 수 없다), 아티팩트로만 내려받기(폰에서 번거롭다) |
 | D10 | 좌측 상단은 **프로젝트 이름만** 넣는다 | 사용자 결정. 카드 이미지에 개인 정보를 남기지 않는다 | 실명, 실명+프로젝트 이름 |
-| D11 | 장수는 **정기 4장(순위가 바뀐 날 5장), 소개 5장**이다 | 사건 하나에 담을 정보는 네 가지다. 고정 4장이면 순위가 그대로인 날 빈 장이 생긴다 | 고정 4장, 고정 5장 |
+| D11 | 장수를 고정하지 않는다. **정기는 최소 4장, 소개는 4장**이다 | 변동 항목을 전부 실어야 한다(D15). 고정하면 항목이 잘리거나 빈 장이 생긴다 | 고정 4장, 고정 5장 |
 | D12 | 템플릿의 **사진 자리는 데이터 블록으로 대체**한다 | 쓸 사진이 없고 타사 이미지·상표를 쓰지 않는다(2026-09-12 결정) | 사진 구입·생성(비용과 저작권 부담) |
 | D14 | 문구 반려는 검토 PR의 `revise-copy` 라벨로 받는다. 워크플로는 재작성 요청 Issue까지 만들고, 재작성은 Claude가 `/humanize-korean`으로 수행한다. 상한 3회 | `/humanize-korean`은 Claude 스킬이라 Actions 안에서 실행되지 않는다 [확인]. 전면 자동화는 **보안 점검 후 사용자가 기각했다** — 키를 쥔 작업에 외부 텍스트와 제3자 스크립트가 함께 들어간다 | Actions에서 Claude 실행(유출 위험), 수동 재작성(마찰이 크다) |
 | D15 | **항목을 생략하지 않는다.** 한 장에 담기지 않으면 같은 종류의 장을 늘려 전부 싣는다(규칙 18). D13(5줄로 자르고 `외 N건`)은 폐기한다 | 카드뉴스의 목적은 정보 전달이다. `외 N건`은 읽는 사람을 대시보드로 보낼 뿐 정보를 주지 않는다 | 자르기(정보 누락), 글자 축소(가독성 저하) |
@@ -82,7 +82,7 @@ tests/test_pipeline.py             # Task 5: 단언 추가
 ```
 data/raw/<날짜>/cards/
     cards.html        # 모든 장이 들어 있는 원본. 텍스트 변경이 git diff에 보인다
-    01-cover.png … 05-closing.png
+    01-cover.png … NN-rank.png
     cards.pdf         # 같은 장을 묶은 캐러셀용 문서
 data/raw/<날짜>/linkedin.md        # 게시문
 data/cards/intro/                  # 소개 카드(날짜와 무관). Task 8
@@ -207,7 +207,7 @@ def print_pdf(html: Path, out: Path) -> Path:
 **Files:** Create `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md`
 
 **담을 것**
-- 소개 5장과 정기 4~5장의 **장별 확정 문안**
+- 소개 4장과 정기 카드의 **장별 확정 문안**
 - 고정 문안과 **자리표시자**(`{작성일}`, `{플랫폼}`, `{전}`, `{후}`, `{변화율}`)를 구분해 표기
 - 표지 제목 생성 규칙 세 가지 경우의 실제 문장
 - 항목이 많은 날의 **장 분할 규칙과 쪽 표시**(`(1/2)`). 생략 문구는 쓰지 않는다(규칙 18)
@@ -266,17 +266,17 @@ def _events(price_records, workloads, changed):
 def test_four_cards_when_ranking_is_unchanged(price_records, workloads):
     events, rows = _events(price_records, workloads, {("redshift", "compute", "us"): 0.40})
     cards = price_change_cards(events, rows, workloads)
-    assert [c["kind"] for c in cards] == ["cover", "bullets", "chart", "closing"]
+    assert [c["kind"] for c in cards] == ["cover", "bullets", "chart", "bullets"]
     assert events["display"]["price_change_count"] == 1
 
 
 def test_five_cards_when_ranking_changes(price_records, workloads):
     events, rows = _events(price_records, workloads, {("redshift", "compute", "us"): 0.80})
     cards = price_change_cards(events, rows, workloads)
-    assert [c["kind"] for c in cards] == ["cover", "bullets", "chart", "banners", "closing"]
+    assert [c["kind"] for c in cards] == ["cover", "bullets", "chart", "bullets", "banners"]
     assert cards[0]["title"] == [{"text": "월 비용 ", "accent": False},
                                  {"text": "순위가 바뀌었습니다", "accent": True}]
-    assert len(cards[3]["banners"]) == 2          # 미국 리전, 서울 리전
+    assert len(cards[4]["banners"]) == 2          # 미국 리전, 서울 리전
 
 
 def test_every_price_change_is_carried_across_pages(price_records, workloads):
@@ -340,7 +340,8 @@ def test_a_number_that_is_not_in_events_is_rejected(sample_events, sample_cards)
 - 표지 제목 규칙은 `docs/plans/phase3-card-design.md` 3-2를 따른다.
 - `chart` 장은 `cost_changes`에서 변화율 절댓값이 가장 큰 시나리오·리전을 고르고, 그 조합의 플랫폼 4개 월 비용을 막대로 만든다. 막대 길이 비율은 최댓값 기준이다.
 - `banners` 장은 `rank_changes`를 리전별로 묶는다. 순위가 바뀐 리전만 넣는다.
-- 상수: `PER_PAGE = {"price": 5, "cost_lead": 4, "cost": 6, "rank": 2}` (디자인 계획 4-1절)
+- 상수: `PER_PAGE = {"price": 5, "cost": 6, "rank": 2}` (디자인 계획 4-1절)
+- **`가정과 산출 근거` 장을 만들지 않는다**(D16). 고지는 월 비용 장의 각주에 넣는다
 - 장수는 고정하지 않는다. 항목을 전부 실을 때까지 늘린다. 10장을 넘으면 경고를 남긴다
 
 - [ ] **Step 4: 게시문 템플릿과 렌더러**
@@ -430,7 +431,7 @@ def test_a_number_outside_events_is_rejected(sample_cards, sample_events):
 
 - `:root`에 디자인 토큰을 둔다. 값은 디자인 계획 1-2·1-3 표를 쓴다.
 - 한 장은 `.card{width:var(--w); height:var(--h); position:relative; overflow:hidden}`이다.
-- 장 종류별 매크로: `cover`, `bullets`, `chart`, `banners`, `closing`, (Task 6에서 `chips`, `flow` 추가)
+- 장 종류별 매크로: `cover`, `bullets`, `chart`, `banners`, (Task 8에서 `chips`, `flow` 추가)
 - 막대는 대시보드와 같은 CSS 막대 문법을 쓴다(`.track` + `.fill`).
 - `@media print`와 `@page{size:1080px 1350px; margin:0}`으로 PDF 한 장이 카드 한 장이 되게 한다.
 - 스크린샷용으로는 `?only=<n>` 대신 **장마다 임시 HTML 파일을 하나씩** 쓴다. 브라우저 인자로 제어하는 것보다 단순하고 실패 원인을 찾기 쉽다.
@@ -553,12 +554,12 @@ def bake(cards, out_dir, eyebrow):
 
 ---
 
-### Task 8: 소개 카드 5장
+### Task 8: 소개 카드 4장
 
 **Files:** Modify `publish/card_data.py`, `templates/cards/cards.html.j2`, `tests/test_card_data.py`
 
 - [ ] **Step 1: 테스트 작성**
-  - `intro_cards(analysis, day)`가 5장을 돌려주고 종류가 `["cover", "chips", "flow", "bullets", "closing"]`이다
+  - `intro_cards(analysis, day)`가 4장을 돌려주고 종류가 `["cover", "chips", "flow", "bullets"]`이다
   - 4장의 판정 문구가 **채택 / 기각**을 쓴다(규칙 17). "지지"라는 낱말이 들어가면 실패한다
   - 시나리오별 1위가 최신 승인 스냅샷의 계산 결과와 같다
   - 소개 카드에는 `events.json`이 없으므로, 숫자 검사는 **계산 결과로 만든 사전**을 기준으로 한다
@@ -587,7 +588,7 @@ def bake(cards, out_dir, eyebrow):
 
 ### Task 10: 첫 게시 (사용자)
 
-- [ ] 소개 카드 5장을 굽는다(`pipeline.py --cards intro`)
+- [ ] 소개 카드 4장을 굽는다(`pipeline.py --cards intro`)
 - [ ] 사용자가 게시된 주소에서 이미지 또는 PDF를 받는다
 - [ ] **사용자가 LinkedIn에서 직접 게시한다.** Claude는 게시하지 않는다
 - [ ] 게시 결과를 확인하고 `CLAUDE.md` 진행 로그에 적는다

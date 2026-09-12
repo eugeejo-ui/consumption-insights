@@ -13,6 +13,8 @@
     --radius:16px; --radius-sm:10px;
   }
   *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  section[id]{scroll-margin-top:24px}
   body{
     margin:0; background:var(--bg); color:var(--ink); display:flex; min-height:100vh;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
@@ -283,7 +285,8 @@
     <p class="note">괄호 안의 견고·민감은 플랫폼 하나의 용량 가정을 ±50% 조정했을 때 1위가 유지되는지를 뜻합니다.</p>
   </section>
 
-  <section id="premium" class="grid2">
+  <section id="premium">
+  <div class="grid2">
     <div class="card">
       <h2>서울 리전 프리미엄이 큰 항목</h2>
       {% for item in premium_high %}
@@ -310,9 +313,9 @@
       </div>
       {% endfor %}
     </div>
-  </section>
+  </div>
 
-  <section class="card" style="margin-bottom:16px">
+  <div class="card" style="margin-bottom:16px">
     <h2>전체 서울 프리미엄 (공시 단가 기준)</h2>
     <table>
       <tr><th>플랫폼 · 항목</th><th>미국 리전 단가</th><th>서울 리전 단가</th><th>프리미엄</th></tr>
@@ -324,6 +327,7 @@
       </tr>
       {% endfor %}
     </table>
+  </div>
   </section>
 
   <section id="assumptions" class="card">
@@ -362,6 +366,25 @@
       document.body.classList.toggle('mode-split', mode.value === 'split');
     });
     apply();
+
+    // 사이드바: 누른 항목의 섹션만 보여 준다(화면 전환). 스크롤이 막힌 미리보기 창에서도 동작한다.
+    var links = Array.prototype.slice.call(document.querySelectorAll('.nav[href^="#"]'));
+    var sections = links.map(function (link) { return document.querySelector(link.getAttribute('href')); });
+    function show(index) {
+      links.forEach(function (link, i) {
+        link.classList.toggle('active', i === index);
+        if (sections[i]) { sections[i].hidden = i !== index; }
+      });
+      window.scrollTo(0, 0);
+    }
+    links.forEach(function (link, index) {
+      if (!sections[index]) { return; }
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        show(index);
+      });
+    });
+    show(0);
   })();
 </script>
 </body>

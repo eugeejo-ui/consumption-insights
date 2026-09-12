@@ -485,8 +485,10 @@ def bake(cards, out_dir, eyebrow):
 
 **Files:** Modify `.github/workflows/collect.yml`
 
-- [ ] **Step 1: 한글 글꼴과 브라우저 준비**
-  - Task 1 실측 결과에 따라 `fonts-noto-cjk` 설치 단계를 넣는다(이미 있으면 넣지 않는다).
+- [ ] **Step 1: 한글 글꼴 설치 (필수)**
+  - `sudo apt-get install -y fonts-noto-cjk`를 **반드시** 넣는다. Task 1 실측에서 CI 서버의 한글 글꼴이 0개였다 [확인].
+  - 없으면 굽기가 실패하지 않고 **두부 글자 카드가 조용히 만들어진다.** 이것이 이 Task에서 가장 위험한 지점이다.
+  - 브라우저는 설치하지 않는다. Chrome 152가 미리 있다 [확인].
 
 - [ ] **Step 2: PR 본문에 카드 표시**
   - 브랜치를 push한 뒤 `SHA=$(git rev-parse HEAD)`로 커밋 SHA를 얻는다.

@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **로컬 실측 완료. CI 실측은 push 승인 대기** (2026-09-12) |
+| 상태 | **완료** (2026-09-12). 로컬·CI 실측 모두 통과 |
 | 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 1, 결정 D8 |
 | 담당 | C (사용자 확인 2회: 시험 카드 눈으로 확인, CI 실측 push 승인) |
 
@@ -61,9 +61,9 @@ print_pdf(html: Path, out: Path) -> Path
   - 같은 HTML을 굽고 아티팩트로 올린다
   - 글꼴이 없으면 `sudo apt-get install -y fonts-noto-cjk`를 넣고 다시 확인한다
   - **push는 외부로 나가는 행동이라 사용자 승인을 받는다**(규칙 4)
-- [ ] **Step 6** 아티팩트를 받아 확인한다. 로컬 결과와 눈으로 비교한다
-- [ ] **Step 7** 임시 워크플로를 삭제한다
-- [ ] **Step 8** 실측값을 이 파일과 `CLAUDE.md`에 `[확인]`으로 적고 커밋한다
+- [x] **Step 6** 아티팩트를 받아 확인한다. 로컬 결과와 눈으로 비교한다
+- [x] **Step 7** 임시 워크플로를 삭제한다
+- [x] **Step 8** 실측값을 이 파일과 `CLAUDE.md`에 `[확인]`으로 적고 커밋한다
 
 ## 테스트 목록
 
@@ -131,6 +131,23 @@ print_pdf(html: Path, out: Path) -> Path
 - 104px 제목은 한 줄에 약 10자가 들어간다. 그 이상은 넘친다. 상한을 `docs/scripts/cards-script.md` 4절에 표로 고정했다.
 - 내용이 적은 장은 아래쪽 여백이 크다. 본문 블록의 수직 위치 조정이 필요하다.
 
-### CI 실측 (대기)
+### CI 실측 (완료, 2026-09-12)
 
-`.github/workflows/probe-browser.yml`을 만들어 두었다. push 승인을 받으면 실행한다. 확인 항목은 서버의 브라우저 유무, 한글 글꼴 유무, `fonts-noto-cjk` 설치 전후 비교다. 확인 후 워크플로를 삭제한다.
+사용자 승인 아래 push하고 `probe-browser.yml`을 수동 실행했다(실행 34697297970).
+
+| 확인 항목 | 결과 |
+|---|---|
+| 브라우저 | **둘 다 미리 설치돼 있다** [확인]. Google Chrome 152.0.7977.82, Chromium 152.0.7977.0. `publish/browser.py`는 `/usr/bin/google-chrome`을 골랐다 |
+| **한글 글꼴** | **설치 전 0개** [확인]. `fc-list :lang=ko`가 0을 돌려줬다 |
+| 글꼴 설치 전 굽기 | 성공하지만 **모든 한글이 네모(두부)로 나왔다** [확인]. PNG 28KB |
+| 글꼴 설치 후 굽기 | `fonts-noto-cjk` 설치 후 **한글이 정상 렌더링됐다** [확인]. PNG 68KB |
+| PNG 크기 | 1080×1350 [확인] |
+| 테스트 | CI에서 3개 통과(실제 굽기 테스트 포함) |
+
+**결론: 카드를 굽는 워크플로에는 `fonts-noto-cjk` 설치 단계가 필수다.** 없으면 실패하지 않고 **두부 글자 카드가 조용히 만들어진다.** 이 점이 가장 위험하다. Task 6에 설치 단계를 넣는다.
+
+**추가 확인:** 로컬(Malgun Gothic)과 CI(Noto Sans CJK)는 줄바꿈 지점이 다르다 [확인]. 같은 문장이 로컬에서는 `비교되지 않습니 / 다`로, CI에서는 `비교되지 않습니다. 같 / 은`으로 끊겼다. 글자 수 상한을 넉넉하게 잡아 둔 것이 맞다.
+
+**정리:** 임시 워크플로 `.github/workflows/probe-browser.yml`을 삭제했다.
+
+**막혔던 것:** 첫 실행이 `ModuleNotFoundError: No module named 'publish'`로 실패했다. `python probe/bake.py`는 `sys.path`에 저장소 루트를 넣지 않는다. `PYTHONPATH=.`을 줘서 해결했다.

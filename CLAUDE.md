@@ -28,10 +28,10 @@
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
 **결정·확인 대기**
-1. **Phase 3 계획 3건 승인**(진행계획, 디자인 계획, 코드 계획). 승인해야 Task 1(브라우저 굽기 실측)을 시작한다.
+1. **저장소 보안 설정 4건**(보안 점검 2026-09-12): main 브랜치 보호, 워크플로 기본 권한 read, 워크플로의 PR 승인 권한 해제, 액션 SHA 고정 요구. 현재는 워크플로 하나가 잘못되면 main과 공개 사이트에 바로 반영된다.
 2. Phase 4(실적 코너·BigQuery 비용 실험)는 시작할 때 Secret `SEC_USER_AGENT`를 등록한다.
 
-**다음 행동:** Phase 3 계획 승인을 기다린다. 승인되면 Task 1부터 하나씩 진행한다(규칙 1·10).
+**다음 행동:** 3-1·3-2 완료. 사용자 지시에 따라 **여기서 멈춘다.** 다음은 3-3(카드 데이터와 게시문 구현)이다.
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -253,7 +253,7 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 **목표:** 가격이 의미 있게 바뀐 날 카드뉴스 이미지와 게시문을 자동으로 만든다. 검토 PR에서 미리 보고, 머지하면 사이트에 게시된다. **게시 버튼은 사람이 누른다.**
 - **방식은 A안이다**(2026-09-12). 기존 추천안 A'(공식 공유 링크)는 URL 하나를 공유하는 창이라 이미지 여러 장을 붙일 수 없다 [지식]. 아카이브 링크만 공유할 때 보조 수단으로 남긴다.
 - **Claude는 LinkedIn에 자동으로 접근하거나 게시하지 않는다.** API 약관 3.1(26), 사용자 약관 13번 [확인]. 브라우저 자동화로 우회하지 않는다.
-- [x] 3-1 (C) 브라우저로 굽기 실측 `publish/browser.py` (로컬 완료, CI 확인 남음)
+- [x] 3-1 (C) 브라우저로 굽기 실측 `publish/browser.py` (로컬·CI 완료)
 - [x] 3-2 (C) **카드 스크립트 작성**(규칙 16). 소개 4장·정기 카드의 확정 문안 → `/humanize-korean` 점검(변경률 1.1%, 등급 A) → (U) 승인 대기
 - [ ] 3-3 (C) 카드 데이터와 게시문 `publish/card_data.py`, `publish/render_linkedin.py`
 - [ ] 3-4 (C) 카드 HTML 템플릿과 굽기 → (U) 카드 실물 확인
@@ -358,6 +358,9 @@ SEC 실적 수집 (Phase 4) ─────────────────�
 - BigQuery 가격 페이지: `cloud.google.com/robots.txt`가 `/bigquery/pricing`을 막지 않는다 [확인 2026-09-12]. 가격 문자열만 뽑아 해시하면 nonce가 바뀌어도 지문이 같다(문자열 825개) [확인].
 - 기기 인증(OAuth device flow)은 Bash 백그라운드로 띄워야 한다 [확인]. PowerShell `Start-Job`은 그 명령이 끝날 때 함께 종료돼 승인 결과를 받지 못한다.
 - humanize-korean 스킬: **전체 경로로 실행된다** [확인 2026-09-12]. 플러그인 루트는 `C:\im-not-ai`이고 `scripts/`가 그 아래에 있다. 정량 점수 shim(`prepare_monolith_input.py`)과 구조 게이트(`verify_gates.py`)가 모두 동작한다. 이전 기록("스크립트를 찾지 못한다")은 더 이상 맞지 않는다.
+- 카드 굽기 [확인 2026-09-12]: 로컬은 Edge(`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`)로, CI는 미리 설치된 Google Chrome 152로 1080×1350 PNG와 장수만큼의 PDF를 굽는다. `--headless=new`, `--screenshot`, `--print-to-pdf`, `--no-pdf-header-footer`가 모두 동작한다.
+- **CI 서버에는 한글 글꼴이 하나도 없다**(`fc-list :lang=ko` → 0) [확인 2026-09-12]. `fonts-noto-cjk`를 설치하지 않으면 **실패하지 않고 두부 글자 카드가 만들어진다.** 카드를 굽는 워크플로에는 설치 단계를 반드시 넣는다.
+- 로컬(Malgun Gothic)과 CI(Noto Sans CJK)는 줄바꿈 지점이 다르다 [확인 2026-09-12]. 글자 수 상한은 넉넉하게 잡는다.
 - PowerShell에서 `gh --jq` 식을 쓰면 따옴표가 깨진다. `gh api ... | ConvertFrom-Json`을 쓴다 [확인].
 - 첫 커밋 전에는 git worktree를 만들 수 없어서 main에서 진행했다. 이후 Task도 규칙 10(Task마다 확인)에 따라 main에 로컬 커밋한다.
 

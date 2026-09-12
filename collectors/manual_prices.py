@@ -13,7 +13,8 @@ DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 def load_manual(path: Path) -> list[PriceRecord]:
     records = []
-    with Path(path).open(newline="", encoding="utf-8") as f:
+    # utf-8-sig: Windows에서 사람이 고친 CSV에 BOM이 붙어도 첫 열 이름이 깨지지 않는다.
+    with Path(path).open(newline="", encoding="utf-8-sig") as f:
         for line_no, row in enumerate(csv.DictReader(f), start=2):
             confirmed = (row.pop("confirmed_on") or "").strip()
             if not DATE.match(confirmed):

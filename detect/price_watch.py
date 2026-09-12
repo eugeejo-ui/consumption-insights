@@ -47,7 +47,7 @@ def check_bigquery(day: str, fetch=fetch_page, path: Path = FINGERPRINT_FILE) ->
     """지문을 비교한다. 처음이면 changed=False로 두고 기준만 만든다."""
     path = Path(path)
     current = fingerprint(fetch(BIGQUERY_PRICING_URL))
-    stored = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    stored = json.loads(path.read_text(encoding="utf-8-sig")) if path.exists() else None   # BOM이 붙어도 읽는다
     return {
         "checked_on": day, "first": stored is None,
         "changed": stored is not None and stored["hash"] != current["hash"],

@@ -6,7 +6,7 @@
 **Goal:** 가격이 의미 있게 바뀐 날(E1) 카드뉴스 이미지와 LinkedIn 게시문을 자동으로 만든다. 검토 PR에서 카드를 미리 보고, 머지(컨펌)하면 사이트에 게시된다. **게시 버튼은 사람이 누른다**(LinkedIn 약관).
 
 **Architecture:**
-- `publish/card_data.py`가 `events.json`과 계산 결과를 카드 장별 데이터(사전 목록)로 바꾼다. 장수는 내용에 따라 4~5장이다.
+- `publish/card_data.py`가 `events.json`과 계산 결과를 카드 장별 데이터(사전 목록)로 바꾼다. **장수는 고정하지 않는다.** 변동 항목을 전부 실을 때까지 늘린다(규칙 18). 최소 4장이다.
 - `templates/cards/cards.html.j2`가 한 파일 안에 모든 장을 그린다. 한 장은 1080×1350 블록이다. 디자인은 `docs/plans/phase3-card-design.md`를 따른다.
 - `publish/browser.py`가 설치된 브라우저를 명령줄로 호출해 PNG와 PDF를 굽는다. **새 파이썬 패키지를 추가하지 않는다.**
 - `publish/render_cards.py`가 위를 엮어 `data/raw/<날짜>/cards/`를 채운다.
@@ -28,7 +28,8 @@
 | D10 | 좌측 상단은 **프로젝트 이름만** 넣는다 | 사용자 결정. 카드 이미지에 개인 정보를 남기지 않는다 | 실명, 실명+프로젝트 이름 |
 | D11 | 장수는 **정기 4장(순위가 바뀐 날 5장), 소개 5장**이다 | 사건 하나에 담을 정보는 네 가지다. 고정 4장이면 순위가 그대로인 날 빈 장이 생긴다 | 고정 4장, 고정 5장 |
 | D12 | 템플릿의 **사진 자리는 데이터 블록으로 대체**한다 | 쓸 사진이 없고 타사 이미지·상표를 쓰지 않는다(2026-09-12 결정) | 사진 구입·생성(비용과 저작권 부담) |
-| D13 | 넘치는 항목은 불릿 5줄로 자르고 `외 N건`으로 적는다. `N`은 카드 생성 시 `events["display"]`에 기록해 숫자 검사를 통과시킨다 | 숫자 검사 규칙을 약화시키지 않는다. 보강된 값이 `events.json`에 남아 추적된다 | 검사 예외 허용(규칙이 느슨해진다), 숫자를 쓰지 않음(정보가 준다) |
+| D14 | 문구 반려는 검토 PR의 `revise-copy` 라벨로 받는다. 워크플로는 재작성 요청 Issue까지 만들고, 재작성은 Claude가 `/humanize-korean`으로 수행한다. 상한 3회 | `/humanize-korean`은 Claude 스킬이라 Actions 안에서 실행되지 않는다 [확인]. 전면 자동화는 **보안 점검 후 사용자가 기각했다** — 키를 쥔 작업에 외부 텍스트와 제3자 스크립트가 함께 들어간다 | Actions에서 Claude 실행(유출 위험), 수동 재작성(마찰이 크다) |
+| D15 | **항목을 생략하지 않는다.** 한 장에 담기지 않으면 같은 종류의 장을 늘려 전부 싣는다(규칙 18). D13(5줄로 자르고 `외 N건`)은 폐기한다 | 카드뉴스의 목적은 정보 전달이다. `외 N건`은 읽는 사람을 대시보드로 보낼 뿐 정보를 주지 않는다 | 자르기(정보 누락), 글자 축소(가독성 저하) |
 
 ## 한눈에 보기 (사용자용 요약)
 
@@ -36,12 +37,12 @@
 |---|---|---|---|
 | 1 | **실측.** 브라우저로 PNG·PDF 굽기, 한글 표시, CI 서버 확인 | +3 → 60 | — |
 | 2 | **카드 스크립트 작성**(규칙 16). 확정 문안 + `/humanize-korean` 점검 | — | **문안 승인** |
-| 3 | 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +9 → 69 | — |
-| 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 75 | **카드 실물 확인** |
-| 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 79 | — |
+| 3 | 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +10 → 70 | — |
+| 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 76 | **카드 실물 확인** |
+| 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 80 | — |
 | 6 | 워크플로: 검토 PR에 카드 표시, 머지 후 사이트 게시 | 워크플로 실측 | 시뮬레이션 PR 확인 |
-| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 81 | 반려 시 라벨 1개 |
-| 8 | 소개 카드 구현 | +4 → 85 | — |
+| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 82 | 반려 시 라벨 1개 |
+| 8 | 소개 카드 구현 | +4 → 86 | — |
 | 9 | 종단 검증 | — | — |
 | 10 | **첫 게시** | — | **LinkedIn에 직접 게시** |
 
@@ -52,6 +53,7 @@
 - 카드 HTML에 **외부 요청이 하나도 없어야 한다.** `<img>`, `<link>`, `@import`, `url()`을 쓰지 않는다. 글꼴은 시스템 글꼴 스택만 쓴다.
 - 타사 로고와 원본 템플릿의 사진·일러스트를 쓰지 않는다. `_workspace/card-template/`의 파일을 저장소로 옮기지 않는다.
 - 카드와 게시문의 모든 숫자는 `events.json`에 있어야 한다(표시 반올림 허용).
+- **항목을 생략하지 않는다**(규칙 18). 한 장에 담기지 않으면 장을 늘린다. 누락 검사를 코드로 강제한다.
 - 사용자에게 보이는 한국어는 격식 있는 문어체다(규칙 17). 문안은 규칙 16의 스크립트 단계를 거친다. 용어 고정: 채택·기각, 작성일, 미국 리전·서울 리전, 월 비용이 낮은 순서.
 - 카드 생성이 실패해도 **검토 PR은 열려야 한다.** 카드는 부가물이고 검토를 막으면 안 된다.
 - 커밋 메시지 끝에 `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`을 붙인다. 한 번에 Task 하나만 하고 보고한 뒤 멈춘다(규칙 10).
@@ -208,7 +210,7 @@ def print_pdf(html: Path, out: Path) -> Path:
 - 소개 5장과 정기 4~5장의 **장별 확정 문안**
 - 고정 문안과 **자리표시자**(`{작성일}`, `{플랫폼}`, `{전}`, `{후}`, `{변화율}`)를 구분해 표기
 - 표지 제목 생성 규칙 세 가지 경우의 실제 문장
-- 넘치는 항목의 `외 N건` 문구
+- 항목이 많은 날의 **장 분할 규칙과 쪽 표시**(`(1/2)`). 생략 문구는 쓰지 않는다(규칙 18)
 - LinkedIn 게시문 전문
 - 장 종류별 **제목 최대 글자 수**. Task 1에서 104px 제목이 카드 폭을 거의 채우는 것을 확인했다
 
@@ -235,7 +237,9 @@ def print_pdf(html: Path, out: Path) -> Path:
 
 **Interfaces:**
 - `price_change_cards(events: dict, rows: list[CostRow], workloads: dict) -> list[dict]`
-  - `events`를 **제자리에서 보강한다**: `events["display"] = {"price_change_count", "price_change_omitted", "cost_change_count"}` (D13)
+  - `events`를 **제자리에서 보강한다**: `events["display"] = {"price_change_count"}`
+  - 각 장에 `group`(`price`|`cost`|`rank`), `page`(`(1/2)` 또는 `None`), `items`를 담는다
+- `check_complete(cards: list[dict], events: dict) -> None` — 카드에 실린 항목 수와 `events`의 항목 수를 대조한다. 어긋나면 `ValueError`(규칙 18, D15)
   - 돌려주는 각 장: `{"kind", "eyebrow", "title", "lead", ...kind별 키}`
   - `title`은 `[{"text": str, "accent": bool}, ...]` — `accent`가 참인 덩어리에만 그라데이션을 입힌다
 - `render_linkedin(events: dict, cards: list[dict]) -> str`
@@ -275,23 +279,36 @@ def test_five_cards_when_ranking_changes(price_records, workloads):
     assert len(cards[3]["banners"]) == 2          # 미국 리전, 서울 리전
 
 
-def test_bullets_are_capped_and_the_rest_is_counted(price_records, workloads):
+def test_every_price_change_is_carried_across_pages(price_records, workloads):
+    """규칙 18: 항목을 생략하지 않는다. 5줄을 넘으면 장이 늘어난다."""
     changed = {(p, s, "us"): v for (p, s, v) in [
         ("redshift", "compute", 0.40), ("redshift", "storage", 0.03), ("bigquery", "compute", 0.07),
         ("bigquery", "storage", 0.03), ("bigquery", "scan", 7.0), ("snowflake", "compute", 3.3),
         ("databricks", "compute", 0.8)]}
     events, rows = _events(price_records, workloads, changed)
     cards = price_change_cards(events, rows, workloads)
-    assert len(cards[1]["bullets"]) == 5
-    assert events["display"]["price_change_omitted"] == 2
-    assert cards[1]["note"] == "외 2건은 대시보드에 있습니다."
+    pages = [c for c in cards if c["kind"] == "bullets" and c["group"] == "price"]
+    assert len(pages) == 2                                   # 7건 → 5 + 2
+    assert sum(len(c["items"]) for c in pages) == len(events["price_changes"])
+    assert [c["page"] for c in pages] == ["(1/2)", "(2/2)"]
+    assert all("외 " not in (c.get("note") or "") for c in cards)   # 생략 문구가 없다
+
+
+def test_missing_item_stops_generation(price_records, workloads):
+    """누락 검사: 항목을 하나 빼면 중단한다."""
+    from publish.card_data import check_complete
+    events, rows = _events(price_records, workloads, {("redshift", "compute", "us"): 0.40})
+    cards = price_change_cards(events, rows, workloads)
+    cards[1]["items"] = cards[1]["items"][:-1]
+    with pytest.raises(ValueError, match="누락"):
+        check_complete(cards, events)
 
 
 def test_platform_and_region_labels_follow_the_fixed_terms(price_records, workloads):
     events, rows = _events(price_records, workloads, {("redshift", "compute", "us"): 0.40})
     cards = price_change_cards(events, rows, workloads)
-    assert "Redshift" in cards[1]["bullets"][0]["strong"]
-    assert "미국 리전" in cards[1]["bullets"][0]["strong"]
+    assert "Redshift" in cards[1]["items"][0]["strong"]
+    assert "미국 리전" in cards[1]["items"][0]["strong"]
 ```
 
 `tests/test_render_linkedin.py`:
@@ -323,7 +340,8 @@ def test_a_number_that_is_not_in_events_is_rejected(sample_events, sample_cards)
 - 표지 제목 규칙은 `docs/plans/phase3-card-design.md` 3-2를 따른다.
 - `chart` 장은 `cost_changes`에서 변화율 절댓값이 가장 큰 시나리오·리전을 고르고, 그 조합의 플랫폼 4개 월 비용을 막대로 만든다. 막대 길이 비율은 최댓값 기준이다.
 - `banners` 장은 `rank_changes`를 리전별로 묶는다. 순위가 바뀐 리전만 넣는다.
-- 상수: `MAX_BULLETS = 5`
+- 상수: `PER_PAGE = {"price": 5, "cost_lead": 4, "cost": 6, "rank": 2}` (디자인 계획 4-1절)
+- 장수는 고정하지 않는다. 항목을 전부 실을 때까지 늘린다. 10장을 넘으면 경고를 남긴다
 
 - [ ] **Step 4: 게시문 템플릿과 렌더러**
 

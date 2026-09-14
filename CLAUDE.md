@@ -6,7 +6,7 @@
 > - **Phase 2 진행 중:** 계획 `docs/plans/phase2-automation-publish.md`(Task 1~5, 2-5a 전 멈춤)와 결정 D1~D3을 2026-09-11 승인받았다. **Phase 2 완료**(테스트 57개). **대시보드 게시: https://eugeejo-ui.github.io/consumption-insights/**
 >   - 매일 수집(00:17 UTC)과 가격 확인 감시(01:37 UTC)가 돌고, 검토 PR을 머지하면 게시와 시트 적재까지 이어진다.
 >   - 시트 적재는 **서비스 계정 키 없이** 워크로드 아이덴티티로 연결했다. 기준선 18행을 적재해 확인했다.
->   - **Phase 3 진행 중:** 방식을 A안으로 정했고 카드 디자인 템플릿을 받았다. 계획 3건을 쓰고 승인을 기다린다(2026-09-12).
+>   - **Phase 3 진행 중:** 방식 A안, 계획 3건 승인. 3-1(굽기 실측)·3-2(카드 스크립트, 2026-09-14 개정본 확정) 완료. 3-3 세부 계획 승인 대기(2026-09-14).
 > - Phase별 진행계획은 `docs/phases/`에 있다.
 >
 > **마지막 갱신:** 2026-09-14
@@ -23,7 +23,7 @@
 | Phase 0: 막힘 점검 (09-11) | 완료 | 약관 막힘 2건(LinkedIn, Snowflake·Databricks), 나머지는 통과 또는 조건부 | `docs/phases/phase-0-access-check.md`, `docs/02_phase0_report.md` |
 | Phase 1: 가격·TCO·대시보드 | **완료** (09-11) | 테스트 33개. 첫 승인 스냅샷(2026-09-11): T1 기각(전 시나리오 Redshift 1위, 미국 민감·서울 견고), T2 지지(39.5%p) | `docs/phases/phase-1-tco-dashboard.md`, `docs/plans/phase1-tco-dashboard.md` |
 | Phase 2: 자동 수집·검토 PR·게시·Sheets 적재 | **완료** (2026-09-12) | 체크포인트 = 검토 PR 머지(Claude 불필요). Sheets 적재는 컨펌 이후. 대시보드를 만들기 전에 멈추고 사용자 템플릿을 받는다(2-5a) | `docs/phases/phase-2-automation-publish.md` |
-| Phase 3: LinkedIn 카드뉴스 | **계획 승인 대기** (2026-09-12) | 방식 A안 확정(사람이 게시), 디자인 템플릿 수령·분석 완료. 카드는 1080×1350, 소개 4장·정기 4장 이상 | `docs/phases/phase-3-linkedin.md`, `docs/plans/phase3-card-design.md`, `docs/plans/phase3-linkedin-cardnews.md` |
+| Phase 3: LinkedIn 카드뉴스 | **진행 중** (3-1·3-2 완료, 3-3 계획 승인 대기, 2026-09-14) | 방식 A안 확정(사람이 게시), 디자인 템플릿 수령·분석 완료. 카드는 1080×1350, 소개 4장·정기 4장 이상 | `docs/phases/phase-3-linkedin.md`, `docs/plans/phase3-card-design.md`, `docs/plans/phase3-linkedin-cardnews.md` |
 | Phase 4: 실적 코너 + 비용 설계 실험 | 대기 | — | `docs/phases/phase-4-earnings-experiment.md` |
 | Phase 5: 안정화·자동 게시 전환 | 대기 | — | `docs/phases/phase-5-stabilize.md` |
 
@@ -31,7 +31,7 @@
 1. **저장소 보안 설정 4건**(보안 점검 2026-09-12): main 브랜치 보호, 워크플로 기본 권한 read, 워크플로의 PR 승인 권한 해제, 액션 SHA 고정 요구. 현재는 워크플로 하나가 잘못되면 main과 공개 사이트에 바로 반영된다.
 2. Phase 4(실적 코너·BigQuery 비용 실험)는 시작할 때 Secret `SEC_USER_AGENT`를 등록한다.
 
-**다음 행동:** 3-1·3-2 완료(3-2 개정본 2026-09-14 확정). **여기서 멈춘다.** 다음은 3-3(카드 데이터와 게시문 구현)이며, 규칙 15에 따라 Task 세부 계획을 먼저 써서 승인받는다.
+**다음 행동:** 3-1·3-2 완료(3-2 개정본 2026-09-14 확정). 3-3 세부 계획(`docs/tasks/phase3/task-3-card-data-and-post.md`)을 작성했고 **승인을 기다린다.** 확인 사항 6건(스크립트 보완 5건, 마무리 안내 장 1건)에 대한 결정이 필요하다. 승인 후 Step 0(스크립트 보완 → `/humanize-korean` → 문안 승인)부터 진행한다.
 
 ## 1. 작업 규칙 (Claude가 매 세션 지킬 것)
 
@@ -249,13 +249,13 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - 멱등성, `--dry-run`
 - **게이트:** (U) 첫 실제 게시 전 확인 → Phase 3 상세 계획 승인
 
-### Phase 3: LinkedIn 카드뉴스 (계획 승인 대기). 진행계획: `docs/phases/phase-3-linkedin.md`
+### Phase 3: LinkedIn 카드뉴스 (진행 중). 진행계획: `docs/phases/phase-3-linkedin.md`
 **목표:** 가격이 의미 있게 바뀐 날 카드뉴스 이미지와 게시문을 자동으로 만든다. 검토 PR에서 미리 보고, 머지하면 사이트에 게시된다. **게시 버튼은 사람이 누른다.**
 - **방식은 A안이다**(2026-09-12). 기존 추천안 A'(공식 공유 링크)는 URL 하나를 공유하는 창이라 이미지 여러 장을 붙일 수 없다 [지식]. 아카이브 링크만 공유할 때 보조 수단으로 남긴다.
 - **Claude는 LinkedIn에 자동으로 접근하거나 게시하지 않는다.** API 약관 3.1(26), 사용자 약관 13번 [확인]. 브라우저 자동화로 우회하지 않는다.
 - [x] 3-1 (C) 브라우저로 굽기 실측 `publish/browser.py` (로컬·CI 완료)
 - [x] 3-2 (C) **카드 스크립트 작성**(규칙 16). 2026-09-12 확정, **2026-09-14 개정본 확정**(D18 차트 장 미국 리전·서울 리전 병기, D19 달러 표기와 통화 기준 각주, 리드 명확화)
-- [ ] 3-3 (C) 카드 데이터와 게시문 `publish/card_data.py`, `publish/render_linkedin.py`
+- [ ] 3-3 (C) 카드 데이터와 게시문 `publish/card_data.py`, `publish/render_linkedin.py`. 세부 계획 작성(2026-09-14), 승인 대기
 - [ ] 3-4 (C) 카드 HTML 템플릿과 굽기 → (U) 카드 실물 확인
 - [ ] 3-5 (C) 파이프라인 연결 `pipeline.py --cards`
 - [ ] 3-6 (C) 워크플로 연결(검토 PR에 카드 표시, 머지 후 게시)
@@ -561,3 +561,4 @@ SEC 실적 수집 (Phase 4) ─────────────────�
   - `/humanize-korean` 점검 2회(run `2026-09-14-001`, `002`), 모두 변경률 0.0%, 게이트 수렴.
   - 시험 굽기 중 `publish/browser.py` 결함을 고쳤다(`05491dd`). Edge가 먼저 종료하고 파일은 하위 프로세스가 뒤늦게 쓴다 [확인]. 테스트 62개.
   - 조판 결함(각주 마지막 음절만 줄바꿈)을 발견해 모든 카드에 `word-break: keep-all`을 적용하도록 디자인 계획에 넣었다.
+- **2026-09-14:** 3-3 세부 계획을 작성했다(`docs/tasks/phase3/task-3-card-data-and-post.md`). 스크립트와 코드를 대조해 스크립트에 없는 값 5건과 마무리 안내 장 결정 1건을 확인했다. 승인 후 스크립트 보완(Step 0)부터 진행한다. Phase 3 상태 표기(계획 승인 대기)가 실제 진행과 어긋나 있어 함께 바로잡았다.

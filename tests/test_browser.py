@@ -38,3 +38,22 @@ def test_bakes_a_png_of_the_right_size(tmp_path):
     out = browser.screenshot(page, tmp_path / "card.png")
     header = out.read_bytes()[16:24]
     assert struct.unpack(">II", header) == (1080, 1350)
+
+
+def test_waits_for_a_file_written_after_the_browser_exits(tmp_path):
+    """브라우저가 먼저 종료하고 파일은 하위 프로세스가 뒤늦게 쓴다(Edge 실측, 2026-09-14)."""
+    import threading
+    import time
+
+    out = tmp_path / "late.png"
+
+    def write_later():
+        time.sleep(1.2)
+        out.write_bytes(b"x" * 64)
+
+    threading.Thread(target=write_later).start()
+    assert browser.wait_for_file(out, timeout=10) is True
+
+
+def test_gives_up_when_the_file_never_appears(tmp_path):
+    assert browser.wait_for_file(tmp_path / "never.png", timeout=1) is False

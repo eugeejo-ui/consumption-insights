@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 CANDIDATES = [
@@ -26,6 +27,7 @@ COMMON = ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage", "--hide-sc
 HEADLESS = ["--headless=new", "--headless"]          # 새 표기를 모르는 버전이 있다
 PDF_HEADER_OFF = ["--no-pdf-header-footer", "--print-to-pdf-no-header"]
 TIMEOUT = 120
+FILE_WAIT = 60                                      # 브라우저 종료 뒤 파일이 쓰일 때까지 기다리는 상한(초)
 
 
 def find_browser() -> str:
@@ -39,9 +41,28 @@ def find_browser() -> str:
     raise RuntimeError("브라우저를 찾지 못했다. Edge나 Chrome을 설치하거나 BROWSER_BIN에 경로를 지정한다.")
 
 
-def _attempt(args: list[str]) -> str | None:
-    """한 번 실행한다. 성공하면 None, 실패하면 사유 문자열."""
-    with tempfile.TemporaryDirectory() as profile:
+def wait_for_file(out: Path, timeout: float = FILE_WAIT) -> bool:
+    """파일이 생기고 크기가 두 번 연속 같으면 다 쓰인 것으로 본다.
+
+    Edge는 실행 파일이 먼저 종료 코드 0을 돌려주고, 실제 굽기는 분리된 하위 프로세스가 뒤늦게 끝낸다
+    [확인 2026-09-14]. 종료 직후 파일을 확인하면 아직 없다.
+    """
+    deadline = time.monotonic() + timeout
+    last = -1
+    while time.monotonic() < deadline:
+        size = out.stat().st_size if out.exists() else -1
+        if size > 0 and size == last:
+            return True
+        last = size
+        time.sleep(0.5)
+    return False
+
+
+def _attempt(args: list[str], out: Path) -> str | None:
+    """한 번 실행하고 결과 파일이 다 쓰일 때까지 기다린다. 성공하면 None, 실패하면 사유 문자열."""
+    # 프로필 폴더는 파일을 기다린 뒤에 지운다. 하위 프로세스가 아직 쓰는 중에 지우면 굽기가 깨진다.
+    # Edge의 충돌 보고 프로세스는 그 뒤에도 프로필 안 파일을 잠시 잠근다. 삭제 실패는 굽기 실패가 아니다.
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
         try:
             subprocess.run([find_browser(), *COMMON, f"--user-data-dir={profile}", *args],
                            check=True, capture_output=True, timeout=TIMEOUT)
@@ -49,6 +70,8 @@ def _attempt(args: list[str]) -> str | None:
             return f"종료 코드 {exc.returncode}: {exc.stderr.decode('utf-8', 'replace').strip()[:200]}"
         except subprocess.TimeoutExpired:
             return f"{TIMEOUT}초 안에 끝나지 않았다"
+        if not wait_for_file(out):
+            return f"{FILE_WAIT}초를 기다려도 파일이 생기지 않았다"
     return None
 
 
@@ -59,10 +82,10 @@ def _bake(out: Path, variants: list[list[str]], args: list[str]) -> Path:
     for headless in HEADLESS:
         for variant in variants:
             out.unlink(missing_ok=True)
-            failure = _attempt([headless, *variant, *args])
-            if failure is None and out.exists() and out.stat().st_size > 0:
+            failure = _attempt([headless, *variant, *args], out)
+            if failure is None:
                 return out
-            reasons.append(f"{headless} {' '.join(variant)}: {failure or '파일이 생기지 않았다'}")
+            reasons.append(f"{headless} {' '.join(variant)}: {failure}")
     raise RuntimeError(f"{out.name}을(를) 만들지 못했다.\n" + "\n".join(reasons))
 
 

@@ -30,19 +30,20 @@
 | D12 | 템플릿의 **사진 자리는 데이터 블록으로 대체**한다 | 쓸 사진이 없고 타사 이미지·상표를 쓰지 않는다(2026-09-12 결정) | 사진 구입·생성(비용과 저작권 부담) |
 | D14 | 문구 반려는 검토 PR의 `revise-copy` 라벨로 받는다. 워크플로는 재작성 요청 Issue까지 만들고, 재작성은 Claude가 `/humanize-korean`으로 수행한다. 상한 3회 | `/humanize-korean`은 Claude 스킬이라 Actions 안에서 실행되지 않는다 [확인]. 전면 자동화는 **보안 점검 후 사용자가 기각했다** — 키를 쥔 작업에 외부 텍스트와 제3자 스크립트가 함께 들어간다 | Actions에서 Claude 실행(유출 위험), 수동 재작성(마찰이 크다) |
 | D15 | **항목을 생략하지 않는다.** 한 장에 담기지 않으면 같은 종류의 장을 늘려 전부 싣는다(규칙 18). D13(5줄로 자르고 `외 N건`)은 폐기한다 | 카드뉴스의 목적은 정보 전달이다. `외 N건`은 읽는 사람을 대시보드로 보낼 뿐 정보를 주지 않는다 | 자르기(정보 누락), 글자 축소(가독성 저하) |
+| D18 | 차트 장에 **미국 리전·서울 리전을 병기**한다. 대표로 고르는 것은 시나리오 하나다 | 리전 하나만 고르면 서울 리전이 구조적으로 빠진다. 한국어 독자에게 관련성이 높고, T2(서울 프리미엄)가 그림으로 드러난다. 장수는 늘지 않는다 | 리전마다 차트 1장(+1장), 서울 프리미엄 고정 장(+1장) |
 
 ## 한눈에 보기 (사용자용 요약)
 
 | Task | 만드는 것 | 테스트(누적) | 사용자가 할 일 |
 |---|---|---|---|
-| 1 | **실측.** 브라우저로 PNG·PDF 굽기, 한글 표시, CI 서버 확인 | +3 → 60 | — |
+| 1 | **실측.** 브라우저로 PNG·PDF 굽기, 한글 표시, CI 서버 확인 | +5 → 62 (결함 수정 테스트 2개 포함) | — |
 | 2 | **카드 스크립트 작성**(규칙 16). 확정 문안 + `/humanize-korean` 점검 | — | **문안 승인** |
-| 3 | 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +10 → 70 | — |
-| 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 76 | **카드 실물 확인** |
-| 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 80 | — |
+| 3 | 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +11 → 73 | — |
+| 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 79 | **카드 실물 확인** |
+| 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 83 | — |
 | 6 | 워크플로: 검토 PR에 카드 표시, 머지 후 사이트 게시 | 워크플로 실측 | 시뮬레이션 PR 확인 |
-| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 82 | 반려 시 라벨 1개 |
-| 8 | 소개 카드 구현 | +4 → 86 | — |
+| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 85 | 반려 시 라벨 1개 |
+| 8 | 소개 카드 구현 | +4 → 89 | — |
 | 9 | 종단 검증 | — | — |
 | 10 | **첫 게시** | — | **LinkedIn에 직접 게시** |
 
@@ -305,6 +306,15 @@ def test_missing_item_stops_generation(price_records, workloads):
         check_complete(cards, events)
 
 
+def test_chart_card_always_shows_both_regions(price_records, workloads):
+    """D18: 변동이 미국 리전에만 있어도 차트에는 서울 리전이 함께 실린다."""
+    events, rows = _events(price_records, workloads, {("redshift", "compute", "us"): 0.40})
+    chart = next(c for c in price_change_cards(events, rows, workloads) if c["kind"] == "chart")
+    assert set(chart["series"]) == {"us", "seoul"}
+    assert all(len(chart["series"][r]) == 4 for r in ("us", "seoul"))
+    assert events["display"]["chart"]["seoul"] == chart["series"]["seoul"]   # 숫자 검사가 통과하도록 기록한다
+
+
 def test_platform_and_region_labels_follow_the_fixed_terms(price_records, workloads):
     events, rows = _events(price_records, workloads, {("redshift", "compute", "us"): 0.40})
     cards = price_change_cards(events, rows, workloads)
@@ -339,7 +349,8 @@ def test_a_number_that_is_not_in_events_is_rejected(sample_events, sample_cards)
 - [ ] **Step 3: `publish/card_data.py` 구현**
 
 - 표지 제목 규칙은 `docs/plans/phase3-card-design.md` 3-2를 따른다.
-- `chart` 장은 `cost_changes`에서 변화율 절댓값이 가장 큰 시나리오·리전을 고르고, 그 조합의 플랫폼 4개 월 사용료를 막대로 만든다. 막대 길이 비율은 최댓값 기준이다.
+- `chart` 장은 `cost_changes`에서 변화율 절댓값이 가장 큰 항목의 **시나리오**를 고른다. **리전은 고르지 않고 미국 리전·서울 리전을 모두 싣는다**(D18). 장 데이터는 `{"kind": "chart", "scenario", "series": {"us": {플랫폼: 금액}, "seoul": {플랫폼: 금액}}}`이다. 막대 높이는 두 리전 전체의 최댓값 기준이다.
+- **차트 금액을 `events["display"]["chart"]`에 기록한다.** 변동이 없는 플랫폼과 리전의 금액은 `cost_changes`에 없으므로, 기록하지 않으면 숫자 검사가 막는다. 금액은 달러 정수로 반올림해 기록하고 카드에도 같은 값을 쓴다
 - `banners` 장은 `rank_changes`를 리전별로 묶는다. 순위가 바뀐 리전만 넣는다.
 - 상수: `PER_PAGE = {"price": 5, "cost": 6, "rank": 2}` (디자인 계획 4-1절)
 - **`가정과 산출 근거` 장을 만들지 않는다**(D16). 고지는 차트 장(`플랫폼별 월 사용료`)의 각주에 넣는다

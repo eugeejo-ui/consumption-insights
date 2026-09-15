@@ -5,7 +5,7 @@
 | 상태 | **3-1~3-8 완료** (2026-09-15, 테스트 127개). 3-2 개정본 확정(2026-09-14), 보완안 확정(2026-09-15, D20 마무리 안내 장). 다음은 3-9다 |
 | 목표 | 가격이 의미 있게 바뀐 날 **카드뉴스 이미지와 게시문을 자동으로 만든다.** 검토 PR에서 미리 보고, 머지하면 사이트에 게시된다. **게시 버튼은 사람이 누른다**(약관) |
 | 선행 조건 | Phase 2 완료(끝남), 이 문서와 코드 계획 승인 |
-| 디자인 계획 | `docs/plans/phase3-card-design.md` (규칙 13의 디자인 게이트) |
+| 디자인 계획 | `docs/plans/phase3-card-design.md` (규칙 13의 디자인 게이트). 디자인 방향성의 단계별 기록은 `docs/design/cardnews/` |
 | 코드 단위 계획 | `docs/plans/phase3-linkedin-cardnews.md` (Task 1~10) |
 | 확정 문안 | `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md` (규칙 16) |
 

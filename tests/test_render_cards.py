@@ -1,3 +1,4 @@
+import json
 import re
 import struct
 
@@ -6,7 +7,8 @@ import pytest
 from publish import browser
 from publish.card_data import intro_cards, price_change_cards
 from publish import render_cards
-from publish.render_cards import INTRO, REPORT, bake, check_layout, korean_font_available, render_html, visible_text
+from publish.render_cards import (INTRO, REPORT, bake, check_layout, korean_font_available, pdf_pages_html, render_html,
+                                  visible_text)
 from publish.render_post import check_numbers
 
 TYPICAL = {("redshift", "compute", "us"): 0.40}           # 5장
@@ -176,7 +178,52 @@ def test_bakes_every_card_and_passes_the_layout_check(make_events, workloads, tm
     assert all(struct.unpack(">II", p.read_bytes()[16:24]) == (1080, 1350) for p in pngs)
     pdf = (tmp_path / "cards.pdf").read_bytes()
     assert len(re.findall(rb"/Type\s*/Page(?![s])", pdf)) == len(cards)
+    assert len(re.findall(rb"/Subtype\s*/Image", pdf)) == len(cards)     # D23: 쪽마다 그 장의 PNG
+    assert b"/SMask" not in pdf                                          # 강조 문구 마스크의 테두리선이 생기지 않는다
     assert set(paths) == {tmp_path / "cards.html", tmp_path / "cards.pdf", *pngs}
+
+
+def test_pdf_pages_show_each_png_on_its_own_full_page(tmp_path):
+    pngs = [tmp_path / "01-cover.png", tmp_path / "02-price.png", tmp_path / "03-closing.png"]
+    html = pdf_pages_html(pngs)
+    assert "@page{size:1080px 1350px;margin:0}" in html
+    assert "<title>cards</title>" in html          # PDF 제목이 임시 파일 이름이 되지 않는다(이전 PDF와 같은 제목)
+    assert html.count("<img") == len(pngs)
+    positions = [html.index(f'src="{p.resolve().as_uri()}"') for p in pngs]   # 절대 파일 주소로, 장 순서대로
+    assert positions == sorted(positions)
+
+
+def test_bake_prints_the_pdf_from_the_baked_pngs(make_events, workloads, tmp_path, monkeypatch):
+    """PDF는 cards.html이 아니라 구운 PNG로 만든다(D23). 이미지 수가 다르거나 마스크가 남으면 멈춘다."""
+    events, cards = _cards(make_events, workloads, TYPICAL)
+    report = [{**_page()[0], "card": n} for n in range(1, len(cards) + 1)]
+    printed = []
+
+    def fake_screenshot(page, out, width, height):
+        out.write_bytes(b"\x89PNG\r\n\x1a\n" + bytes(8) + struct.pack(">II", width, height) + bytes(8))
+        return out
+
+    def fake_print(pdf_body):
+        def print_pdf(html, out):
+            printed.append(html.read_text(encoding="utf-8"))
+            out.write_bytes(pdf_body)
+            return out
+        return print_pdf
+
+    monkeypatch.setattr(render_cards, "korean_font_available", lambda: True)
+    monkeypatch.setattr(browser, "dump_dom", lambda html: f'<pre id="layout-report">{json.dumps(report)}</pre>')
+    monkeypatch.setattr(browser, "screenshot", fake_screenshot)
+    n = len(cards)
+    monkeypatch.setattr(browser, "print_pdf", fake_print(b"/Type /Page\n/Subtype /Image\n" * n))
+    bake(cards, tmp_path, REPORT, events)
+    pngs = sorted(tmp_path.glob("*.png"))
+    assert printed[0] == pdf_pages_html(pngs) and "cards.html" not in printed[0]
+
+    for body, message in [(b"/Type /Page\n/Subtype /Image\n" * (n - 1) + b"/Type /Page\n", "이미지"),
+                          (b"/Type /Page\n/Subtype /Image\n" * n + b"/SMask 9 0 R", "마스크")]:
+        monkeypatch.setattr(browser, "print_pdf", fake_print(body))
+        with pytest.raises(ValueError, match=message):
+            bake(cards, tmp_path, REPORT, events)
 
 
 def test_bake_refuses_without_a_korean_font(make_events, workloads, tmp_path, monkeypatch):

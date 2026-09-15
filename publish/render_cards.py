@@ -10,7 +10,7 @@ import struct
 import subprocess
 import sys
 import tempfile
-from html import unescape
+from html import escape, unescape
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
@@ -95,8 +95,25 @@ def _pdf_pages(path: Path) -> int:
     return len(re.findall(rb"/Type\s*/Page(?![s])", path.read_bytes()))
 
 
+def _pdf_images(path: Path) -> int:
+    return len(re.findall(rb"/Subtype\s*/Image", path.read_bytes()))
+
+
+def pdf_pages_html(pngs: list[Path]) -> str:
+    """구운 PNG를 한 쪽에 한 장씩 여백 없이 싣는 인쇄용 HTML(D23).
+
+    카드 HTML을 바로 인쇄하면 강조 문구(background-clip:text)가 그라데이션 사각형과 소프트 마스크로 기록되고,
+    PDF 보기 프로그램이 마스크 가장자리를 부드럽게 그리면서 문구를 감싸는 테두리선이 비친다 [확인 2026-09-15].
+    """
+    images = "".join(f'<img src="{escape(Path(p).resolve().as_uri())}">' for p in pngs)
+    return ('<!doctype html><meta charset="utf-8"><title>cards</title><style>@page{size:1080px 1350px;margin:0}html,body{margin:0}'
+            "img{display:block;width:1080px;height:1350px;break-after:page}img:last-child{break-after:auto}</style>"
+            + images)
+
+
 def bake(cards: list[dict], out_dir: Path, eyebrow: str, events: dict) -> list[Path]:
-    """cards.html, 장마다 PNG, cards.pdf를 만든다. 검사 순서: 글꼴 → 숫자 → 레이아웃 → 굽기 → 크기·쪽수."""
+    """cards.html, 장마다 PNG, PNG로 조립한 cards.pdf를 만든다.
+    검사 순서: 글꼴 → 숫자 → 레이아웃 → 굽기 → 크기·쪽수·이미지 수·마스크."""
     if not korean_font_available():
         raise RuntimeError("한글 글꼴이 없다. 두부 글자 카드를 만들지 않는다(fonts-noto-cjk 설치 필요)")
     html = render_html(cards, eyebrow)
@@ -123,7 +140,13 @@ def bake(cards: list[dict], out_dir: Path, eyebrow: str, events: dict) -> list[P
             if _png_size(png) != SIZE:
                 raise ValueError(f"{png.name} 크기가 {_png_size(png)}다. {SIZE}여야 한다")
             pngs.append(png)
-    pdf = browser.print_pdf(out_dir / "cards.html", out_dir / "cards.pdf")
+        pages = work / "pdf-pages.html"
+        pages.write_text(pdf_pages_html(pngs), encoding="utf-8")
+        pdf = browser.print_pdf(pages, out_dir / "cards.pdf")
     if _pdf_pages(pdf) != len(cards):
         raise ValueError(f"cards.pdf가 {_pdf_pages(pdf)}쪽이다. 장수 {len(cards)}와 같아야 한다")
+    if _pdf_images(pdf) != len(cards):
+        raise ValueError(f"cards.pdf의 이미지가 {_pdf_images(pdf)}개다. 장마다 PNG 한 장이어야 한다")
+    if b"/SMask" in pdf.read_bytes():
+        raise ValueError("cards.pdf에 소프트 마스크가 있다. 강조 문구 테두리선이 생긴다")
     return [out_dir / "cards.html", *pngs, pdf]

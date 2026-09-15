@@ -18,6 +18,7 @@
 | 6 | 한글 조판을 우선한다: 단어 단위 줄바꿈(`keep-all`), 한 음절 줄 금지, 한글 라벨 자간 축소 | 2·3 |
 | 7 | 넘침·겹침·줄 수는 굽기 전에 브라우저 실측으로 검사하고, 어긋나면 굽지 않는다 | 3 |
 | 8 | 로컬과 CI가 같은 Noto 계열 글꼴로 굽는다. 글꼴이 없으면 두부 글자 카드를 만들지 않고 멈춘다 | 4·5 |
+| 9 | 게시물 모습의 정본은 PNG다. PDF는 구운 PNG를 쪽마다 싣는다(D23) | 6 |
 
 ## 단계 지도
 
@@ -28,6 +29,7 @@
 | [Phase 3 템플릿 구현과 레이아웃 검사](phase-3-template/README.md) | 2026-09-15 | 마무리 안내 장을 더하고, 원본 대조로 규격을 조정해 구현하고, 레이아웃 검사를 코드로 넣었다 | [3-1 마무리 안내 장](phase-3-template/task-3-1-closing-card.md) · [3-2 원본 대조 디자인 조정](phase-3-template/task-3-2-design-adjustments.md) · [3-3 레이아웃 실측 검사](phase-3-template/task-3-3-layout-checks.md) |
 | [Phase 4 CI 렌더링 정합](phase-4-ci-rendering/README.md) | 2026-09-15 | CI에서도 한글이 제대로 그려지게 하고 CI 산출물로 조판을 확인했다 | [4-1 CI 한글 글꼴과 줄바꿈](phase-4-ci-rendering/task-4-1-ci-fonts.md) |
 | [Phase 5 소개 카드 확장](phase-5-intro-cards/README.md) | 2026-09-15 | 새 장 종류(칩·흐름)를 만들고, 글꼴 목록과 표지 제목 기준을 고치고, 결과 장 구성을 보완했다 | [5-1 칩·흐름 장](phase-5-intro-cards/task-5-1-chips-and-flow.md) · [5-2 글꼴 목록과 표지 제목 기준](phase-5-intro-cards/task-5-2-font-stack-and-title.md) · [5-3 현재 결과 장](phase-5-intro-cards/task-5-3-result-card.md) |
+| [Phase 6 게시 형식 정합](phase-6-pdf-output/README.md) | 2026-09-15 | PDF에서 강조 문구 테두리선이 보이는 결함을 찾아, PDF를 PNG로 조립하도록 바꿨다 | [6-1 PDF를 PNG로 조립](phase-6-pdf-output/task-6-1-pdf-from-png.md) |
 
 ## 현재 규격 요약 (2026-09-15 기준)
 
@@ -79,15 +81,16 @@
 | Task 4 조정 6건 | 여백 48px, 알약 56px·그라데이션 테두리, 세로 가운데 정렬, 굵기 400·700, 글꼴 목록 끝에 Noto Sans CJK KR | 3 |
 | D21 | 소개 카드는 로컬에서 굽고 실물 승인 후 push | 5 |
 | D22 | 글꼴 목록에서 Noto Sans KR을 맑은 고딕 앞에 | 5 |
+| D23 | 카드 PDF는 구운 PNG를 한 쪽에 한 장씩 실어 만든다 | 6 |
 
 ## 원본 기록
 
 | 문서 | 담긴 내용 |
 |---|---|
 | `docs/plans/phase3-card-design.md` | 디자인 적용 계획(규칙 13 게이트). 규격의 정본 |
-| `docs/tasks/phase3/task-1-browser-bake.md` ~ `task-8-intro-cards.md` | 과제별 실행 기록(계획과 결과 전문) |
+| `docs/tasks/phase3/task-1-browser-bake.md` ~ `task-8-intro-cards.md`, `task-10-first-post.md` | 과제별 실행 기록(계획과 결과 전문). PDF 결함 수정은 3-10 기록에 있다 |
 | `docs/scripts/cards-script.md` | 카드 확정 문안, 글자 수 상한, `/humanize-korean` 점검 기록 |
-| `docs/plans/phase3-linkedin-cardnews.md` | 코드 계획과 결정 D7~D22 |
+| `docs/plans/phase3-linkedin-cardnews.md` | 코드 계획과 결정 D7~D23 |
 | `CLAUDE.md` | 결정 로그, 확인된 사실, 진행 로그 |
 
 ## 열린 과제

@@ -15,11 +15,9 @@ on:
       - ".github/workflows/publish.yml"
   workflow_dispatch:
 
+# 기본은 읽기만. 작업마다 필요한 권한만 준다. 특히 OIDC(id-token)는 pip 설치·테스트가 도는 build 작업에 주지 않는다(보안 점검 2026-09-15).
 permissions:
-  contents: write
-  pages: write
-  id-token: write
-  issues: write
+  contents: read
 
 concurrency:
   group: pages
@@ -29,14 +27,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write        # 승인 기록 커밋을 main에 push한다
     env:
       PYTHONIOENCODING: utf-8
     outputs:
       day: ${{ steps.site.outputs.day }}
       confirmed: ${{ steps.record.outputs.confirmed }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
           cache: pip
@@ -73,19 +73,22 @@ jobs:
         name: build the dashboard
         # 승인일(day)은 pipeline.py가 단계 출력에 직접 쓴다. 출력 문장을 파싱하던 방식은 문장이 바뀌자 조용히 깨졌다.
         run: python pipeline.py --build
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
         with:
           path: site
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:             # actions/deploy-pages README의 최소 권한
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346  # v5.0.1
 
   log:
     needs: [build, deploy]
@@ -101,8 +104,8 @@ jobs:
       DAYS: ${{ needs.build.outputs.confirmed }}
       PRICE_SHEET_ID: ${{ secrets.PRICE_SHEET_ID }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
           cache: pip
@@ -110,7 +113,7 @@ jobs:
         run: pip install -r requirements.txt
       # 키 파일을 쓰지 않는다. GitHub OIDC 토큰으로 워크로드 아이덴티티 인증을 받는다.
       - if: env.PRICE_SHEET_ID != ''
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093  # v3.0.0
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}

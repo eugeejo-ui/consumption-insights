@@ -21,14 +21,16 @@ jobs:
       PYTHONIOENCODING: utf-8
       PRICE_SHEET_ID: ${{ secrets.PRICE_SHEET_ID }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
-      - uses: google-github-actions/auth@v3
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093  # v3.0.0
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
-      - run: python -m publish.sheets_log --baseline "${{ inputs.day }}"
+      - env:
+          DAY: ${{ inputs.day }}   # 입력값은 식으로 셸에 넣지 않고 환경변수로 넘긴다(보안 점검 2026-09-15)
+        run: python -m publish.sheets_log --baseline "$DAY"

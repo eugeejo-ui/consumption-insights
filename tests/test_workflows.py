@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import yaml
@@ -50,6 +51,26 @@ def test_sheet_append_runs_only_for_days_approved_in_this_run():
     assert build["outputs"]["confirmed"] == "${{ steps.record.outputs.confirmed }}"
     assert "needs.build.outputs.confirmed" in log["if"]
     assert "needs.build.outputs.day" not in yaml.safe_dump(log)            # 최근 승인일로는 적재하지 않는다
+
+
+def test_workflows_pin_actions_and_limit_oidc_and_shell_inputs():
+    """보안 점검(2026-09-15): 액션은 커밋 SHA로 고정한다. OIDC 토큰은 인증이 필요한 작업에만 준다.
+    사람이 넣는 값(workflow_dispatch 입력, 이벤트 본문)은 식으로 셸에 넣지 않는다."""
+    oidc_jobs = set()
+    for path in sorted(WORKFLOWS.glob("*.yml")):
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert "permissions" in workflow, path.name                      # 저장소 기본 토큰 권한에 기대지 않는다
+        top = workflow["permissions"]
+        for name, job in workflow["jobs"].items():
+            permissions = job.get("permissions", top)
+            if permissions.get("id-token") == "write":
+                oidc_jobs.add(f"{path.stem}.{name}")
+            for step in job["steps"]:
+                if "uses" in step:
+                    assert re.fullmatch(r"[\w.-]+/[\w.-]+@[0-9a-f]{40}", step["uses"]), (path.name, step["uses"])
+                run = step.get("run", "")
+                assert "${{ inputs." not in run and "${{ github.event." not in run, (path.name, name)
+    assert oidc_jobs == {"publish.deploy", "publish.log", "sheets-baseline.baseline"}
 
 
 def test_publish_runs_when_intro_cards_change():

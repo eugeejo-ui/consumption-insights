@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **계획 승인** (2026-09-15, 확인 사항 6건 모두 권고안). **Step 0 보완 문안 승인 대기.** 문안 승인 전에는 코드를 쓰지 않는다(규칙 16) |
+| 상태 | **계획 승인** (2026-09-15, 확인 사항 6건 모두 권고안). Step 0 보완 문안 확정(2026-09-15 사용자 승인, 단가 표기 조정 포함). **구현 진행 중** |
 | 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 3, 결정 D11·D15·D16·D17·D18·D19·D20 |
 | 문안 정본 | `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md` |
 | 담당 | C (사용자 확인 2회: 계획 승인, Step 0 보완 문안 승인) |
@@ -141,7 +141,7 @@ render_linkedin(events: dict, workloads: dict) -> str         # 숫자 검사, 3
 
 ## 단계
 
-- [ ] **Step 0 스크립트 보완 (규칙 16)**
+- [x] **Step 0 스크립트 보완 (규칙 16)** — 2026-09-15 승인
   - 확인 사항 1·2·3·5와 설계 판단 1을 `cards-script.md`에, 확인 사항 4를 `linkedin-post-script.md`에 반영한다. A안이면 마무리 장 문안과 관련 문서도 함께 고친다
   - 새로 쓰거나 바꾼 문안만 모아 `/humanize-korean`으로 점검하고, 결과를 두 스크립트의 점검 기록에 남긴다
   - **사용자 승인.** 승인 전에는 Step 1로 넘어가지 않는다

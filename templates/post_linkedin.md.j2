@@ -1,0 +1,23 @@
+데이터 플랫폼 월 비용 변동 · {{ e.day }}
+
+직전 승인 가격({{ e.compared_to }}) 대비 단가 {{ count }}건이 바뀌었습니다.
+
+{% for item in items %}
+▪ {{ item.strong }} {{ item.rest }}
+{% endfor %}
+{% if top or e.rank_changes %}
+
+{% if top %}
+월 비용 변동 폭이 가장 큰 조합은 {{ top.scenario }} · {{ top.region }}입니다.
+{% endif %}
+{% if e.rank_changes %}
+월 비용이 낮은 순서가 바뀌었습니다.
+{% endif %}
+{% endif %}
+
+과금 단위가 서로 다른 네 플랫폼을 같은 워크로드 기준으로 환산해 비교했습니다.
+약정 할인을 제외한 모델 추정치이며 가정과 계산 과정을 모두 공개합니다.
+
+{{ url }}
+
+#데이터플랫폼 #클라우드비용 #FinOps #Snowflake #Databricks #BigQuery #Redshift

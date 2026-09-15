@@ -1,6 +1,10 @@
+from dataclasses import replace
+
 import pytest
 
 from common.schema import PriceRecord
+from detect.events import detect
+from model.tco import PriceBook, estimate
 
 # 로직 검증용 테스트 가격이다. 실제 가격표(data/manual, 수집기)와 다를 수 있다.
 # 예: BigQuery 스토리지는 여기서 논리 단가를 쓰지만, 실제 가격표는 물리 단가를 쓴다(2026-09-11 가정 검토).
@@ -40,3 +44,14 @@ def workloads():
             "W3": {"name": "비정기 대용량 탐색", "mode": "scan", "tib_scanned_per_month": 20, "size": 4, "tib_per_hour": 2},
         },
     }
+
+
+@pytest.fixture
+def make_events(price_records, workloads):
+    """테스트 가격의 일부 단가를 바꿔 (events, rows, prev_rows)를 만든다. 카드 데이터·게시문·카드 템플릿 테스트가 쓴다."""
+    def make(changed: dict[tuple[str, str, str], float]):
+        now = [replace(r, price_usd=changed[(r.platform, r.service, r.region)])
+               if (r.platform, r.service, r.region) in changed else r for r in price_records]
+        events = detect("2026-09-13", now, price_records, "2026-09-11", workloads, {"e1_min_cost_change_pct": 1.0})
+        return events, estimate(PriceBook(now), workloads), estimate(PriceBook(price_records), workloads)
+    return make

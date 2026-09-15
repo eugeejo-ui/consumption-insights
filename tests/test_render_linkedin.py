@@ -1,0 +1,55 @@
+import pytest
+
+from publish.card_data import price_item
+from publish.render_linkedin import DASHBOARD_URL, render_linkedin
+
+TYPICAL = {("redshift", "compute", "us"): 0.40}           # 단가 1건 · 월 비용 3건 · 순위 0건
+RANKED = {("redshift", "compute", "us"): 0.80}            # 순위 3건
+MANY = {(p, s, "us"): v for (p, s, v) in [                # 단가 7건
+    ("redshift", "compute", 0.40), ("redshift", "storage", 0.03), ("bigquery", "compute", 0.07),
+    ("bigquery", "storage", 0.03), ("bigquery", "scan", 7.0), ("snowflake", "compute", 3.3),
+    ("databricks", "compute", 0.8)]}
+
+HASHTAGS = "#데이터플랫폼 #클라우드비용 #FinOps #Snowflake #Databricks #BigQuery #Redshift"
+TOP_LINE = "월 비용 변동 폭이 가장 큰 조합은 소규모 BI 대시보드 · 미국 리전입니다."
+RANK_LINE = "월 비용이 낮은 순서가 바뀌었습니다."
+
+
+def test_post_lists_every_price_change_and_the_dashboard_link(make_events, workloads):
+    events, _, _ = make_events(MANY)
+    text = render_linkedin(events, workloads)
+    assert text.startswith("데이터 플랫폼 월 비용 변동 · 2026-09-13\n\n직전 승인 가격(2026-09-11) 대비 단가 7건이 바뀌었습니다.\n")
+    for change in events["price_changes"]:                    # 규칙 18: 한 줄도 빠뜨리지 않는다
+        item = price_item(change)
+        assert f"▪ {item['strong']} {item['rest']}\n" in text
+    assert f"\n{DASHBOARD_URL}\n" in text
+    assert text.rstrip("\n").endswith(HASHTAGS)
+    assert "외 " not in text
+
+
+def test_conditional_lines_follow_the_events(make_events, workloads):
+    typical, _, _ = make_events(TYPICAL)
+    text = render_linkedin(typical, workloads)
+    assert TOP_LINE in text and RANK_LINE not in text
+
+    ranked, _, _ = make_events(RANKED)
+    assert RANK_LINE in render_linkedin(ranked, workloads)
+
+    ranked["cost_changes"] = []                                # 순위만 바뀐 날에는 변동 폭 줄이 없다
+    text = render_linkedin(ranked, workloads)
+    assert "변동 폭" not in text and RANK_LINE in text
+
+
+def test_post_over_3000_chars_stops(make_events, workloads):
+    events, _, _ = make_events(TYPICAL)
+    change = events["price_changes"][0]
+    events["price_changes"] = [dict(change) for _ in range(80)]
+    with pytest.raises(ValueError, match="3,000자"):
+        render_linkedin(events, workloads)
+
+
+def test_a_number_not_in_events_is_rejected(make_events, workloads):
+    workloads["scenarios"]["W1"]["name"] = "소규모 BI 대시보드 777"
+    events, _, _ = make_events(TYPICAL)
+    with pytest.raises(ValueError, match="777"):
+        render_linkedin(events, workloads)

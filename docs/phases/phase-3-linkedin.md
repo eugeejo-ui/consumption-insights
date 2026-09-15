@@ -74,7 +74,7 @@
 | ~~3-4~~ | **완료.** 카드 HTML 템플릿(디자인 적용)과 굽기. 기록 `docs/tasks/phase3/task-4-card-template.md`. 커밋 `88174ca`. 사용자 실물 확인 승인 | C | `templates/cards/cards.html.j2`, `publish/render_cards.py` | 외부 요청이 0건이다. **사용자가 카드 실물을 확인한다** |
 | ~~3-5~~ | **완료.** 파이프라인 연결. 기록 `docs/tasks/phase3/task-5-pipeline-cards.md`. 커밋 `b2c8576` | C | `pipeline.py --cards` | E1인 날 카드와 게시문이 자동으로 생긴다. 굽기가 실패해도 검토 자료는 남는다 |
 | ~~3-6~~ | **완료.** 워크플로 연결. 기록 `docs/tasks/phase3/task-6-workflow.md`. 커밋 `d72560e`. 시뮬레이션 PR #4로 CI 실측 | C | `collect.yml` | 검토 PR 본문에 카드가 보인다. 머지하면 `site/cards/`가 게시된다 |
-| **3-7** | 세부 계획 `docs/tasks/phase3/task-7-revise-loop.md`(2026-09-15 작성, 승인 대기). **문구 반려 재작성 루프 (규칙 16).** `revise-copy` 라벨을 받으면 재작성 요청을 열고, `/humanize-korean`으로 다듬어 같은 PR을 갱신한다 | C | `.github/workflows/revise.yml`, `docs/scripts/revise-loop.md` | 라벨을 붙이면 재작성 요청이 열린다. 재작성 후 같은 PR이 갱신된다. 3회를 넘기면 멈춘다 |
+| **3-7** | 세부 계획 `docs/tasks/phase3/task-7-revise-loop.md`(2026-09-15 승인). 새 문안 승인 대기. **문구 반려 재작성 루프 (규칙 16).** `revise-copy` 라벨을 받으면 재작성 요청을 열고, `/humanize-korean`으로 다듬어 같은 PR을 갱신한다 | C | `.github/workflows/revise.yml`, `docs/scripts/revise-loop.md` | 라벨을 붙이면 재작성 요청이 열린다. 재작성 후 같은 PR이 갱신된다. 3회를 넘기면 멈춘다 |
 | 3-8 | 소개 카드 구현 | C | `card_data.intro_cards` | 3-2에서 확정한 문안을 그대로 쓴다. 숫자가 최신 승인 스냅샷과 같다 |
 | 3-9 | 종단 검증 | C | 검증 기록 | 시뮬레이션 → PR 확인 → 머지 → 게시까지 이어진다 |
 | 3-10 | **첫 게시** | U | LinkedIn 게시물 | 사용자가 직접 게시한다. Claude는 게시하지 않는다 |
@@ -148,3 +148,4 @@
 - **2026-09-15:** 3-6을 로컬에서 구현했다(`d72560e`, 테스트 108개). push와 CI 시뮬레이션 실측은 사용자 승인 뒤 한다.
 - **2026-09-15:** **3-6 완료.** push 뒤 CI 시뮬레이션에서 한글 글꼴 설치(18초), 카드 5장 굽기(1단계 10초), 레이아웃 검사 통과, 검토 PR 본문의 카드·게시문 표시를 확인했다. 게시 워크플로의 승인일 읽기도 고쳐졌다. 시뮬레이션 PR은 닫았다.
 - **2026-09-15:** 3-7 세부 계획을 작성했다. 승인 관문은 세 번이다(계획, 새 문안, push·실측).
+- **2026-09-15:** 3-7 계획 승인. Step 0 새 문안(검토 PR 5~7절, 재작성 요청 Issue)을 작성해 `/humanize-korean`으로 점검했다(변경률 0.0%). 문안 승인을 기다린다.

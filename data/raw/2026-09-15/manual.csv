@@ -1,0 +1,11 @@
+platform,service,sku,region,unit,price_usd,source,fetched_at
+bigquery,compute,enterprise-slot,seoul,slot-hour,0.0765,https://cloud.google.com/bigquery/pricing,2026-09-11
+bigquery,compute,enterprise-slot,us,slot-hour,0.06,https://cloud.google.com/bigquery/pricing,2026-09-11
+bigquery,scan,on-demand,seoul,TiB,7.5,https://cloud.google.com/bigquery/pricing,2026-09-11
+bigquery,scan,on-demand,us,TiB,6.25,https://cloud.google.com/bigquery/pricing,2026-09-11
+bigquery,storage,active-physical,seoul,GiB-month,0.052,https://cloud.google.com/bigquery/pricing,2026-09-11
+bigquery,storage,active-physical,us,GiB-month,0.04,https://cloud.google.com/bigquery/pricing,2026-09-11
+snowflake,compute,enterprise-credit,seoul,credit,4.05,https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf,2026-09-11
+snowflake,compute,enterprise-credit,us,credit,3.0,https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf,2026-09-11
+snowflake,storage,on-demand-storage,seoul,TB-month,25.0,https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf,2026-09-11
+snowflake,storage,on-demand-storage,us,TB-month,23.0,https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf,2026-09-11

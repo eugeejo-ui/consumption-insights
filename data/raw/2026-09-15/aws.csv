@@ -1,0 +1,5 @@
+platform,service,sku,region,unit,price_usd,source,fetched_at
+redshift,compute,serverless-rpu,seoul,RPU-hour,0.438,https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRedshift/20260911124505/ap-northeast-2/index.json,2026-09-15
+redshift,compute,serverless-rpu,us,RPU-hour,0.39375,https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRedshift/20260911124505/us-east-1/index.json (simulated),2026-09-15
+redshift,storage,managed-storage,seoul,GB-month,0.0261,https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRedshift/20260911124505/ap-northeast-2/index.json,2026-09-15
+redshift,storage,managed-storage,us,GB-month,0.024,https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRedshift/20260911124505/us-east-1/index.json,2026-09-15

@@ -40,7 +40,7 @@
 | 1 | **실측.** 브라우저로 PNG·PDF 굽기, 한글 표시, CI 서버 확인 | +5 → 62 (결함 수정 테스트 2개 포함) | — |
 | 2 | **카드 스크립트 작성**(규칙 16). 확정 문안 + `/humanize-korean` 점검 | — | **문안 승인** |
 | 3 | **완료** (2026-09-15, `06ace44`). 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +17 → 79 | 보완 문안 승인 |
-| 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 85 | **카드 실물 확인** |
+| 4 | **완료** (2026-09-15, `d2490bc`). 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +13 → 92 | 카드 실물 확인(승인) |
 | 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 89 | — |
 | 6 | 워크플로: 검토 PR에 카드 표시, 머지 후 사이트 게시 | 워크플로 실측 | 시뮬레이션 PR 확인 |
 | 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 91 | 반려 시 라벨 1개 |
@@ -392,6 +392,8 @@ def test_a_number_that_is_not_in_events_is_rejected(sample_events, sample_cards)
 ---
 
 ### Task 4: 카드 HTML 템플릿과 굽기
+
+> **완료 (2026-09-15).** 실제 설계와 실행 기록은 `docs/tasks/phase3/task-4-card-template.md`에 있다. 아래 초안과 달라진 점: 원본 대조 조정 6건(여백 48px, 알약 56px, 세로 가운데 정렬, 굵기 400·700, 글꼴 스택), 브라우저 실측 레이아웃 검사(`--dump-dom`), `render_html(..., only, measure)`, `bake(..., events)`, 테스트 +13 → 92. 아래 코드 초안은 이력으로 남긴다.
 
 디자인은 **`docs/plans/phase3-card-design.md`를 그대로 따른다.** 이 Task에서 디자인을 새로 정하지 않는다.
 

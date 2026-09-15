@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  issues: write          # revise-copy 라벨 준비, 열린 재작성 요청 조회(Task 7)
   pull-requests: write
 
 concurrency:
@@ -73,6 +74,12 @@ jobs:
           if [ "$SIMULATE" = "true" ]; then BRANCH=review/simulated; TITLE="[시뮬레이션·머지 금지] $TITLE"; fi
           git switch -c "$BRANCH"
           git add "data/raw/$DAY"
+          # 문구 반려 중인 PR이면 보류를 유지한다. 강제 push로 copy-hold.txt가 사라지면 머지 때 승인·게시가 진행된다(Task 7).
+          LABELS=$(gh pr view "$BRANCH" --json state,labels -q 'select(.state == "OPEN") | .labels[].name' 2>/dev/null || true)
+          if printf '%s\n' "$LABELS" | grep -qx revise-copy; then
+            gh issue list --label copy-revision --state open --json url -q '.[].url' | head -n 1 > "data/raw/$DAY/copy-hold.txt"
+            git add "data/raw/$DAY/copy-hold.txt"
+          fi
           git commit -m "review: price snapshot $DAY"
           git push --force origin "$BRANCH"
           # 본문: 검토 보고서 + 글 초안 + 카드 미리보기 + 게시문. 이미지 주소는 방금 push한 커밋 SHA로 고정한다
@@ -80,6 +87,7 @@ jobs:
           SHA=$(git rev-parse HEAD)
           BODY="$RUNNER_TEMP/body.md"
           python -m publish.review_pr --day "$DAY" --repo "$GITHUB_REPOSITORY" --sha "$SHA" > "$BODY"
+          gh label create revise-copy --color FBCA04 || true      # 검토자가 문구 반려에 쓰는 라벨(revise.yml)
           if [ "$(gh pr view "$BRANCH" --json state -q .state 2>/dev/null)" = "OPEN" ]; then
             gh pr edit "$BRANCH" --title "$TITLE" --body-file "$BODY"
           else

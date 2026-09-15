@@ -87,3 +87,34 @@ def test_fixed_copy_matches_the_script(tmp_path):
                 continue
             pattern = re.sub(r"\\\{.+?\\\}", ".+?", re.escape(line))
             assert re.search(f"^{pattern}$", body, flags=re.M), line
+
+
+def _script_block(number):
+    """review-pr-script.md의 N절 문안 블록. 출력 조건 표시 [..]를 뗀 줄 목록이다."""
+    section = re.split(r"\n## \d+\.", SCRIPT.read_text(encoding="utf-8").split(f"## {number}.")[1])[0]
+    block = re.search(r"^(`{3,4})\n(.*?)^\1$", section, flags=re.S | re.M).group(2)
+    return [re.sub(r"\[[^\]!]+\] ", "", line).rstrip() for line in block.splitlines() if line.strip()]
+
+
+def test_body_explains_how_to_reject_the_copy(tmp_path):
+    body = _body(_day(tmp_path / "cards"))
+    guide = _script_block(6)
+    assert body.rstrip("\n").endswith("\n\n".join(guide))                 # 본문 맨 끝, 줄마다 문단
+    assert body.index("## LinkedIn 게시문") < body.index("## 문구 반려")
+
+    only_post = _body(_day(tmp_path / "post", cards=0, errors="굽기: 실패\n"))
+    assert "## 문구 반려" in only_post                                   # 게시문만 있어도 반려할 수 있다
+    assert "## 문구 반려" not in _body(_day(tmp_path / "none", cards=0, linkedin=False, post=False))
+
+
+def test_body_warns_while_the_copy_is_on_hold(tmp_path):
+    root = _day(tmp_path / "request")
+    (root / DAY / "copy-hold.txt").write_text("https://github.com/owner/repo/issues/12\n", encoding="utf-8")
+    warning, notice, link = _script_block(5)
+    link = link.replace("{요청 주소}", "https://github.com/owner/repo/issues/12")
+    assert _body(root).startswith(f"{warning}\n{notice}\n>\n{link}\n\n# 중간 검토 보고서")   # 검토 보고서보다 앞
+
+    limit = _day(tmp_path / "limit")
+    (limit / DAY / "copy-hold.txt").write_text("\n", encoding="utf-8")   # 4회차부터는 요청이 없다
+    assert _body(limit).startswith(f"{warning}\n{notice}\n\n# 중간 검토 보고서")
+    assert "> [!WARNING]" not in _body(_day(tmp_path / "free"))

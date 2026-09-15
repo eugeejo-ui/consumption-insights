@@ -30,6 +30,7 @@ from publish.render_cards import REPORT, bake
 from publish.render_linkedin import render_linkedin
 from publish.render_post import render_post
 from publish.render_site import render
+from publish.review_pr import COPY_HOLD_FILE
 from publish.review_report import (APPROVED_FILE, REVIEW_FILE, build_review, latest_approved_day,
                                    previous_snapshot)
 
@@ -277,6 +278,8 @@ def confirm(day: str) -> Path:
     snapshot = RAW / day
     if not (snapshot / REVIEW_FILE).exists():
         raise SystemExit(f"{snapshot / REVIEW_FILE}가 없다. 검토 보고서가 없는 스냅샷은 반영하지 않는다(먼저 pipeline.py 실행).")
+    if (snapshot / COPY_HOLD_FILE).exists():         # revise-copy 라벨이 붙은 PR을 머지해도 승인·게시하지 않는다(Task 7)
+        raise SystemExit(f"{day}는 문구 재작성 중이다({COPY_HOLD_FILE}). 반영하지 않는다. 라벨을 떼면 보류가 풀린다.")
     records = snapshot_records(day)
     if any(r.source.endswith(SIMULATED_TAG) for r in records):
         raise SystemExit(f"{day}는 시뮬레이션 스냅샷이다. 반영하지 않는다.")

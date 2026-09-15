@@ -142,6 +142,18 @@ def test_simulated_snapshot_is_marked_and_cannot_be_confirmed(tmp_path, monkeypa
     assert not Path("data/raw", TODAY, "approved.txt").exists()
 
 
+def test_confirm_refuses_a_snapshot_on_copy_hold(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    write_snapshot(price_records, "2026-09-11", "all")
+    Path("data/raw/2026-09-11/review.md").write_text("reviewed", encoding="utf-8")
+    Path("data/raw/2026-09-11/copy-hold.txt").write_text("https://github.com/owner/repo/issues/12\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="문구 재작성"):              # 라벨이 붙은 PR을 머지해도 승인·게시하지 않는다
+        pipeline.main(["--confirm", "2026-09-11"])
+    assert not Path("data/raw/2026-09-11/approved.txt").exists() and not Path("site").exists()
+
+
 def test_dry_run_writes_nothing(tmp_path, monkeypatch, price_records):
     monkeypatch.chdir(tmp_path)
     _copy_config(tmp_path)

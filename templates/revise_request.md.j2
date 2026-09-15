@@ -1,0 +1,42 @@
+{# 문구 재작성 요청 Issue 본문. 문안 정본: docs/scripts/revise-request-script.md #}
+## 요청
+
+검토 PR: {{ pr_url }}
+
+회차: {{ round }}/{{ max_rounds }}
+
+## 반려 사유
+
+{% for item in reasons %}
+{{ item.time }}
+{{ item.quote }}
+
+{% else %}
+사유 코멘트가 없습니다. 재작성은 검토 PR에 사유가 남은 뒤 진행합니다.
+
+{% endfor %}
+## 현재 문안
+
+{% if cards %}
+### 카드뉴스 · {{ cards|length }}장
+
+{% for card in cards %}
+#### {{ card.number }}장 {{ card.name }}
+
+```text
+{{ card.text }}
+```
+
+{% endfor %}
+{% endif %}
+{% if linkedin %}
+### LinkedIn 게시문
+
+```text
+{{ linkedin }}
+```
+
+{% endif %}
+## 처리 절차
+
+재작성 절차는 [revise-loop.md]({{ procedure_url }})에 있습니다.

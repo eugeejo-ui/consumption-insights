@@ -1,0 +1,8 @@
+{# 문구 재작성 중일 때 검토 PR 본문 맨 위에 두는 알림. 문안 정본: docs/scripts/review-pr-script.md 5절 #}
+> [!WARNING]
+> 문구 재작성이 진행 중입니다. 지금 머지하면 승인과 게시가 진행되지 않습니다.
+{% if request_url %}
+>
+> 재작성 요청: {{ request_url }}
+{% endif %}
+

@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **계획 승인**(2026-09-15). Step 0 문안 승인 대기 |
+| 상태 | **구현 완료(로컬), push·CI 실측 승인 대기** (2026-09-15). 계획·새 문안 승인됨. 테스트 117개 |
 | 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 7, 결정 D14, 규칙 4·14·16 |
 | 담당 | C (사용자 확인 3회: 계획 승인, **새 문안 승인**, **push·실측 승인**) |
 
@@ -176,8 +176,8 @@ jobs:
 
 ## 단계
 
-- [ ] **Step 0 스크립트 (규칙 16).** 위 초안 작성 → `/humanize-korean` 점검 → **사용자 문안 승인.** 승인 전에는 Step 1로 넘어가지 않는다
-  - 2026-09-15 작성·점검 완료, **문안 승인 대기.** `docs/scripts/review-pr-script.md` 5~7절, `docs/scripts/revise-request-script.md` 신규. run `2026-09-15-003` light, 변경률 0.0%, 게이트 exit 0. 스킬 제안 4건 중 1건 반영(처리 코멘트 능동 통일, 반영본 변경률 0.3%)
+- [x] **Step 0 스크립트 (규칙 16).** 위 초안 작성 → `/humanize-korean` 점검 → **사용자 문안 승인.** 승인 전에는 Step 1로 넘어가지 않는다
+  - 2026-09-15 작성·점검 완료, **2026-09-15 사용자 승인.** `docs/scripts/review-pr-script.md` 5~7절, `docs/scripts/revise-request-script.md` 신규. run `2026-09-15-003` light, 변경률 0.0%, 게이트 exit 0. 스킬 제안 4건 중 1건 반영(처리 코멘트 능동 통일, 반영본 변경률 0.3%)
   - **초안에서 달라진 점**
     | 초안 | 스크립트 | 이유 |
     |---|---|---|
@@ -187,12 +187,12 @@ jobs:
     | 사유 줄 `{작성자} · {작성 시각}` | `{작성 시각}`만 | 권한 있는 사람의 코멘트만 싣으므로 작성자 구분이 필요 없다. 기록되는 개인 식별 정보를 줄인다(규칙 11) |
     | 모든 권한 있는 코멘트 | 2회차부터 직전 요청 이후 코멘트만 | 이미 반영한 사유가 다시 실리지 않게 한다 |
     | 처리 코멘트 1문장(`…에 있고, …갱신됐습니다`) | 2문장 + `문안 변경`·`변경률` 라벨 줄 | 한 문장에 사실 하나(규칙 16). 회차별 변경률 기록(규칙 16)을 Issue에도 남긴다 |
-- [ ] **Step 1** 테스트 9개를 먼저 쓰고 실패를 확인한다
-- [ ] **Step 2** `publish/revise_request.py`, 템플릿
-- [ ] **Step 3** `confirm()` 보류 거부, `review_pr` 반려 안내·보류 알림
-- [ ] **Step 4** `revise.yml`, `collect.yml` 보류 유지
-- [ ] **Step 5** `docs/scripts/revise-loop.md`(Claude 절차서)
-- [ ] **Step 6** 전체 테스트 → 117개 통과. 개인정보 검사, 커밋
+- [x] **Step 1** 테스트 9개를 먼저 쓰고 실패를 확인한다
+- [x] **Step 2** `publish/revise_request.py`, 템플릿
+- [x] **Step 3** `confirm()` 보류 거부, `review_pr` 반려 안내·보류 알림
+- [x] **Step 4** `revise.yml`, `collect.yml` 보류 유지
+- [x] **Step 5** `docs/scripts/revise-loop.md`(Claude 절차서)
+- [x] **Step 6** 전체 테스트 → 117개 통과. 개인정보 검사, 커밋
 - [ ] **Step 7 사용자 승인 요청 (규칙 4).** 아래 외부 행동을 한 번에 여쭙는다
   1. main push
   2. 수집 워크플로 시뮬레이션 실행(`review/simulated` PR)
@@ -274,3 +274,41 @@ jobs:
 - 사용자 승인 아래 push했고, 시뮬레이션 PR에서 라벨 → Issue·보류 파일 생성, 라벨 제거 → 보류 파일 삭제를 확인했다.
 - `docs/scripts/revise-loop.md`에 Claude 재작성 절차가 있다.
 - 이 파일에 실행 결과가 덧붙고, 관련 문서가 갱신되고, 커밋됐다.
+
+## 실행 결과 (Step 0~6, 2026-09-15)
+
+> Step 7(push·CI 실측 승인) 전까지의 기록이다. CI 실측 결과는 Step 8 뒤에 덧붙인다.
+
+### 한 일
+
+- **Step 0.** 새 문안을 작성해 `/humanize-korean`으로 점검했다(run `2026-09-15-003`, light, 변경률 0.0%, 게이트 exit 0). 제안 4건 중 1건을 반영했다. 사용자가 승인했다. 초안과 달라진 점은 Step 0 항목의 표에 있다.
+- **Step 1.** 테스트 9개를 먼저 썼다. 구현 전 실행에서 4개가 단언 실패, 5개(`test_revise_request.py`)가 모듈 없음으로 실패했다 [확인].
+- **Step 2.** `publish/revise_request.py`와 `templates/revise_request.md.j2`. 검토 날짜 찾기, 기존 요청으로 회차 계산, 권한 있는 코멘트만 사유로 싣기, 장마다 보이는 글자 추출, 처리 코멘트, `gh api --paginate` 응답 읽기.
+- **Step 3.** `pipeline.py confirm()`이 `copy-hold.txt`가 있는 스냅샷을 거부한다. `publish/review_pr.py`가 보류 알림(`templates/review_pr_hold.md.j2`)을 본문 맨 위에, 문구 반려 절을 맨 끝에 붙인다.
+- **Step 4.** `.github/workflows/revise.yml` 신규. `collect.yml`은 `revise-copy` 라벨을 만들고, 라벨이 남은 PR을 다시 만들 때 보류 파일을 넣는다. `publish.yml`의 거부 경고 문장에 문구 재작성 중을 더했다.
+- **Step 5.** `docs/scripts/revise-loop.md`. 시작 조건, 사유 대응, 재작성 조건, 승인, 반영, 기록, 금지 사항.
+- **Step 6.** 전체 테스트 **117개 통과** [확인]. 로컬 커밋.
+
+### 실측 [확인]
+
+- Task 5 시험 굽기의 실제 카드 5장과 게시문으로 요청 Issue 본문을 만들었다. 2회차 제목, 권한 없는 코멘트 제외, CRLF 코멘트의 줄 단위 인용, 장마다 보이는 글자, 게시문 원문이 모두 맞게 나왔다.
+- 같은 실측에서 결함 1건을 찾아 고쳤다. 강조 태그(`<em>`)를 공백으로 바꿔 `전체 비교는 대시보드 에 있습니다`로 나왔다. 강조 태그는 공백 없이 지우고, 테스트에 단언을 더했다.
+- 보류 파일이 있는 날의 검토 PR 본문은 경고 블록 → 검토 보고서 순서이고, 맨 끝에 문구 반려 절이 있다.
+
+### 계획과 달라진 점
+
+| 계획 | 실제 | 이유 |
+|---|---|---|
+| `next_round(issue_titles, day)` | `previous_requests(issues, day)` + `pending_day(root)` | 2회차부터 직전 요청 이후 코멘트만 싣기 위해 요청의 생성 시각이 필요하다. 검토 날짜는 PR 제목(사람이 고칠 수 있다) 대신 검토 브랜치의 파일로 찾는다 |
+| 카드 글자는 `render_cards.visible_text` | `revise_request.card_texts` | `visible_text`는 줄 구분이 사라져 요청 Issue에서 읽기 어렵다. 블록 태그 단위로 줄을 나눈다 |
+| `revise.yml`은 Issue·보류 파일까지 | 라벨을 붙이거나 뗄 때 PR 본문도 다시 만든다 | 보류 알림이 본문에 있으므로 본문을 다시 만들지 않으면 실제 상태와 어긋난다 |
+| 보류 알림 템플릿은 `review_pr.md.j2` 안 | 별도 `templates/review_pr_hold.md.j2` | 알림은 검토 보고서 앞에, 나머지 절은 뒤에 붙는다 |
+| `collect.yml`에 라벨 안내만 | 라벨 생성(`revise-copy`)과 보류 유지, `issues: write` 권한 추가 | 라벨이 저장소에 있어야 검토자가 붙일 수 있다. 권한을 명시하면 적지 않은 권한은 없어져 Issue 조회에 필요하다 |
+| 라벨 설명 문구 | 설명 없이 색만 지정 | 라벨 설명도 사람이 읽는 문장이라 승인 문안이 필요하다(규칙 16). 이번 범위에 넣지 않았다 |
+
+### 남은 위험 (CI 실측에서 확인)
+
+- 사용자 계정으로 붙인 라벨이 `pull_request` `labeled` 실행을 만드는지 [미확인]. GITHUB_TOKEN이 만든 PR이라도 라벨을 붙인 주체가 사람이면 실행된다고 본다 [지식].
+- `gh api --paginate` 출력 형식과 `gh issue create`가 표준 출력에 주소를 내는지 [지식]. 모듈은 이어 붙은 JSON 배열을 모두 읽는다.
+- 같은 PR에서 수집 워크플로와 `revise.yml`이 동시에 검토 브랜치에 push하면 한쪽이 거부될 수 있다. 사람이 라벨을 붙이는 시각과 매일 수집(00:17 UTC)이 겹칠 때만 생긴다. 거부되면 라벨을 다시 붙인다.
+- `collect.yml`이 보류를 유지할 때 넣는 요청 주소는 열린 `copy-revision` Issue 중 가장 최근 것이다. 검토 PR이 둘(정기·시뮬레이션) 동시에 반려되면 다른 PR의 요청 주소가 들어갈 수 있다. 보류 자체는 유지된다.

@@ -1,0 +1,88 @@
+name: revise
+# 문구 반려(Phase 3 Task 7, 규칙 16). 검토 PR에 revise-copy 라벨이 붙으면 재작성 요청 Issue를 열고,
+# 검토 브랜치에 copy-hold.txt를 커밋해 머지돼도 승인·게시되지 않게 한다. 라벨을 떼면 보류를 푼다.
+# 재작성 자체는 Claude가 대화에서 docs/scripts/revise-loop.md 절차로 한다(/humanize-korean은 Actions에서 돌지 않는다).
+# 보안: PR 코멘트는 공개 저장소의 외부 입력이다. 식(${{ }})으로 셸에 넣지 않고, gh api 응답 파일을 파이썬이 읽는다.
+on:
+  pull_request:
+    types: [labeled, unlabeled]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: revise-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  hold:
+    if: >-
+      github.event.label.name == 'revise-copy'
+      && startsWith(github.event.pull_request.head.ref, 'review/')
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONIOENCODING: utf-8
+      GH_TOKEN: ${{ github.token }}
+      ACTION: ${{ github.event.action }}
+      PR: ${{ github.event.pull_request.number }}
+      BRANCH: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: open a revision request and hold the snapshot
+        if: env.ACTION == 'labeled'
+        run: |
+          set -euo pipefail
+          DAY=$(python -m publish.revise_request pending-day)
+          gh label create copy-revision --color D4C5F9 || true
+          gh label create copy-needs-human --color E99695 || true
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues?labels=copy-revision&state=all&per_page=100" > "$RUNNER_TEMP/issues.json"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments?per_page=100" > "$RUNNER_TEMP/comments.json"
+          OUT="$RUNNER_TEMP/request"
+          python -m publish.revise_request request --day "$DAY" --repo "$GITHUB_REPOSITORY" --pr "$PR" \
+            --issues "$RUNNER_TEMP/issues.json" --comments "$RUNNER_TEMP/comments.json" --out "$OUT"
+          if [ -f "$OUT/body.md" ]; then
+            URL=$(gh issue create --label copy-revision --title "$(head -n 1 "$OUT/title.txt")" --body-file "$OUT/body.md")
+          else
+            # 상한(3회)을 넘겼다. 요청을 열지 않고 사람에게 넘긴다. 보류는 그대로 건다.
+            gh pr edit "$PR" --add-label copy-needs-human
+            gh pr comment "$PR" --body-file "$OUT/limit.md"
+            URL=""
+          fi
+          printf '%s\n' "$URL" > "data/raw/$DAY/copy-hold.txt"
+          git add "data/raw/$DAY/copy-hold.txt"
+          git commit -m "review: hold copy $DAY (round $(cat "$OUT/round"))"
+          git push origin "HEAD:$BRANCH"
+          echo "DAY=$DAY" >> "$GITHUB_ENV"
+      - name: release the hold
+        if: env.ACTION == 'unlabeled'
+        run: |
+          set -euo pipefail
+          DAY=$(python -m publish.revise_request pending-day)
+          if [ -f "data/raw/$DAY/copy-hold.txt" ]; then
+            git rm -q "data/raw/$DAY/copy-hold.txt"
+            git commit -m "review: release copy hold $DAY"
+            git push origin "HEAD:$BRANCH"
+          fi
+          echo "DAY=$DAY" >> "$GITHUB_ENV"
+      - name: refresh the review PR body
+        # 보류 알림은 본문 맨 위에 있다. 라벨을 붙이거나 뗄 때마다 다시 만들어야 알림이 실제 상태와 맞는다.
+        run: |
+          set -euo pipefail
+          BODY="$RUNNER_TEMP/body.md"
+          python -m publish.review_pr --day "$DAY" --repo "$GITHUB_REPOSITORY" --sha "$(git rev-parse HEAD)" > "$BODY"
+          gh pr edit "$PR" --body-file "$BODY"

@@ -99,3 +99,24 @@ def print_pdf(html: Path, out: Path) -> Path:
     out = Path(out)
     return _bake(out, [[flag] for flag in PDF_HEADER_OFF],
                  [f"--print-to-pdf={out}", Path(html).resolve().as_uri()])
+
+
+def dump_dom(html: Path) -> str:
+    """페이지 스크립트가 실행된 뒤의 DOM을 표준 출력으로 받는다. 카드 레이아웃 측정값을 읽는 데 쓴다.
+
+    Edge에서도 출력을 받는다(5회 모두, 최대 30KB) [확인 2026-09-15]. PDF 제목으로 받는 방식은 4,096자에서 잘린다.
+    """
+    reasons = []
+    for headless in HEADLESS:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
+            try:
+                result = subprocess.run([find_browser(), *COMMON, f"--user-data-dir={profile}", headless, "--dump-dom",
+                                         Path(html).resolve().as_uri()], capture_output=True, timeout=TIMEOUT)
+            except subprocess.TimeoutExpired:
+                reasons.append(f"{headless}: {TIMEOUT}초 안에 끝나지 않았다")
+                continue
+        dom = result.stdout.decode("utf-8", "replace")
+        if result.returncode == 0 and dom.strip():
+            return dom
+        reasons.append(f"{headless}: 종료 코드 {result.returncode}, 출력 {len(dom)}자")
+    raise RuntimeError("DOM을 받지 못했다.\n" + "\n".join(reasons))

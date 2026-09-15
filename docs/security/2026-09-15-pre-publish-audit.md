@@ -71,3 +71,16 @@
 - **코드 수정 push:** 사용자 승인 아래 `121b651`을 push했다(원격 새 커밋 없음).
 - **게시 워크플로 실측 [확인]** (실행 34944499450, 37초): build·deploy 성공, `log`는 새 승인이 없어 건너뜀. 실행 기록의 토큰 권한이 build는 `Contents: write`, deploy는 `Pages: write`만이다(OIDC는 deploy·log 작업에만). SHA로 고정한 액션이 모두 정상 동작했다. 대시보드와 소개 카드 200.
 - 남은 사용자 조치: U1(이메일 비공개), U3~U6(저장소 설정), 선택 U7~U9.
+
+## 사용자 설정 반영 확인 (2026-09-15) [확인]
+
+사용자가 설정을 마쳤다고 알려 와 API로 다시 읽었다(읽기 전용).
+
+| 조치 | 결과 |
+|---|---|
+| U3 기본 토큰 권한 read | 반영(`default_workflow_permissions: read`). PR 생성·승인 허용은 설계대로 켜져 있다 |
+| U4 액션 SHA 고정 요구 | 반영(`sha_pinning_required: true`) |
+| U5 main 규칙 | 반영. 저장소 규칙 `main-protect`: 대상 기본 브랜치, 활성, 규칙 `deletion`·`non_fast_forward`, 우회 주체 없음 |
+| 일반 설정 | Wikis 꺼짐, Projects 꺼짐, 머지 후 브랜치 자동 삭제 켜짐, 자동 머지 꺼짐 |
+| **U6 Dependabot alerts** | **API가 여전히 꺼짐으로 응답한다**(`Dependabot alerts are disabled for this repository`). 사용자 재확인 필요 |
+| U1 이메일 비공개, 커밋 코멘트, push 한도 | 현재 gh 토큰 권한으로 읽을 수 없다. 권한을 늘리려면 사용자 승인이 필요해 요청하지 않았다. 사용자 화면 확인에 맡긴다 |

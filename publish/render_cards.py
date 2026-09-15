@@ -25,7 +25,7 @@ INTRO = "소개"
 MIN_GAP = 24                                    # 본문 블록과 상단 바·하단 알약 사이 최소 여백(px)
 ORPHAN_EM = 1.6                                 # 마지막 줄 폭이 글자 크기의 이 배수 미만이면 한 음절 줄로 본다
 SIZE = (1080, 1350)
-FILE_NAMES = {"cover": "cover", "chart": "chart", "banners": "rank", "closing": "closing"}
+FILE_NAMES = {"cover": "cover", "chips": "units", "flow": "flow", "chart": "chart", "banners": "rank", "closing": "closing"}
 
 
 def render_html(cards: list[dict], eyebrow: str, *, only: int | None = None, measure: bool = False) -> str:

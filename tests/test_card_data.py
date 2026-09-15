@@ -1,7 +1,10 @@
+import re
+from pathlib import Path
+
 import pytest
 
-from publish.card_data import (card_text, check_complete, cover_title, price_change_cards, price_item,
-                               price_label)
+from publish.card_data import (card_text, check_complete, closing_card, cover_title, intro_cards, price_change_cards,
+                               price_item, price_label)
 from publish.render_post import check_numbers
 
 TYPICAL = {("redshift", "compute", "us"): 0.40}           # 단가 1건 · 월 사용료 3건 · 순위 0건
@@ -143,3 +146,77 @@ def test_events_without_a_significant_change_are_rejected(make_events, workloads
     assert events["price_changes"] and not events["significant"]
     with pytest.raises(ValueError):
         price_change_cards(events, rows, prev_rows, workloads)
+
+
+SCRIPT = Path(__file__).resolve().parent.parent / "docs" / "scripts" / "cards-script.md"
+
+
+def _result(us=False, seoul=False, t2=True, spread=39.5, us_winner="redshift", seoul_winner="redshift"):
+    """analyze()의 판정 부분. supported=True가 채택이다. 채택이면 시나리오마다 1위가 다르다."""
+    def t1(supported, winner):
+        return {"winners": {"W1": winner, "W2": "bigquery" if supported else winner, "W3": winner},
+                "robustness": {"W1": "견고", "W2": "견고", "W3": "견고"}, "supported": supported}
+    return {"t1_by_region": {"us": t1(us, us_winner), "seoul": t1(seoul, seoul_winner)},
+            "t2": {"spread_pp": spread, "supported": t2}}
+
+
+def test_intro_cards_are_five_in_order():
+    cards, _ = intro_cards(_result(), "2026-09-11")
+    assert [(c["kind"], c.get("group")) for c in cards] == [
+        ("cover", None), ("chips", None), ("flow", None), ("bullets", "result"), ("closing", None)]
+    assert cards[-1] == closing_card()
+    assert [(chip["platform"], chip["unit"]) for chip in cards[1]["chips"]] == [
+        ("Snowflake", "크레딧"), ("Databricks", "DBU-시간"), ("Redshift", "RPU-시간"), ("BigQuery", "슬롯-시간")]
+    assert [step["text"] for step in cards[2]["steps"]] == ["매일 수집", "월 사용료 계산", "검토 요청에서 정지", "승인 후 게시"]
+    assert [step["text"] for step in cards[2]["steps"] if step["stop"]] == ["검토 요청에서 정지"]   # 멈춤 지점
+
+
+def test_intro_results_state_each_region_and_the_conclusion():
+    cards, _ = intro_cards(_result(us_winner="databricks"), "2026-09-11")
+    result = cards[3]
+    assert result["lead"] == "월 사용료가 가장 낮은 플랫폼이 1위입니다."
+    assert result["items"] == [
+        {"strong": "T1 기각 · 미국 리전", "rest": "시나리오가 달라도 1위는 Databricks로 같습니다."},
+        {"strong": "T1 기각 · 서울 리전", "rest": "시나리오가 달라도 1위는 Redshift로 같습니다."},
+        {"strong": "T2 채택", "rest": "서울 프리미엄은 서비스마다 최대 39.5%p 다릅니다."}]
+    assert result["notes"] == ["2026-09-11 승인 스냅샷 기준입니다.", "약정 할인을 제외한 모델 추정치입니다."]
+
+    cards, _ = intro_cards(_result(us=True, t2=False, spread=9.9), "2026-09-11")
+    assert cards[3]["items"][0] == {"strong": "T1 채택 · 미국 리전", "rest": "시나리오에 따라 1위가 달라집니다."}
+    assert cards[3]["items"][2] == {"strong": "T2 기각", "rest": "서울 프리미엄의 서비스 간 차이가 9.9%p로 작습니다."}
+    assert "지지" not in card_text(cards)                                  # 규칙 17: 채택 / 기각
+
+
+def test_intro_numbers_come_from_the_approved_snapshot():
+    cards, facts = intro_cards(_result(spread=39.5), "2026-09-11")
+    text = card_text(cards)
+    assert "39.5%p" in text and "2026-09-11" in text
+    check_numbers(text, facts)                                             # 그대로면 통과
+    with pytest.raises(ValueError, match="39.5"):
+        check_numbers(text, {**facts, "spread_pp": 12.3})                  # 기준 사전에 없는 숫자는 멈춘다
+
+
+def test_intro_copy_matches_the_script():
+    """소개 카드 고정 문장이 확정 스크립트 3절과 글자 단위로 같다. 자리표시자 {…} 자리에는 무엇이 와도 된다."""
+    section = SCRIPT.read_text(encoding="utf-8").split("## 3. 소개 카드")[1].split("\n## ")[0]
+    expected = []
+    for line in section.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("- 제목:", "- 부제:", "- 리드:")):
+            expected.append(stripped.split(":", 1)[1].strip().replace("**", "").strip("`"))
+        elif stripped.startswith(("- 칩 4개:", "- 흐름 4단계:", "- 각주")):
+            expected += re.findall(r"`([^`]+)`", stripped)
+        elif stripped.startswith("| T1") or stripped.startswith("| T2") or stripped.startswith("| |"):
+            expected += [re.sub(r"^\[.+?\] ", "", cell) for cell in re.findall(r"(?:\[.+?\] )?`([^`]+)`", stripped)]
+        elif stripped and not stripped.startswith(("-", "#", "|", "`", "1-1")) and "니다." in stripped:
+            expected.append(stripped)                                      # 3장 각주 코드 블록의 문장
+    assert len(expected) >= 20
+    variants = [intro_cards(_result(), "2026-09-11")[0], intro_cards(_result(us=True, t2=False, spread=9.9), "2026-09-11")[0]]
+    lines = set()
+    for cards in variants:
+        lines |= set(card_text(cards).splitlines())
+        lines |= {f"{chip['platform']} {chip['unit']}" for chip in cards[1]["chips"]}
+        lines |= {step["text"] for step in cards[2]["steps"]}
+    for text in expected:
+        pattern = re.sub(r"\\\{.+?\\\}", ".+?", re.escape(text))
+        assert any(re.fullmatch(pattern, line) for line in lines), text

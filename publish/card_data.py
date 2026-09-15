@@ -1,5 +1,6 @@
-"""카드뉴스 장별 데이터(Phase 3 Task 3). events.json을 장 목록으로 바꾼다. 디자인과 굽기는 render_cards의 일이다.
+"""카드뉴스 장별 데이터(Phase 3 Task 3·8). events.json을 장 목록으로 바꾼다. 디자인과 굽기는 render_cards의 일이다.
 문안의 정본은 docs/scripts/cards-script.md다. 항목을 생략하지 않고(규칙 18), 카드의 숫자는 모두 events.json에 있어야 한다.
+소개 카드(Task 8)는 events.json이 없어 승인 스냅샷의 판정 결과로 만든 기준 사전으로 숫자를 검사한다.
 검사 셋(누락·글자 수·숫자) 중 하나라도 어긋나면 ValueError로 생성을 멈춘다. 잘라내거나 요약하지 않는다."""
 from __future__ import annotations
 
@@ -10,12 +11,18 @@ from model.tco import CostRow
 from publish.render_post import PLATFORM_LABELS, check_numbers
 
 PER_PAGE = {"price": 5, "cost": 6, "rank": 2}                       # 디자인 계획 4-1
-LIMITS = {"cover_title": 20, "closing_title": 20, "title": 28,      # 스크립트 4절: 한 줄 상한 × 줄 수 상한
-          "lead": 90, "item": 32, "note": 40}                       # 항목과 각주는 한 줄씩 싣는다
+LIMITS = {"cover_line": 10, "closing_title": 20, "title": 28,       # 스크립트 4절: 한 줄 상한 × 줄 수 상한
+          "lead": 90, "item": 32, "note": 40,                       # 항목과 각주는 한 줄씩 싣는다
+          "chip": 12, "step": 16}                                   # 소개 카드 칩·흐름 단계는 한 줄
 SERVICE_LABELS = {"compute": "컴퓨트", "storage": "스토리지", "scan": "주문형 쿼리"}
 REGION_LABELS = {"us": "미국 리전", "seoul": "서울 리전"}
 DASHBOARD = "eugeejo-ui.github.io/consumption-insights"
 CHART_NOTES = ["금액은 벤더 공시 통화인 미국 달러 기준입니다.", "약정 할인을 제외한 모델 추정치입니다."]
+ESTIMATE_NOTE = CHART_NOTES[1]
+VERDICT = {True: "채택", False: "기각"}                               # 규칙 17: 지지·판정이라고 쓰지 않는다
+INTRO_UNITS = [("Snowflake", "크레딧"), ("Databricks", "DBU-시간"), ("Redshift", "RPU-시간"), ("BigQuery", "슬롯-시간")]
+INTRO_FLOW = ["매일 수집", "월 사용료 계산", "검토 요청에서 정지", "승인 후 게시"]
+INTRO_STOP = "검토 요청에서 정지"                                      # 사람의 승인을 기다리는 지점. 흐름 장에서 구분한다
 
 
 def _title(plain: str, accent: str, after: str = "") -> list[dict]:
@@ -126,6 +133,50 @@ def closing_card() -> dict:
             "lead": "시나리오별 월 사용료, 서울 프리미엄, 가정과 산출 근거를 공개합니다.", "url": DASHBOARD}
 
 
+def _t1_item(region: str, verdict: dict) -> dict:
+    """T1: 월 사용료 1위는 워크로드마다 다르다. 리전마다 판정한다(스크립트 3절 4장)."""
+    if verdict["supported"]:
+        rest = "시나리오에 따라 1위가 달라집니다."
+    else:
+        (winner,) = set(verdict["winners"].values())               # 기각이면 모든 시나리오의 1위가 하나다
+        rest = f"시나리오가 달라도 1위는 {PLATFORM_LABELS[winner]}로 같습니다."   # 네 이름 모두 모음으로 끝나 '로'
+    return {"strong": f"T1 {VERDICT[verdict['supported']]} · {REGION_LABELS[region]}", "rest": rest}
+
+
+def _t2_item(verdict: dict) -> dict:
+    """T2: 서울 프리미엄은 서비스마다 다르다. 격차는 서비스별 서울 프리미엄의 최대-최소 차이다."""
+    spread = f"{verdict['spread_pp']:.1f}"
+    rest = (f"서울 프리미엄은 서비스마다 최대 {spread}%p 다릅니다." if verdict["supported"]
+            else f"서울 프리미엄의 서비스 간 차이가 {spread}%p로 작습니다.")
+    return {"strong": f"T2 {VERDICT[verdict['supported']]}", "rest": rest}
+
+
+def intro_cards(result: dict, day: str) -> tuple[list[dict], dict]:
+    """소개 카드 5장(스크립트 3절). result는 승인 스냅샷의 analyze() 결과(t1_by_region, t2), day는 그 승인일이다.
+    소개 카드에는 events.json이 없으므로 숫자 검사 기준 사전을 함께 돌려준다. 굽기의 숫자 검사도 이 사전을 쓴다."""
+    cards = [
+        {"kind": "cover", "title": _title("데이터 플랫폼 네 곳의 ", "월 사용료 추적"),
+         "subtitle": "Snowflake · Databricks · BigQuery · Redshift",
+         "lead": "같은 워크로드를 기준으로 월 사용료를 환산해 매일 비교합니다."},
+        {"kind": "chips", "title": _title("가격표만으로는 ", "비교되지 않습니다"), "break_before_accent": True,   # 강조 구절을 한 줄에 둔다
+         "lead": "네 플랫폼은 과금 단위가 서로 다릅니다.",
+         "chips": [{"platform": platform, "unit": unit} for platform, unit in INTRO_UNITS],
+         "notes": ["단가를 나란히 놓아도 어느 쪽의 월 사용료가 낮은지 판단할 수 없습니다."]},
+        {"kind": "flow", "title": _title("사람의 ", "승인", "을 거칩니다"), "lead": "",
+         "steps": [{"text": text, "stop": text == INTRO_STOP} for text in INTRO_FLOW],
+         "notes": ["가격이 바뀐 날에만 검토 요청이 열립니다.", "승인한 값만 기록과 비교 기준에 사용합니다."]},
+        {"kind": "bullets", "group": "result", "page": None, "title": _title("현재 ", "결과"),
+         "lead": "월 사용료가 가장 낮은 플랫폼이 1위입니다.",
+         "items": [*(_t1_item(region, result["t1_by_region"][region]) for region in REGIONS), _t2_item(result["t2"])],
+         "notes": [f"{day} 승인 스냅샷 기준입니다.", ESTIMATE_NOTE]},
+        closing_card(),
+    ]
+    facts = {"day": day, "spread_pp": round(result["t2"]["spread_pp"], 1), "first_place": 1}   # '1위'의 1
+    check_lengths(cards)
+    check_numbers(card_text(cards), facts)
+    return cards, facts
+
+
 def check_complete(cards: list[dict], events: dict) -> None:
     """규칙 18 누락 검사: 카드에 실린 항목 수가 events.json의 항목 수와 같아야 한다."""
     carried = {"price": 0, "cost": 0, "rank": 0}
@@ -149,10 +200,17 @@ def _title_text(card: dict) -> str:
 def check_lengths(cards: list[dict]) -> None:
     """스크립트 4절 글자 수 상한. 넘치면 잘라내지 않고 멈춘다. 문안이 길어지면 스크립트를 고친다."""
     for n, card in enumerate(cards, start=1):
-        role = {"cover": "cover_title", "closing": "closing_title"}.get(card["kind"], "title")
-        fields = [(role, _title_text(card)), ("lead", card["lead"])]
+        if card["kind"] == "cover":
+            # 표지 제목은 일반 부분과 강조 부분이 줄로 나뉜다. 줄마다 공백을 빼고 센다.
+            # 104px에서 공백 폭은 한글 한 글자의 1/4 안팎이다: 공백 3개가 든 12자 줄이 968px 폭에 들어간다 [확인 2026-09-15].
+            fields = [("cover_line", part["text"].replace(" ", "")) for part in card["title"]]
+        else:
+            fields = [({"closing": "closing_title"}.get(card["kind"], "title"), _title_text(card))]
+        fields.append(("lead", card["lead"]))
         fields += [("item", text) for item in card.get("items", []) for text in (item["strong"], item["rest"])]
         fields += [("note", text) for text in card.get("notes", [])]
+        fields += [("chip", text) for chip in card.get("chips", []) for text in (chip["platform"], chip["unit"])]
+        fields += [("step", step["text"]) for step in card.get("steps", [])]
         for name, text in fields:
             if len(text) > LIMITS[name]:
                 raise ValueError(f"글자 수: {n}장 {name} {len(text)}자가 상한 {LIMITS[name]}자를 넘는다: {text}")
@@ -166,5 +224,7 @@ def card_text(cards: list[dict]) -> str:
         lines += [text for item in card.get("items", []) for text in (item["strong"], item["rest"])]
         lines += [text for banner in card.get("banners", []) for text in banner.values()]
         lines += [usd_label(v) for amounts in card.get("series", {}).values() for v in amounts.values()]
+        lines += [text for chip in card.get("chips", []) for text in (chip["platform"], chip["unit"])]
+        lines += [step["text"] for step in card.get("steps", [])]
         lines += card.get("notes", []) + [card.get("url", "")]
     return "\n".join(line for line in lines if line)

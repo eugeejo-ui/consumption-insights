@@ -1,7 +1,10 @@
+from pathlib import Path
+
 import pytest
 
 from publish.card_data import price_item
-from publish.render_linkedin import DASHBOARD_URL, render_linkedin
+from publish.render_linkedin import DASHBOARD_URL, MAX_CHARS, render_intro_post, render_linkedin
+from publish.render_post import NUMBER
 
 TYPICAL = {("redshift", "compute", "us"): 0.40}           # 단가 1건 · 월 비용 3건 · 순위 0건
 RANKED = {("redshift", "compute", "us"): 0.80}            # 순위 3건
@@ -53,3 +56,12 @@ def test_a_number_not_in_events_is_rejected(make_events, workloads):
     events, _, _ = make_events(TYPICAL)
     with pytest.raises(ValueError, match="777"):
         render_linkedin(events, workloads)
+
+
+def test_intro_post_matches_the_script():
+    """소개 게시문(스크립트 2절)은 고정 문안이다. 대시보드 주소만 채운다. 숫자가 하나도 없어 events.json이 필요 없다."""
+    script = (Path(__file__).resolve().parent.parent / "docs" / "scripts" / "linkedin-post-script.md").read_text(encoding="utf-8")
+    block = script.split("## 2. 소개 게시문")[1].split("```\n")[1]
+    text = render_intro_post()
+    assert text == block.replace("{대시보드 주소}", DASHBOARD_URL)
+    assert not NUMBER.findall(text) and len(text) <= MAX_CHARS

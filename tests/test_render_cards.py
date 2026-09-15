@@ -4,9 +4,9 @@ import struct
 import pytest
 
 from publish import browser
-from publish.card_data import price_change_cards
+from publish.card_data import intro_cards, price_change_cards
 from publish import render_cards
-from publish.render_cards import REPORT, bake, check_layout, korean_font_available, render_html, visible_text
+from publish.render_cards import INTRO, REPORT, bake, check_layout, korean_font_available, render_html, visible_text
 from publish.render_post import check_numbers
 
 TYPICAL = {("redshift", "compute", "us"): 0.40}           # 5장
@@ -127,6 +127,22 @@ def test_typesetting_rules_are_in_the_css(make_events, workloads):
     assert "@page{size:1080px 1350px;margin:0}" in html
     assert '"Noto Sans CJK KR"' in html
     assert all(int(w) <= 700 for w in re.findall(r"font-weight:(\d+)", html))
+
+
+def test_chips_and_flow_render_with_layout_fields():
+    cards, _ = intro_cards({"t1_by_region": {r: {"winners": {"W1": "redshift"}, "robustness": {}, "supported": False}
+                                             for r in ("us", "seoul")},
+                            "t2": {"spread_pp": 39.5, "supported": True}}, "2026-09-11")
+    html = render_html(cards, INTRO, measure=True)
+    chips, flow = _sections(html)[1], _sections(html)[2]
+    assert '가격표만으로는 <br><em class="accent">비교되지 않습니다</em>' in chips   # 강조 구절이 두 줄로 갈라지지 않는다
+    assert "<br>" not in flow.split("</h2>")[0]                                 # 나머지 장의 제목은 자연 줄바꿈
+    assert chips.count('data-role="chip" data-lines="1"') == 8                 # 플랫폼 이름 4 + 과금 단위 4
+    assert flow.count('data-role="step" data-lines="1"') == 4
+    assert flow.count(" stop") == 1 and "검토 요청에서 정지" in flow.split(" stop")[1].split("</li>")[0]
+    assert 'class="lead"' in chips and 'class="lead"' not in flow               # 리드가 없는 장에 빈 리드를 두지 않는다
+    assert all(section.count('class="note"') == n for section, n in ((chips, 1), (flow, 2), (_sections(html)[3], 2)))
+    assert html.index('"Noto Sans KR"') < html.index('"Malgun Gothic"')        # D22: 로컬도 CI와 같은 Noto 계열로 굽는다
 
 
 def _page(**overrides):

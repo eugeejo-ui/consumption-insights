@@ -39,3 +39,8 @@ def test_revise_workflow_is_scoped_and_never_puts_comments_in_the_shell():
     # 매일 수집이 검토 브랜치를 강제 push해도 라벨이 남아 있으면 보류 파일을 다시 넣는다.
     assert "revise-copy" in collect
     assert collect.index("copy-hold.txt") < collect.index('git commit -m "review: price snapshot')
+
+
+def test_publish_runs_when_intro_cards_change():
+    publish = yaml.safe_load((WORKFLOWS / "publish.yml").read_text(encoding="utf-8"))
+    assert "data/cards/**" in publish[True]["push"]["paths"]             # 소개 카드만 바뀐 push에도 사이트에 올린다(D21)

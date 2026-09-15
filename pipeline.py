@@ -25,9 +25,9 @@ from collectors import aws_prices, azure_prices, manual_prices
 from common.schema import REGIONS, PriceRecord, read_snapshot, write_snapshot
 from detect.events import detect
 from model.tco import CostRow, PriceBook, estimate, ranking, seoul_premiums, t1_verdict, t2_verdict
-from publish.card_data import price_change_cards
-from publish.render_cards import REPORT, bake
-from publish.render_linkedin import render_linkedin
+from publish.card_data import intro_cards, price_change_cards
+from publish.render_cards import INTRO, REPORT, bake
+from publish.render_linkedin import render_intro_post, render_linkedin
 from publish.render_post import render_post
 from publish.render_site import render
 from publish.review_pr import COPY_HOLD_FILE
@@ -41,6 +41,7 @@ POST_FILE = "post.md"
 CARDS_DIR = "cards"
 LINKEDIN_FILE = "linkedin.md"
 CARD_ERRORS_FILE = "card-errors.txt"
+INTRO_DIR = Path("data/cards/intro")          # 소개 카드(날짜와 무관, D21). 로컬에서 굽고 실물 승인 후 커밋한다
 SIMULATED = ("redshift", "compute", "us")     # --simulate: 이 단가만 5% 올려 검토 PR 흐름을 검증한다
 SIMULATED_TAG = " (simulated)"
 SIMULATION_NOTICE = "> **시뮬레이션:** 검증용 가짜 변동(Redshift 미국 RPU +5%)이다. 머지하지 말고 닫는다.\n\n"
@@ -226,9 +227,23 @@ def rebuild_cards(day: str) -> Path:
     return folder / CARDS_DIR
 
 
+def rebuild_intro() -> Path:
+    """--cards intro: 최신 승인 스냅샷으로 소개 카드 5장과 소개 게시문을 data/cards/intro/에 만든다(Task 8).
+    승인한 값만 쓴다(규칙 14). 승인 기록은 건드리지 않는다. 명시적으로 부른 명령이라 실패를 드러낸다."""
+    day = latest_approved_day(dt.date.max.isoformat(), RAW)
+    if day is None:
+        raise SystemExit("승인된 스냅샷이 없다. 소개 카드는 승인한 값으로만 만든다.")
+    cards, facts = intro_cards(analyze(snapshot_records(day)), day)
+    post = render_intro_post()
+    bake(cards, INTRO_DIR, INTRO, facts)
+    (INTRO_DIR / LINKEDIN_FILE).write_text(post, encoding="utf-8")
+    print(f"intro cards written: {INTRO_DIR} ({len(cards)}장, {day} 승인 스냅샷 기준)")
+    return INTRO_DIR
+
+
 def publish_cards(site: Path = Path("site")) -> list[Path]:
-    """승인된 날의 카드와 게시문을 site/cards/<날짜>/로 복사한다.
-    승인 기록이 없는 날(반려·시뮬레이션)은 게시하지 않는다(규칙 14, D9)."""
+    """승인된 날의 카드와 게시문을 site/cards/<날짜>/로, 소개 카드를 site/cards/intro/로 복사한다.
+    승인 기록이 없는 날(반려·시뮬레이션)은 게시하지 않는다(규칙 14, D9). 소개 카드는 대화에서 실물을 승인한 뒤 커밋한다(D21)."""
     target = site / CARDS_DIR
     shutil.rmtree(target, ignore_errors=True)
     published = []
@@ -241,6 +256,9 @@ def publish_cards(site: Path = Path("site")) -> list[Path]:
         if (folder / LINKEDIN_FILE).exists():
             shutil.copy2(folder / LINKEDIN_FILE, dest / LINKEDIN_FILE)
         published.append(dest)
+    if INTRO_DIR.is_dir():
+        shutil.copytree(INTRO_DIR, target / "intro")
+        published.append(target / "intro")
     return published
 
 
@@ -269,7 +287,9 @@ def build_site(day: str | None = None) -> Path:
                  price_dates, built_on=day, prev_ranks=previous_ranks(day, result["workloads"]))
     cards = publish_cards(out.parent)
     write_outputs(day=day)                           # 게시 워크플로가 시트 적재에 넘긴다. 출력 문장을 파싱하지 않는다
-    print(f"site written: {out} ({day} 승인 스냅샷, 카드 {len(cards)}일분)")
+    dated = [p for p in cards if p.name != "intro"]
+    intro = " + 소개 카드" if len(dated) < len(cards) else ""
+    print(f"site written: {out} ({day} 승인 스냅샷, 카드 {len(dated)}일분{intro})")
     return out
 
 
@@ -308,7 +328,7 @@ def main(argv: list[str] | None = None) -> Path:
     if args.dry_run:
         return dry_run()
     if args.cards:
-        return rebuild_cards(args.cards)
+        return rebuild_intro() if args.cards == "intro" else rebuild_cards(args.cards)
     if args.confirm:
         return confirm(args.confirm)
     if args.build is not None:

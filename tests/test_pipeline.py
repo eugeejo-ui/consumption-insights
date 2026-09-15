@@ -372,3 +372,48 @@ def test_build_writes_the_approved_day_to_the_step_output(tmp_path, monkeypatch,
     pipeline.main(["--build"])
 
     assert "day=2000-01-01\n" in gh_out.read_text(encoding="utf-8")
+
+
+# ── Phase 3 Task 8: 소개 카드 ─────────────────────────────────────────────────
+
+def test_cards_intro_bakes_from_the_latest_approved_snapshot(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _approved(price_records, day="2000-01-01")
+    _approved(price_records, day="2000-01-03")
+    write_snapshot(price_records, "2000-01-05", "all")           # 승인 기록이 없는 날은 기준이 아니다
+    calls = _fake_bake(monkeypatch)
+
+    out = pipeline.main(["--cards", "intro"])
+
+    assert out == Path("data/cards/intro") and len(calls) == 1
+    assert calls[0]["out_dir"] == out and calls[0]["eyebrow"] == "소개"
+    assert [c["kind"] for c in calls[0]["cards"]] == ["cover", "chips", "flow", "bullets", "closing"]
+    assert calls[0]["cards"][3]["notes"][0] == "2000-01-03 승인 스냅샷 기준입니다."
+    assert (out / "linkedin.md").read_text(encoding="utf-8").startswith("데이터 플랫폼 네 곳의 월 비용을 매일 추적합니다.")
+    assert not Path("data/raw/2000-01-05/approved.txt").exists()                # 승인 기록은 바꾸지 않는다
+
+
+def test_cards_intro_refuses_without_an_approved_snapshot(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    write_snapshot(price_records, "2000-01-05", "all")
+    calls = _fake_bake(monkeypatch)
+
+    with pytest.raises(SystemExit, match="승인"):
+        pipeline.main(["--cards", "intro"])
+    assert not calls and not Path("data/cards").exists()
+
+
+def test_site_build_publishes_intro_cards(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _approved(price_records, day="2000-01-01")
+    Path("data/cards/intro").mkdir(parents=True)
+    Path("data/cards/intro/01-cover.png").write_bytes(b"png")
+    Path("data/cards/intro/linkedin.md").write_text("intro", encoding="utf-8")
+
+    pipeline.main(["--build"])
+
+    assert Path("site/cards/intro/01-cover.png").exists()
+    assert Path("site/cards/intro/linkedin.md").read_text(encoding="utf-8") == "intro"

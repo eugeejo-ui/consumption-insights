@@ -71,7 +71,7 @@
 | ~~3-1~~ | **완료.** 로컬 Edge·CI Chrome 양쪽에서 1080×1350 PNG와 PDF를 구웠다. CI는 `fonts-noto-cjk` 설치가 필수다 [확인] | C | `publish/browser.py` | 완료(2026-09-12) |
 | ~~**3-2**~~ | **완료.** 카드 스크립트 작성 (규칙 16). 소개 4장과 정기 카드의 확정 문안을 먼저 쓴다. `/humanize-korean`으로 점검한다 | C → U | `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md` | 완료(2026-09-12 승인). 변경률 1.1%, 등급 A |
 | ~~3-3~~ | **완료.** 카드 데이터와 게시문. 기록 `docs/tasks/phase3/task-3-card-data-and-post.md`. 커밋 `06ace44` | C | `publish/card_data.py`, `publish/render_linkedin.py` | 항목 수에 따라 장이 늘어난다. 숫자 검사와 **누락 검사**(규칙 18)를 통과한다 |
-| 3-4 | 카드 HTML 템플릿(디자인 적용)과 굽기. 세부 계획 `docs/tasks/phase3/task-4-card-template.md`(2026-09-15 작성, 승인 대기) | C | `templates/cards/cards.html.j2`, `publish/render_cards.py` | 외부 요청이 0건이다. **사용자가 카드 실물을 확인한다** |
+| 3-4 | 카드 HTML 템플릿(디자인 적용)과 굽기. 기록 `docs/tasks/phase3/task-4-card-template.md`. 구현 완료(`d2490bc`), **사용자 실물 확인 대기** | C | `templates/cards/cards.html.j2`, `publish/render_cards.py` | 외부 요청이 0건이다. **사용자가 카드 실물을 확인한다** |
 | 3-5 | 파이프라인 연결 | C | `pipeline.py --cards` | E1인 날 카드와 게시문이 자동으로 생긴다. 굽기가 실패해도 검토 자료는 남는다 |
 | 3-6 | 워크플로 연결 | C | `collect.yml` | 검토 PR 본문에 카드가 보인다. 머지하면 `site/cards/`가 게시된다 |
 | **3-7** | **문구 반려 재작성 루프 (규칙 16).** `revise-copy` 라벨을 받으면 재작성 요청을 열고, `/humanize-korean`으로 다듬어 같은 PR을 갱신한다 | C | `.github/workflows/revise.yml`, `docs/scripts/revise-loop.md` | 라벨을 붙이면 재작성 요청이 열린다. 재작성 후 같은 PR이 갱신된다. 3회를 넘기면 멈춘다 |
@@ -139,3 +139,4 @@
   - 실제 승인 스냅샷(2026-09-11)에 시뮬레이션 변동을 넣어 5장과 게시문 371자를 만들었다. 차트 금액 8개가 Task 2 시험 카드와 같다 [확인]. 생략 문구 0건.
   - 순위 배너의 서열 문자열(44자) 크기와 마무리 안내 장 조판은 3-4에서 정한다.
 - **2026-09-15:** 3-4 세부 계획을 작성했다. 원본 대조 결과 좌우 여백 48px, 하단 알약 높이 56px·그라데이션 테두리, 본문 세로 가운데 정렬, 제목 굵기 700·본문 400, 글꼴 스택에 Noto Sans CJK KR 추가를 제안했다. 레이아웃 검사(겹침·넘침·줄 수·한 음절 줄)를 코드로 강제한다. 테스트 계획 +13개(→ 92).
+- **2026-09-15:** 3-4를 구현했다(`d2490bc`, 테스트 92개). 겹침·넘침·줄 수·한 음절 줄을 브라우저 실측으로 검사한다. 실제 승인 스냅샷으로 전형적인 날 5장과 변동이 많은 날 10장을 구웠고 모두 통과했다. 한글 라벨 자간을 줄였다. 사용자 실물 확인을 기다린다.

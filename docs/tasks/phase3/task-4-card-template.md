@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **완료** (2026-09-15). 사용자 실물 확인 승인. 테스트 92개. 코드 커밋 `d2490bc` |
+| 상태 | **완료** (2026-09-15). 사용자 실물 확인 승인. 테스트 92개. 코드 커밋 `88174ca` |
 | 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 4, `docs/plans/phase3-card-design.md`(규칙 13 디자인 게이트), 결정 D5·D8·D12·D18·D19·D20 |
 | 문안 정본 | `docs/scripts/cards-script.md`. 틀 문구(상단 바, 하단 알약, 범례, `이전`·`현재`)도 이 문서를 따른다 |
 | 담당 | C (사용자 확인 2회: 계획 승인, **카드 실물 확인**) |
@@ -181,7 +181,7 @@ bake(cards: list[dict], out_dir: Path, eyebrow: str, events: dict) -> list[Path]
 
 ## 실행 결과 (2026-09-15)
 
-계획과 조정안 6건을 사용자가 승인했다("ㅇㅇ"). Step 0~6을 마쳤다. 테스트 92개 통과. 코드 커밋 `d2490bc`. **Step 7(사용자 실물 확인)을 기다린다.**
+계획과 조정안 6건을 사용자가 승인했다("ㅇㅇ"). Step 0~6을 마쳤다. 테스트 92개 통과. 코드 커밋 `88174ca`. **Step 7(사용자 실물 확인)을 기다린다.**
 
 ### Step 1 측정 방식 실측 [확인]
 
@@ -202,7 +202,7 @@ bake(cards: list[dict], out_dir: Path, eyebrow: str, events: dict) -> list[Path]
 | 3 | `templates/cards/cards.html.j2`, `publish/render_cards.py` 구현 |
 | 4 | 새 테스트 13개 통과(실제 굽기 포함 56초), 전체 **92개 통과** [확인] |
 | 5 | 실제 승인 스냅샷으로 두 벌을 굽고 레이아웃 검사 통과 확인(아래) |
-| 6 | 개인정보 검사 0건, `_workspace/` 미포함 확인, 커밋 `d2490bc`, `git ls-files`로 새 파일 3개 추적 확인 |
+| 6 | 개인정보 검사 0건, `_workspace/` 미포함 확인, 커밋 `88174ca`, `git ls-files`로 새 파일 3개 추적 확인 |
 
 ### Step 5 실측값 [확인]
 

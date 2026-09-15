@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **계획 승인** (2026-09-15, 확인 사항 6건 모두 권고안). **완료** (2026-09-15). 테스트 79개. 코드 커밋 `06ace44` |
+| 상태 | **계획 승인** (2026-09-15, 확인 사항 6건 모두 권고안). **완료** (2026-09-15). 테스트 79개. 코드 커밋 `9f50492` |
 | 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 3, 결정 D11·D15·D16·D17·D18·D19·D20 |
 | 문안 정본 | `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md` |
 | 담당 | C (사용자 확인 2회: 계획 승인, Step 0 보완 문안 승인) |
@@ -238,13 +238,13 @@ render_linkedin(events: dict, workloads: dict) -> str         # 숫자 검사, 3
 
 ## 실행 결과 (2026-09-15)
 
-**완료.** 테스트 17개를 추가해 전체 79개가 통과한다. 코드 커밋 `06ace44`.
+**완료.** 테스트 17개를 추가해 전체 79개가 통과한다. 코드 커밋 `9f50492`.
 
 ### 실제로 한 일
 
 | Step | 결과 |
 |---|---|
-| 0 | 스크립트 보완, `/humanize-korean` 점검(run `2026-09-15-001`, 게이트 수렴), 사용자 승인(단가 표기 조정 포함). 문서 커밋 `17b889b` |
+| 0 | 스크립트 보완, `/humanize-korean` 점검(run `2026-09-15-001`, 게이트 수렴), 사용자 승인(단가 표기 조정 포함). 문서 커밋 `4252e80` |
 | 1 | 테스트 17개 작성. 새 모듈이 없어 `ModuleNotFoundError`로 실패하는 것을 확인했다 |
 | 2 | `publish/card_data.py` 구현. 장 구성, 쪽 나눔, 대표 시나리오, `events["display"]` 기록, 누락·글자 수·숫자 검사 |
 | 3 | `templates/post_linkedin.md.j2`, `publish/render_linkedin.py` 구현. 단가 줄은 카드와 같은 `price_item`으로 만든다 |

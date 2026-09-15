@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **계획 승인** (2026-09-15, 확인 사항 6건 모두 권고안). Step 0 보완 문안 확정(2026-09-15 사용자 승인, 단가 표기 조정 포함). **구현 진행 중** |
+| 상태 | **계획 승인** (2026-09-15, 확인 사항 6건 모두 권고안). **완료** (2026-09-15). 테스트 79개. 코드 커밋 `06ace44` |
 | 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 3, 결정 D11·D15·D16·D17·D18·D19·D20 |
 | 문안 정본 | `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md` |
 | 담당 | C (사용자 확인 2회: 계획 승인, Step 0 보완 문안 승인) |
@@ -145,19 +145,19 @@ render_linkedin(events: dict, workloads: dict) -> str         # 숫자 검사, 3
   - 확인 사항 1·2·3·5와 설계 판단 1을 `cards-script.md`에, 확인 사항 4를 `linkedin-post-script.md`에 반영한다. A안이면 마무리 장 문안과 관련 문서도 함께 고친다
   - 새로 쓰거나 바꾼 문안만 모아 `/humanize-korean`으로 점검하고, 결과를 두 스크립트의 점검 기록에 남긴다
   - **사용자 승인.** 승인 전에는 Step 1로 넘어가지 않는다
-- [ ] **Step 1** 테스트 17개를 먼저 쓰고 실패를 확인한다(`ModuleNotFoundError`)
-- [ ] **Step 2** `publish/card_data.py`를 구현한다
+- [x] **Step 1** 테스트 17개를 먼저 쓰고 실패를 확인한다(`ModuleNotFoundError`)
+- [x] **Step 2** `publish/card_data.py`를 구현한다
   - 표지 → 단가 변동 내역(5줄마다 1장) → 플랫폼별 월 사용료(1장) → 월 사용료 변동 내역(6줄마다 1장, 없으면 0장) → 순위 변동(배너 2개마다 1장, 없으면 0장) → 마무리 안내(1장, D20)
   - 금액은 `round()`로 달러 정수를 한 번 만들어 `events["display"]["chart"]`와 카드에 같은 값을 쓴다
-- [ ] **Step 3** `templates/post_linkedin.md.j2`와 `publish/render_linkedin.py`를 구현한다. 단가 표기는 `card_data.price_label`을 함께 쓴다
-- [ ] **Step 4** 전체 테스트를 돌린다 → 79개 통과
-- [ ] **Step 5 실제 스냅샷 확인**
+- [x] **Step 3** `templates/post_linkedin.md.j2`와 `publish/render_linkedin.py`를 구현한다. 단가 표기는 `card_data.price_label`을 함께 쓴다
+- [x] **Step 4** 전체 테스트를 돌린다 → 79개 통과
+- [x] **Step 5 실제 스냅샷 확인**
   - 2026-09-11 승인 스냅샷에 시뮬레이션 변동(Redshift 미국 리전 컴퓨트 +5%)을 넣어 카드 데이터와 게시문을 만든다. 출력은 스크래치 폴더에만 둔다
   - 차트 금액이 Task 2 시험 카드의 값과 같은지 대조한다(미국 리전 1,550·2,056·933·1,693, 서울 리전 2,032·2,708·1,032·2,167)
   - 장수(5장), 게시문 글자 수, 생략 문구 0건을 확인한다
   - **게시문 전문을 사용자에게 보고한다**
-- [ ] **Step 6** 커밋 전 개인정보 검사(이메일, 로컬 사용자 경로, 개인 프로젝트 ID) → 커밋 `feat: build card data and the LinkedIn post text` → `git ls-files`로 새 파일 추적 확인
-- [ ] **Step 7** 이 파일에 실행 결과를 덧붙이고, 코드 계획 Task 3 절·진행계획·`CLAUDE.md`를 갱신한다. **보고하고 멈춘다**(규칙 10)
+- [x] **Step 6** 커밋 전 개인정보 검사(이메일, 로컬 사용자 경로, 개인 프로젝트 ID) → 커밋 `feat: build card data and the LinkedIn post text` → `git ls-files`로 새 파일 추적 확인
+- [x] **Step 7** 이 파일에 실행 결과를 덧붙이고, 코드 계획 Task 3 절·진행계획·`CLAUDE.md`를 갱신한다. **보고하고 멈춘다**(규칙 10)
 
 ## 테스트 목록
 
@@ -233,3 +233,98 @@ render_linkedin(events: dict, workloads: dict) -> str         # 숫자 검사, 3
 - 누락·숫자·글자 수·게시문 길이 검사가 코드로 강제된다.
 - 실제 승인 스냅샷 시뮬레이션의 차트 금액이 Task 2 시험 카드와 같다.
 - 이 파일에 실행 결과가 덧붙고, 관련 문서가 갱신되고, 커밋됐다.
+
+---
+
+## 실행 결과 (2026-09-15)
+
+**완료.** 테스트 17개를 추가해 전체 79개가 통과한다. 코드 커밋 `06ace44`.
+
+### 실제로 한 일
+
+| Step | 결과 |
+|---|---|
+| 0 | 스크립트 보완, `/humanize-korean` 점검(run `2026-09-15-001`, 게이트 수렴), 사용자 승인(단가 표기 조정 포함). 문서 커밋 `17b889b` |
+| 1 | 테스트 17개 작성. 새 모듈이 없어 `ModuleNotFoundError`로 실패하는 것을 확인했다 |
+| 2 | `publish/card_data.py` 구현. 장 구성, 쪽 나눔, 대표 시나리오, `events["display"]` 기록, 누락·글자 수·숫자 검사 |
+| 3 | `templates/post_linkedin.md.j2`, `publish/render_linkedin.py` 구현. 단가 줄은 카드와 같은 `price_item`으로 만든다 |
+| 4 | 새 테스트 17개 통과, 전체 **79개 통과** [확인] |
+| 5 | 실제 승인 스냅샷 확인(아래) |
+| 6 | 개인정보 검사 0건, LinkedIn 호출 코드 0건. 커밋 후 `git ls-files`로 새 파일 5개 추적 확인 |
+
+### 바뀐 파일
+
+| 파일 | 내용 |
+|---|---|
+| `publish/card_data.py` | 신규 |
+| `publish/render_linkedin.py` | 신규 |
+| `templates/post_linkedin.md.j2` | 신규. 확정 게시문 문안 |
+| `tests/conftest.py` | 픽스처 `make_events` 추가 |
+| `tests/test_card_data.py` | 신규. 13개 |
+| `tests/test_render_linkedin.py` | 신규. 4개 |
+| `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md` | 보완안 확정 표기 |
+
+### 실측값 [확인]
+
+2026-09-11 승인 스냅샷에 시뮬레이션 변동(Redshift 미국 리전 컴퓨트 +5%, `$0.375 → $0.39375`)을 넣어 만들었다. 출력은 스크래치 폴더에만 두었다.
+
+| 확인 항목 | 결과 |
+|---|---|
+| 장 구성 | 5장: 표지 → 단가 변동 내역 → 플랫폼별 월 사용료 → 월 사용료 변동 내역 → 마무리 안내 |
+| 표지 제목 | 월 사용료 **변동** (순위 변동 없음) |
+| 대표 시나리오 | W1 소규모 BI 대시보드(+3.7%) |
+| 차트 금액 | 미국 리전 $1,550·$2,056·$933·$1,693, 서울 리전 $2,032·$2,708·$1,032·$2,167. **Task 2 시험 카드와 같다** |
+| 단가 줄 | `Redshift 컴퓨트 · 미국 리전` / `$0.375 → $0.39375 (+5.0%)` (반올림하지 않음) |
+| 월 사용료 변동 내역 | 3건 모두 실림(+3.7%, +3.0%, +1.7%) |
+| 생략 문구 | 카드 0건, 게시문 0건 |
+| 게시문 | 371자. 3,000자 한도의 12% |
+
+게시문 전문:
+
+```
+데이터 플랫폼 월 비용 변동 · 2026-09-15
+
+직전 승인 가격(2026-09-11) 대비 단가 1건이 바뀌었습니다.
+
+▪ Redshift 컴퓨트 · 미국 리전 $0.375 → $0.39375 (+5.0%)
+
+월 비용 변동 폭이 가장 큰 조합은 소규모 BI 대시보드 · 미국 리전입니다.
+
+과금 단위가 서로 다른 네 플랫폼을 같은 워크로드 기준으로 환산해 비교했습니다.
+약정 할인을 제외한 모델 추정치이며 가정과 계산 과정을 모두 공개합니다.
+
+https://eugeejo-ui.github.io/consumption-insights/
+
+#데이터플랫폼 #클라우드비용 #FinOps #Snowflake #Databricks #BigQuery #Redshift
+```
+
+순위만 바뀐 날에는 변동 폭 줄이 빠지고 `월 비용이 낮은 순서가 바뀌었습니다.`만 남는 것을 테스트 픽스처로 확인했다.
+
+### 막혔던 것
+
+없다. `tests/`가 패키지가 아니라 테스트 파일끼리 상수를 가져올 수 없어, 변동 조건 상수 세 개를 두 테스트 파일에 각각 두었다.
+
+### 계획과 달라진 점 (구현 단계)
+
+| 계획 | 실제 | 이유 |
+|---|---|---|
+| 공개 함수 7개(`price_label`, `cover_title`, `price_change_cards`, `check_complete`, `check_lengths`, `card_text`, `render_linkedin`) | 보조 함수 6개를 더 공개했다: `price_item`, `usd_label`, `scenario_names`, `note_price_change_count`, `representative_scenario`, `closing_card` | 게시문이 카드와 같은 단가 줄을 쓰고, Task 4 템플릿이 같은 금액 표기를, Task 8 소개 카드가 같은 마무리 장을 쓴다. 표기를 한 곳에서만 정의한다 |
+
+Step 0에서 달라진 점은 위 "Step 0 실행 결과" 절에 있다.
+
+### 다음 Task에 넘기는 것
+
+- **Task 4 (카드 템플릿)**
+  - 장 종류는 `cover`, `bullets`, `chart`, `banners`, `closing` 다섯 가지다. `page`는 제목 뒤에 강조 없이 붙인다.
+  - 틀 문구(상단 바, 하단 알약 `넘기기 / →`·`끝`, 차트 범례 `미국 리전`·`서울 리전`, 배너의 `이전`·`현재`)는 템플릿에 둔다. 데이터에는 없다.
+  - 차트 금액은 `card_data.usd_label`로 적는다. 숫자 검사가 이 표기를 기준으로 통과했다.
+  - **순위 배너의 서열 문자열은 44자다.** 글자 수 상한표에 배너 항목이 없다. 글자 크기와 줄 수를 정하고 굽기로 확인한다.
+  - 마무리 안내 장은 템플릿 `10-closing` 틀이다. 배경은 다른 장과 같고, 주소는 한 줄에 들어가는 크기로 정한다.
+  - 테스트 픽스처는 `make_events`를 쓴다.
+- **Task 5 (파이프라인)**
+  - `price_change_cards`가 `events["display"]`를 채우므로 **카드 데이터를 먼저 만들고 `events.json`을 쓴다.**
+  - `prev_rows`는 `estimate(PriceBook(previous_snapshot(day)), workloads)`로 만든다.
+  - 게시문은 카드와 따로 만든다. 3,000자 초과 `ValueError`는 검토 PR에서 사람에게 알린다.
+- **Task 6 (워크플로):** 10장 초과 경고 문장은 PR 본문 문안과 함께 스크립트 단계를 거친다(규칙 16).
+- **Task 8 (소개 카드):** 마무리 장은 `closing_card()`를 재사용한다. 소개 4장 각주는 보완본(두 문장)을 쓴다.
+- **D17 교체(다른 대화):** 게시문의 `월 비용`은 `templates/post_linkedin.md.j2` 세 곳(제목, 변동 폭 줄, 순위 줄)과 `tests/test_render_linkedin.py`의 상수 두 개에 있다. 교체할 때 함께 바꾼다.

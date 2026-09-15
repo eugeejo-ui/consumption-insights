@@ -39,12 +39,12 @@
 |---|---|---|---|
 | 1 | **실측.** 브라우저로 PNG·PDF 굽기, 한글 표시, CI 서버 확인 | +5 → 62 (결함 수정 테스트 2개 포함) | — |
 | 2 | **카드 스크립트 작성**(규칙 16). 확정 문안 + `/humanize-korean` 점검 | — | **문안 승인** |
-| 3 | 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +11 → 73 | — |
-| 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 79 | **카드 실물 확인** |
-| 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 83 | — |
+| 3 | **완료** (2026-09-15, `06ace44`). 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +17 → 79 | 보완 문안 승인 |
+| 4 | 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +6 → 85 | **카드 실물 확인** |
+| 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 89 | — |
 | 6 | 워크플로: 검토 PR에 카드 표시, 머지 후 사이트 게시 | 워크플로 실측 | 시뮬레이션 PR 확인 |
-| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 85 | 반려 시 라벨 1개 |
-| 8 | 소개 카드 구현 | +4 → 89 | — |
+| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 91 | 반려 시 라벨 1개 |
+| 8 | 소개 카드 구현 | +4 → 95 | — |
 | 9 | 종단 검증 | — | — |
 | 10 | **첫 게시** | — | **LinkedIn에 직접 게시** |
 
@@ -234,6 +234,8 @@ def print_pdf(html: Path, out: Path) -> Path:
 ---
 
 ### Task 3: 카드 데이터와 게시문 (디자인과 무관한 부분)
+
+> **완료 (2026-09-15).** 실제 설계와 실행 기록은 `docs/tasks/phase3/task-3-card-data-and-post.md`에 있다. 아래 초안과 달라진 점: `price_change_cards`에 `prev_rows` 인자 추가, `render_linkedin(events, workloads)`(카드에 의존하지 않음), 마무리 안내 장(D20)으로 장수 +1, 순위 배너는 조합마다 1개, 단가는 반올림하지 않음, 글자 수 검사 추가, 10장 초과 경고는 Task 6으로 이동, 테스트 +17 → 79. 아래 코드 초안은 이력으로 남긴다.
 
 **Files:**
 - Create: `publish/card_data.py`, `publish/render_linkedin.py`, `templates/post_linkedin.md.j2`, `tests/test_card_data.py`, `tests/test_render_linkedin.py`

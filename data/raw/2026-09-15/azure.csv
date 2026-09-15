@@ -1,5 +1,0 @@
-platform,service,sku,region,unit,price_usd,source,fetched_at
-databricks,compute,sql-serverless-dbu,seoul,DBU-hour,0.95,https://prices.azure.com/api/retail/prices,2026-09-15
-databricks,compute,sql-serverless-dbu,us,DBU-hour,0.7,https://prices.azure.com/api/retail/prices,2026-09-15
-databricks,storage,adls-hot-lrs,seoul,GB-month,0.02,https://prices.azure.com/api/retail/prices,2026-09-15
-databricks,storage,adls-hot-lrs,us,GB-month,0.0208,https://prices.azure.com/api/retail/prices,2026-09-15

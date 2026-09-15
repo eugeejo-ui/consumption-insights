@@ -1,0 +1,41 @@
+{# 검토 PR 본문의 새 절. 문안 정본: docs/scripts/review-pr-script.md #}
+{% if images %}
+
+---
+## 카드뉴스 미리보기 · {{ images|length }}장
+
+원본 PDF: [cards.pdf]({{ pdf_url }})
+
+머지 후 게시 주소: {{ site_url }}
+
+{% if images|length > warn_over %}
+카드가 {{ images|length }}장으로 10장을 넘습니다. 게시 분량은 검토자가 판단합니다.
+
+{% endif %}
+{% for image in images %}
+![{{ image.number }}장 {{ image.name }}]({{ image.url }})
+
+{% endfor %}
+{% endif %}
+{% if errors %}
+
+---
+## 카드뉴스·게시문 생성 실패
+
+카드 또는 게시문 생성에 실패했습니다. 검토 자료는 정상입니다.
+
+```text
+{{ errors }}
+```
+{% endif %}
+{% if linkedin %}
+
+---
+## LinkedIn 게시문
+
+LinkedIn에는 사람이 직접 게시합니다.
+
+```text
+{{ linkedin }}
+```
+{% endif %}

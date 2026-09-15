@@ -348,3 +348,15 @@ def test_site_build_publishes_only_approved_cards(tmp_path, monkeypatch, price_r
     assert Path("site/cards/2000-01-01/01-cover.png").exists()
     assert Path("site/cards/2000-01-01/linkedin.md").read_text(encoding="utf-8") == "post"
     assert not Path("site/cards/2000-01-02").exists()
+
+
+def test_build_writes_the_approved_day_to_the_step_output(tmp_path, monkeypatch, price_records):
+    """게시 워크플로는 이 값을 시트 적재에 넘긴다. 출력 문장을 파싱하던 방식은 문장이 바뀌자 조용히 깨졌다."""
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _approved(price_records, day="2000-01-01")
+    gh_out = _gh_output(tmp_path, monkeypatch)
+
+    pipeline.main(["--build"])
+
+    assert "day=2000-01-01\n" in gh_out.read_text(encoding="utf-8")

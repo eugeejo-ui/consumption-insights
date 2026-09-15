@@ -267,6 +267,7 @@ def build_site(day: str | None = None) -> Path:
     out = render(result["rows"], result["premiums"], result["t1_by_region"], result["t2"], result["workloads"],
                  price_dates, built_on=day, prev_ranks=previous_ranks(day, result["workloads"]))
     cards = publish_cards(out.parent)
+    write_outputs(day=day)                           # 게시 워크플로가 시트 적재에 넘긴다. 출력 문장을 파싱하지 않는다
     print(f"site written: {out} ({day} 승인 스냅샷, 카드 {len(cards)}일분)")
     return out
 

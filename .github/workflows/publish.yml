@@ -61,9 +61,8 @@ jobs:
           fi
       - id: site
         name: build the dashboard
-        run: |
-          python pipeline.py --build | tee build.log
-          echo "day=$(sed -n 's/.*(\(.*\) 승인 스냅샷)/\1/p' build.log)" >> "$GITHUB_OUTPUT"
+        # 승인일(day)은 pipeline.py가 단계 출력에 직접 쓴다. 출력 문장을 파싱하던 방식은 문장이 바뀌자 조용히 깨졌다.
+        run: python pipeline.py --build
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site

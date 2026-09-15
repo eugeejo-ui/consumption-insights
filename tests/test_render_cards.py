@@ -142,7 +142,7 @@ def _page(**overrides):
 
 def test_layout_problems_stop_baking():
     cards = [{"kind": "chart"}]
-    check_layout(_page(), cards)                                          # 정상 값은 통과한다
+    assert check_layout(_page(), cards) == {"min_gap": 120, "max_right": 990, "limit_right": 1032}   # 통과하면 요약
     for overrides, message in [({"gap_bottom": 12}, "하단 알약과 겹친다"), ({"gap_top": -5}, "상단 바와 겹친다"),
                                ({"lines": 4}, "줄 수"), ({"right": 1050}, "넘친다"), ({"last_em": 1.2}, "한 음절")]:
         with pytest.raises(ValueError, match=message):

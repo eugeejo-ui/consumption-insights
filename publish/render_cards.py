@@ -51,8 +51,9 @@ def read_layout(dom: str) -> list[dict]:
     return json.loads(unescape(found.group(1)))
 
 
-def check_layout(report: list[dict], cards: list[dict]) -> None:
-    """디자인 계획 6절 검수 기준을 브라우저 실측값으로 검사한다. 하나라도 어긋나면 굽지 않는다."""
+def check_layout(report: list[dict], cards: list[dict]) -> dict:
+    """디자인 계획 6절 검수 기준을 브라우저 실측값으로 검사한다. 하나라도 어긋나면 굽지 않는다.
+    통과하면 요약(가장 좁은 여백, 가장 오른쪽 글자 끝)을 돌려준다. CI 기록에서 여유를 확인하는 데 쓴다."""
     problems = [] if len(report) == len(cards) else [f"측정한 장 수 {len(report)}가 카드 장수 {len(cards)}와 다르다"]
     for page in report:
         where = f"{page['card']}장({cards[page['card'] - 1]['kind']})"
@@ -70,6 +71,9 @@ def check_layout(report: list[dict], cards: list[dict]) -> None:
                 problems.append(f"{where} {role} 마지막 줄에 한 음절만 남는다(폭 {field['last_em']}em)")
     if problems:
         raise ValueError("레이아웃 검사 실패:\n" + "\n".join(problems))
+    return {"min_gap": min(min(p["gap_top"], p["gap_bottom"]) for p in report),
+            "max_right": max(f["right"] for p in report for f in p["fields"]),
+            "limit_right": min(p["limit_right"] for p in report)}
 
 
 def korean_font_available() -> bool:
@@ -105,7 +109,9 @@ def bake(cards: list[dict], out_dir: Path, eyebrow: str, events: dict) -> list[P
         work = Path(tmp)
         measure = work / "measure.html"
         measure.write_text(render_html(cards, eyebrow, measure=True), encoding="utf-8")
-        check_layout(read_layout(browser.dump_dom(measure)), cards)
+        summary = check_layout(read_layout(browser.dump_dom(measure)), cards)
+        print(f"레이아웃 검사 통과: {len(cards)}장, 가장 좁은 여백 {summary['min_gap']}px, "
+              f"가장 오른쪽 글자 끝 {summary['max_right']}/{summary['limit_right']}px")
 
         (out_dir / "cards.html").write_text(html, encoding="utf-8")
         pngs = []

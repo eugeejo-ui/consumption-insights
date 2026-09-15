@@ -49,7 +49,7 @@
 | # | 조치 | 위치 | 이유 |
 |---|---|---|---|
 | U1 | **"Keep my email addresses private"** 켜기, 가능하면 "Block command line pushes that expose my email"도 켜기 | GitHub → Settings → Emails | 웹·API 머지 커밋이 noreply 주소로 기록된다 [지식]. 켜기 전까지 Claude는 `gh pr merge`로 머지하지 않는다 |
-| U2 | 기존 머지 커밋 2개 처리 결정 | — | 아래 "발견 1의 선택지" |
+| U2 | 기존 머지 커밋 2개 처리 결정 | — | **A안으로 결정했다**(2026-09-15 사용자). 아래 "발견 1의 선택지" |
 | U3 | 기본 토큰 권한을 **Read repository contents and packages permissions**로 바꾸기 | Settings → Actions → General → Workflow permissions | 모든 워크플로가 권한을 명시하므로 read로 바꿔도 동작한다 [확인, 테스트]. 같은 화면의 "Allow GitHub Actions to create and approve pull requests"는 **켠 채로 둔다.** 생성과 승인이 한 체크박스라, 끄면 수집 워크플로가 검토 PR을 만들지 못한다. main 보호(U5)와 소유자 1인 구조에서 승인 권한의 실질 위험은 작다 |
 | U4 | **Require actions to be pinned to a full-length commit SHA** 켜기 | Settings → Actions → General | 이번 수정으로 모든 액션이 고정됐다. 이 수정을 push한 뒤에 켠다 |
 | U5 | main 규칙: **force push 차단, 삭제 차단**만 켜기(PR 필수는 켜지 않는다) | Settings → Rules → Rulesets | 봇이 main에 직접 커밋한다(매일 확인 기록, 승인 기록, 가격 지문). PR 필수를 켜면 자동화가 멈춘다. U2에서 이력 재작성을 고르면 그 뒤에 켠다 |
@@ -64,3 +64,10 @@
 |---|---|---|
 | **A. 설정만 켜고 기존 커밋은 둔다** | 재발을 막는다 | 기존 머지 커밋 2개에 주소가 남는다. 2026-09-12부터 공개돼 있었다 |
 | B. main 이력을 다시 쓴다 | 두 커밋의 작성자를 noreply로 바꾸고 강제 push한다 | 첫 대상 뒤 커밋 60개의 해시가 모두 바뀐다(문서의 해시 참조 수십 곳 수정). 공개 main에 강제 push한다. PR #3·#7 화면은 원래 머지 커밋을 계속 가리키고, GitHub는 참조가 끊긴 커밋도 해시로 한동안 열어 준다 [지식]. 완전히 지우려면 GitHub 지원팀 요청이 필요하다 |
+
+## 결정과 반영 결과 (2026-09-15)
+
+- **발견 1: A안(설정만 켜고 기존 커밋은 둔다)** 으로 사용자가 결정했다. 이력을 다시 쓰지 않는다. 이메일 비공개 설정(U1)은 사용자가 켠다.
+- **코드 수정 push:** 사용자 승인 아래 `121b651`을 push했다(원격 새 커밋 없음).
+- **게시 워크플로 실측 [확인]** (실행 34944499450, 37초): build·deploy 성공, `log`는 새 승인이 없어 건너뜀. 실행 기록의 토큰 권한이 build는 `Contents: write`, deploy는 `Pages: write`만이다(OIDC는 deploy·log 작업에만). SHA로 고정한 액션이 모두 정상 동작했다. 대시보드와 소개 카드 200.
+- 남은 사용자 조치: U1(이메일 비공개), U3~U6(저장소 설정), 선택 U7~U9.

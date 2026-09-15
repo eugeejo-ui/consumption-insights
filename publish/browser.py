@@ -90,13 +90,15 @@ def _bake(out: Path, variants: list[list[str]], args: list[str]) -> Path:
 
 
 def screenshot(html: Path, out: Path, width: int = 1080, height: int = 1350) -> Path:
-    out = Path(out)
+    # 출력 경로는 절대 경로로 넘긴다. Edge의 분리된 하위 프로세스는 작업 폴더가 달라 상대 경로 파일을 쓰지 못한다
+    # [확인 2026-09-15, pipeline.py의 data/raw 상대 경로에서 60초 대기 후 실패].
+    out = Path(out).resolve()
     return _bake(out, [[]], [f"--window-size={width},{height}", f"--screenshot={out}",
                              Path(html).resolve().as_uri()])
 
 
 def print_pdf(html: Path, out: Path) -> Path:
-    out = Path(out)
+    out = Path(out).resolve()
     return _bake(out, [[flag] for flag in PDF_HEADER_OFF],
                  [f"--print-to-pdf={out}", Path(html).resolve().as_uri()])
 

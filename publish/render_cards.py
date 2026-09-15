@@ -5,7 +5,10 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import struct
+import subprocess
+import sys
 import tempfile
 from html import unescape
 from pathlib import Path
@@ -69,6 +72,17 @@ def check_layout(report: list[dict], cards: list[dict]) -> None:
         raise ValueError("레이아웃 검사 실패:\n" + "\n".join(problems))
 
 
+def korean_font_available() -> bool:
+    """한글 글꼴이 있는가. 없으면 굽기가 실패하지 않고 두부 글자 카드가 만들어진다(CI 서버) [확인 2026-09-12]."""
+    if sys.platform in ("win32", "darwin"):
+        return True                                 # 맑은 고딕·Apple SD Gothic Neo가 기본으로 들어 있다 [지식]
+    fc_list = shutil.which("fc-list")
+    if fc_list is None:
+        return False
+    found = subprocess.run([fc_list, ":lang=ko"], capture_output=True, text=True, timeout=30)
+    return bool(found.stdout.strip())
+
+
 def _png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", path.read_bytes()[16:24])
 
@@ -78,7 +92,9 @@ def _pdf_pages(path: Path) -> int:
 
 
 def bake(cards: list[dict], out_dir: Path, eyebrow: str, events: dict) -> list[Path]:
-    """cards.html, 장마다 PNG, cards.pdf를 만든다. 검사 순서: 숫자 → 레이아웃 → 굽기 → 크기·쪽수."""
+    """cards.html, 장마다 PNG, cards.pdf를 만든다. 검사 순서: 글꼴 → 숫자 → 레이아웃 → 굽기 → 크기·쪽수."""
+    if not korean_font_available():
+        raise RuntimeError("한글 글꼴이 없다. 두부 글자 카드를 만들지 않는다(fonts-noto-cjk 설치 필요)")
     html = render_html(cards, eyebrow)
     check_numbers(visible_text(html), events)
     out_dir = Path(out_dir)

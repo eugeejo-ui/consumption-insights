@@ -1,4 +1,5 @@
 import struct
+from pathlib import Path
 
 import pytest
 
@@ -57,3 +58,19 @@ def test_waits_for_a_file_written_after_the_browser_exits(tmp_path):
 
 def test_gives_up_when_the_file_never_appears(tmp_path):
     assert browser.wait_for_file(tmp_path / "never.png", timeout=1) is False
+
+
+def test_output_paths_are_passed_to_the_browser_as_absolute(tmp_path, monkeypatch):
+    """Edge의 하위 프로세스는 작업 폴더가 달라 상대 경로 파일을 쓰지 못한다(2026-09-15 실측).
+    파이프라인은 data/raw 상대 경로로 굽는다."""
+    monkeypatch.chdir(tmp_path)
+    seen = []
+    monkeypatch.setattr(browser, "_bake", lambda out, variants, args: seen.append((out, args)) or out)
+
+    browser.screenshot(Path("card.html"), Path("data/raw/day/cards/01-cover.png"))
+    browser.print_pdf(Path("card.html"), Path("data/raw/day/cards/cards.pdf"))
+
+    for out, args in seen:
+        assert out.is_absolute()
+        flag = next(a for a in args if a.startswith(("--screenshot=", "--print-to-pdf=")))
+        assert Path(flag.split("=", 1)[1]) == tmp_path / out.relative_to(tmp_path)

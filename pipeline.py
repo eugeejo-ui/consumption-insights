@@ -3,9 +3,10 @@
 1단계  .venv\\Scripts\\python.exe pipeline.py [--simulate]
        수집 → 이전 승인 스냅샷과 비교
        · 변화 없음: data/checks.csv에 한 줄 기록하고 끝낸다(스냅샷을 만들지 않는다)
-       · 변화 있음(또는 첫 스냅샷): 스냅샷, review.md, events.json, (E1이면) post.md → 멈춤
+       · 변화 있음(또는 첫 스냅샷): 스냅샷, review.md, events.json, (E1이면) post.md·linkedin.md·cards/ → 멈춤
+         카드는 부가물이다. 카드·게시문이 실패해도 검토 자료는 남고, 사유는 card-errors.txt에 적는다
 2단계  .venv\\Scripts\\python.exe pipeline.py --confirm <날짜>
-       사용자가 검토 보고서를 컨펌한 뒤 실행한다. 사이트 생성 + 승인 기록(approved.txt)
+       사용자가 검토 보고서를 컨펌한 뒤 실행한다. 사이트 생성 + 승인 기록(approved.txt) + 승인된 카드 복사
 """
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ import csv
 import datetime as dt
 import json
 import os
+import shutil
 from dataclasses import replace
 from pathlib import Path
 
@@ -22,7 +24,10 @@ import yaml
 from collectors import aws_prices, azure_prices, manual_prices
 from common.schema import REGIONS, PriceRecord, read_snapshot, write_snapshot
 from detect.events import detect
-from model.tco import PriceBook, estimate, ranking, seoul_premiums, t1_verdict, t2_verdict
+from model.tco import CostRow, PriceBook, estimate, ranking, seoul_premiums, t1_verdict, t2_verdict
+from publish.card_data import price_change_cards
+from publish.render_cards import REPORT, bake
+from publish.render_linkedin import render_linkedin
 from publish.render_post import render_post
 from publish.render_site import render
 from publish.review_report import (APPROVED_FILE, REVIEW_FILE, build_review, latest_approved_day,
@@ -32,6 +37,9 @@ RAW = Path("data/raw")
 CHECKS = Path("data/checks.csv")
 EVENTS_FILE = "events.json"
 POST_FILE = "post.md"
+CARDS_DIR = "cards"
+LINKEDIN_FILE = "linkedin.md"
+CARD_ERRORS_FILE = "card-errors.txt"
 SIMULATED = ("redshift", "compute", "us")     # --simulate: 이 단가만 5% 올려 검토 PR 흐름을 검증한다
 SIMULATED_TAG = " (simulated)"
 SIMULATION_NOTICE = "> **시뮬레이션:** 검증용 가짜 변동(Redshift 미국 RPU +5%)이다. 머지하지 말고 닫는다.\n\n"
@@ -98,6 +106,52 @@ def dry_run() -> dict:
     return events
 
 
+def clear_card_outputs(folder: Path) -> None:
+    """같은 날 다시 수집하면 앞선 실행의 카드와 게시문이 검토 PR에 섞이지 않게 먼저 지운다."""
+    shutil.rmtree(folder / CARDS_DIR, ignore_errors=True)
+    for name in (LINKEDIN_FILE, CARD_ERRORS_FILE):
+        (folder / name).unlink(missing_ok=True)
+
+
+def prepare_cards(events: dict, rows: list[CostRow], previous: list[PriceRecord] | None,
+                  workloads: dict) -> tuple[list[dict] | None, str | None, list[str]]:
+    """카드 데이터와 게시문 텍스트. events["display"]를 채우므로 events.json을 쓰기 전에 부른다.
+    E1이 아니면 아무것도 만들지 않는다. 실패는 예외 대신 사유 목록으로 돌려준다(카드는 부가물이다)."""
+    if not events["significant"]:
+        return None, None, []
+    cards, post, errors = None, None, []
+    try:
+        cards = price_change_cards(events, rows, estimate(PriceBook(previous), workloads), workloads)
+    except ValueError as exc:
+        errors.append(f"카드 데이터: {exc}")
+    try:
+        post = render_linkedin(events, workloads)
+    except ValueError as exc:
+        errors.append(f"게시문: {exc}")
+    return cards, post, errors
+
+
+def write_card_outputs(folder: Path, events: dict, cards: list[dict] | None, post: str | None,
+                       errors: list[str]) -> str:
+    """게시문을 쓰고 카드를 굽는다. 어떤 실패도 검토 자료를 막지 않는다. 결과 ok|failed|skipped를 돌려준다."""
+    if post is not None:
+        (folder / LINKEDIN_FILE).write_text(post, encoding="utf-8")
+    baked = 0
+    if cards is not None:
+        try:
+            bake(cards, folder / CARDS_DIR, REPORT, events)
+            baked = len(cards)
+        except Exception as exc:                    # 브라우저·글꼴·레이아웃 어느 실패든 검토 PR은 열려야 한다
+            errors = [*errors, f"굽기: {exc}"]
+            shutil.rmtree(folder / CARDS_DIR, ignore_errors=True)   # 도중에 실패한 반쪽 카드를 검토 PR에 올리지 않는다
+    if errors:
+        (folder / CARD_ERRORS_FILE).write_text("\n".join(errors) + "\n", encoding="utf-8")
+        print(f"카드·게시문 생성 실패 {len(errors)}건. 사유: {folder / CARD_ERRORS_FILE}")
+    status = "skipped" if not events["significant"] else "failed" if errors else "ok"
+    write_outputs(cards=status, card_count=str(baked))
+    return status
+
+
 def collect_and_review(simulate: bool = False) -> Path:
     """1단계: 변화가 있으면 검토 자료까지만 만들고 멈춘다. 화면 생성과 커밋은 컨펌 이후에 한다."""
     day = dt.date.today().isoformat()
@@ -114,7 +168,8 @@ def collect_and_review(simulate: bool = False) -> Path:
     records = [r for recs in collected.values() for r in recs]
     result = analyze(records)
     compared_to = latest_approved_day(day, RAW)
-    events = detect(day, records, previous_snapshot(day, RAW), compared_to, result["workloads"], result["thresholds"])
+    previous = previous_snapshot(day, RAW)
+    events = detect(day, records, previous, compared_to, result["workloads"], result["thresholds"])
     write_outputs(day=day, status=events["status"], significant=str(events["significant"]).lower())
 
     if events["status"] == "unchanged":
@@ -130,9 +185,12 @@ def collect_and_review(simulate: bool = False) -> Path:
                         counts={name: len(recs) for name, recs in collected.items()},
                         significant=events["significant"])
     review.write_text((SIMULATION_NOTICE if simulate else "") + text, encoding="utf-8")
+    clear_card_outputs(folder)
+    cards, post, card_errors = prepare_cards(events, result["rows"], previous, result["workloads"])
     (folder / EVENTS_FILE).write_text(json.dumps(events, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if events["significant"]:
         (folder / POST_FILE).write_text(render_post(events), encoding="utf-8")
+    write_card_outputs(folder, events, cards, post, card_errors)
     if not simulate:
         record_check(day, "review", compared_to)
     print(f"검토 보고서: {review}")
@@ -142,6 +200,47 @@ def collect_and_review(simulate: bool = False) -> Path:
 
 def snapshot_records(day: str) -> list[PriceRecord]:
     return [r for p in sorted((RAW / day).glob("*.csv")) for r in read_snapshot(p)]
+
+
+def rebuild_cards(day: str) -> Path:
+    """--cards DAY: 저장된 events.json으로 카드와 게시문을 다시 만든다(문안·템플릿을 고친 뒤 등).
+    명시적으로 부른 명령이라 실패를 잡지 않고 드러낸다. 승인 기록은 건드리지 않는다."""
+    folder = RAW / day
+    events_path = folder / EVENTS_FILE
+    if not events_path.exists():
+        raise SystemExit(f"{events_path}가 없다. 1단계를 먼저 실행한다.")
+    events = json.loads(events_path.read_text(encoding="utf-8"))
+    if not events.get("significant"):
+        raise SystemExit(f"{day}는 E1 이벤트가 아니다. 카드를 만들지 않는다.")
+    result = analyze(snapshot_records(day))
+    workloads = result["workloads"]
+    previous = estimate(PriceBook(snapshot_records(events["compared_to"])), workloads)
+    cards = price_change_cards(events, result["rows"], previous, workloads)
+    post = render_linkedin(events, workloads)
+    clear_card_outputs(folder)
+    events_path.write_text(json.dumps(events, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (folder / LINKEDIN_FILE).write_text(post, encoding="utf-8")
+    bake(cards, folder / CARDS_DIR, REPORT, events)
+    print(f"cards written: {folder / CARDS_DIR} ({len(cards)}장)")
+    return folder / CARDS_DIR
+
+
+def publish_cards(site: Path = Path("site")) -> list[Path]:
+    """승인된 날의 카드와 게시문을 site/cards/<날짜>/로 복사한다.
+    승인 기록이 없는 날(반려·시뮬레이션)은 게시하지 않는다(규칙 14, D9)."""
+    target = site / CARDS_DIR
+    shutil.rmtree(target, ignore_errors=True)
+    published = []
+    days = sorted(p for p in RAW.iterdir() if p.is_dir()) if RAW.exists() else []
+    for folder in days:
+        if not (folder / APPROVED_FILE).exists() or not (folder / CARDS_DIR).is_dir():
+            continue
+        dest = target / folder.name
+        shutil.copytree(folder / CARDS_DIR, dest)
+        if (folder / LINKEDIN_FILE).exists():
+            shutil.copy2(folder / LINKEDIN_FILE, dest / LINKEDIN_FILE)
+        published.append(dest)
+    return published
 
 
 def previous_ranks(day: str, workloads: dict) -> dict:
@@ -167,7 +266,8 @@ def build_site(day: str | None = None) -> Path:
         price_dates[r.platform] = max(price_dates.get(r.platform, ""), r.fetched_at)
     out = render(result["rows"], result["premiums"], result["t1_by_region"], result["t2"], result["workloads"],
                  price_dates, built_on=day, prev_ranks=previous_ranks(day, result["workloads"]))
-    print(f"site written: {out} ({day} 승인 스냅샷)")
+    cards = publish_cards(out.parent)
+    print(f"site written: {out} ({day} 승인 스냅샷, 카드 {len(cards)}일분)")
     return out
 
 
@@ -187,6 +287,7 @@ def confirm(day: str) -> Path:
                  price_dates, built_on=day, prev_ranks=previous_ranks(day, result["workloads"]))
     (snapshot / APPROVED_FILE).write_text(f"approved_at: {dt.datetime.now().isoformat(timespec='seconds')}\n",
                                           encoding="utf-8")
+    publish_cards(out.parent)                        # 승인 기록을 남긴 뒤라야 이날 카드도 포함된다
     print(f"site written: {out}")
     return out
 
@@ -198,9 +299,12 @@ def main(argv: list[str] | None = None) -> Path:
     parser.add_argument("--build", nargs="?", const="", metavar="DAY",
                         help="승인된 스냅샷(생략하면 가장 최근)으로 사이트만 다시 그린다. 게시 워크플로가 쓴다")
     parser.add_argument("--dry-run", action="store_true", help="아무것도 쓰지 않고 오늘 가격과 판정만 확인한다")
+    parser.add_argument("--cards", metavar="DAY", help="저장된 events.json으로 그날 카드와 게시문을 다시 만든다(승인 기록은 바꾸지 않는다)")
     args = parser.parse_args(argv)
     if args.dry_run:
         return dry_run()
+    if args.cards:
+        return rebuild_cards(args.cards)
     if args.confirm:
         return confirm(args.confirm)
     if args.build is not None:

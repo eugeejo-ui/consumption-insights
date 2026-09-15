@@ -18,6 +18,11 @@ def _no_github_output(monkeypatch):
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)   # CI 안에서 테스트가 실제 단계 출력에 쓰지 않게 한다
 
 
+@pytest.fixture(autouse=True)
+def _no_real_bake(monkeypatch):
+    monkeypatch.setattr(pipeline, "bake", lambda *args, **kwargs: [])   # E1 테스트가 실제 브라우저를 부르지 않게 한다
+
+
 def _copy_config(tmp_path):
     (tmp_path / "data" / "manual").mkdir(parents=True, exist_ok=True)
     shutil.copy(REPO / "data" / "manual" / "workloads.yaml", tmp_path / "data" / "manual" / "workloads.yaml")
@@ -177,3 +182,169 @@ def test_rerun_after_same_day_approval_is_refused(tmp_path, monkeypatch, price_r
 
     with pytest.raises(SystemExit, match="이미 승인"):
         pipeline.main([])
+
+
+# ── Phase 3 Task 5: 카드와 게시문 연결 ─────────────────────────────────────────
+
+E1_BASE = ("redshift", "compute", "us")                          # 승인 0.30 → 오늘 0.375: E1
+
+
+def _e1_approved(price_records):
+    _approved([replace(r, price_usd=0.30) if (r.platform, r.service, r.region) == E1_BASE else r
+               for r in price_records])
+
+
+def _fake_bake(monkeypatch, fail=None):
+    """브라우저 없이 검증하려고 굽기를 바꾼다. 받은 인자를 기록하고 파일을 만든다."""
+    calls = []
+
+    def bake(cards, out_dir, eyebrow, events):
+        calls.append({"cards": cards, "out_dir": Path(out_dir), "eyebrow": eyebrow})
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        if fail:
+            (out_dir / "cards.html").write_text("partial", encoding="utf-8")   # 도중에 실패한 상황
+            raise fail
+        pngs = []
+        for n in range(1, len(cards) + 1):
+            pngs.append(out_dir / f"{n:02d}-card.png")
+            pngs[-1].write_bytes(b"png")
+        (out_dir / "cards.html").write_text("cards", encoding="utf-8")
+        (out_dir / "cards.pdf").write_bytes(b"pdf")
+        return [out_dir / "cards.html", *pngs, out_dir / "cards.pdf"]
+
+    monkeypatch.setattr(pipeline, "bake", bake)
+    return calls
+
+
+def _gh_output(tmp_path, monkeypatch):
+    path = tmp_path / "gh_output.txt"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(path))
+    return path
+
+
+def test_e1_run_writes_cards_and_the_linkedin_post(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _fake_collectors(monkeypatch, price_records)
+    _e1_approved(price_records)
+    calls = _fake_bake(monkeypatch)
+    gh_out = _gh_output(tmp_path, monkeypatch)
+
+    folder = pipeline.main([]).parent
+
+    assert len(calls) == 1
+    assert calls[0]["out_dir"] == folder / "cards" and calls[0]["eyebrow"] == "가격 변동 리포트"
+    assert calls[0]["cards"][-1]["kind"] == "closing"
+    assert (folder / "linkedin.md").read_text(encoding="utf-8").startswith(f"데이터 플랫폼 월 비용 변동 · {TODAY}")
+    events = json.loads((folder / "events.json").read_text(encoding="utf-8"))
+    assert events["display"]["price_change_count"] == 1 and "chart" in events["display"]   # 카드 데이터 뒤에 썼다
+    assert f"cards=ok\ncard_count={len(calls[0]['cards'])}\n" in gh_out.read_text(encoding="utf-8")
+    assert not (folder / "card-errors.txt").exists()
+
+
+def test_non_e1_run_makes_no_cards_and_clears_stale_ones(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _fake_collectors(monkeypatch, price_records)
+    _approved([replace(r, price_usd=0.02401) if (r.platform, r.service, r.region) == ("redshift", "storage", "us") else r
+               for r in price_records])                          # 단가는 바뀌었지만 월 비용 변동이 기준 미만
+    calls = _fake_bake(monkeypatch)
+    gh_out = _gh_output(tmp_path, monkeypatch)
+    stale = Path("data/raw", TODAY)                              # 같은 날 앞선 실행이 남긴 카드
+    (stale / "cards").mkdir(parents=True)
+    (stale / "cards" / "01-cover.png").write_bytes(b"old")
+    (stale / "linkedin.md").write_text("old", encoding="utf-8")
+    (stale / "card-errors.txt").write_text("old", encoding="utf-8")
+
+    folder = pipeline.main([]).parent
+
+    events = json.loads((folder / "events.json").read_text(encoding="utf-8"))
+    assert events["status"] == "changed" and not events["significant"]
+    assert calls == []
+    assert not (folder / "cards").exists() and not (folder / "linkedin.md").exists()
+    assert not (folder / "card-errors.txt").exists()
+    assert "cards=skipped\ncard_count=0\n" in gh_out.read_text(encoding="utf-8")
+
+
+def test_card_failure_keeps_the_review_and_records_the_error(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _fake_collectors(monkeypatch, price_records)
+    _e1_approved(price_records)
+    _fake_bake(monkeypatch, fail=RuntimeError("한글 글꼴이 없다"))
+    gh_out = _gh_output(tmp_path, monkeypatch)
+
+    out = pipeline.main([])                                       # 카드가 실패해도 1단계는 정상 종료한다
+
+    folder = out.parent
+    for name in ("review.md", "events.json", "post.md", "linkedin.md"):
+        assert (folder / name).exists()
+    assert "굽기: 한글 글꼴이 없다" in (folder / "card-errors.txt").read_text(encoding="utf-8")
+    assert not (folder / "cards").exists()                      # 반쪽 카드를 남기지 않는다
+    assert "cards=failed\ncard_count=0\n" in gh_out.read_text(encoding="utf-8")
+
+
+def test_linkedin_failure_is_recorded_and_cards_still_bake(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _fake_collectors(monkeypatch, price_records)
+    _e1_approved(price_records)
+    calls = _fake_bake(monkeypatch)
+
+    def too_long(events, workloads):
+        raise ValueError("게시문이 3,100자라 LinkedIn 한도 3,000자를 넘는다")
+
+    monkeypatch.setattr(pipeline, "render_linkedin", too_long)
+
+    folder = pipeline.main([]).parent
+
+    assert len(calls) == 1 and (folder / "cards" / "cards.pdf").exists()
+    assert not (folder / "linkedin.md").exists()
+    assert "게시문: 게시문이 3,100자라" in (folder / "card-errors.txt").read_text(encoding="utf-8")
+
+
+def test_cards_command_rebuilds_without_touching_approval(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _fake_collectors(monkeypatch, price_records)
+    _e1_approved(price_records)
+    calls = _fake_bake(monkeypatch)
+    folder = pipeline.main([]).parent
+    (folder / "approved.txt").write_text("approved", encoding="utf-8")
+    shutil.rmtree(folder / "cards")
+    (folder / "linkedin.md").unlink()
+
+    out = pipeline.main(["--cards", TODAY])
+
+    assert out == folder / "cards" and len(calls) == 2
+    assert (folder / "cards" / "cards.pdf").exists() and (folder / "linkedin.md").exists()
+    assert (folder / "approved.txt").read_text(encoding="utf-8") == "approved"
+
+
+def test_cards_command_refuses_a_day_without_an_e1_event(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _approved(price_records)
+    with pytest.raises(SystemExit, match="events.json"):
+        pipeline.main(["--cards", "2000-01-01"])
+    Path("data/raw/2000-01-01/events.json").write_text(json.dumps({"significant": False}), encoding="utf-8")
+    with pytest.raises(SystemExit, match="E1"):
+        pipeline.main(["--cards", "2000-01-01"])
+
+
+def test_site_build_publishes_only_approved_cards(tmp_path, monkeypatch, price_records):
+    monkeypatch.chdir(tmp_path)
+    _copy_config(tmp_path)
+    _approved(price_records, day="2000-01-01")
+    write_snapshot(price_records, "2000-01-02", "all")           # 승인 기록이 없는 날(시뮬레이션 포함)
+    for day in ("2000-01-01", "2000-01-02"):
+        Path("data/raw", day, "cards").mkdir(parents=True)
+        Path("data/raw", day, "cards", "01-cover.png").write_bytes(b"png")
+        Path("data/raw", day, "linkedin.md").write_text("post", encoding="utf-8")
+
+    pipeline.main(["--build"])
+
+    assert Path("site/cards/2000-01-01/01-cover.png").exists()
+    assert Path("site/cards/2000-01-01/linkedin.md").read_text(encoding="utf-8") == "post"
+    assert not Path("site/cards/2000-01-02").exists()

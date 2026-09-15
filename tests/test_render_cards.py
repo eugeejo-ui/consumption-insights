@@ -5,7 +5,8 @@ import pytest
 
 from publish import browser
 from publish.card_data import price_change_cards
-from publish.render_cards import REPORT, bake, check_layout, render_html, visible_text
+from publish import render_cards
+from publish.render_cards import REPORT, bake, check_layout, korean_font_available, render_html, visible_text
 from publish.render_post import check_numbers
 
 TYPICAL = {("redshift", "compute", "us"): 0.40}           # 5장
@@ -149,7 +150,7 @@ def test_layout_problems_stop_baking():
     check_layout(_page(last_em=1.2, orphan_check=False), cards)           # 의도된 줄바꿈은 검사하지 않는다
 
 
-@pytest.mark.skipif(not _has_browser(), reason="브라우저가 없다")
+@pytest.mark.skipif(not (_has_browser() and korean_font_available()), reason="브라우저나 한글 글꼴이 없다")
 def test_bakes_every_card_and_passes_the_layout_check(make_events, workloads, tmp_path):
     events, cards = _cards(make_events, workloads, RANKED)
     paths = bake(cards, tmp_path, REPORT, events)
@@ -160,3 +161,18 @@ def test_bakes_every_card_and_passes_the_layout_check(make_events, workloads, tm
     pdf = (tmp_path / "cards.pdf").read_bytes()
     assert len(re.findall(rb"/Type\s*/Page(?![s])", pdf)) == len(cards)
     assert set(paths) == {tmp_path / "cards.html", tmp_path / "cards.pdf", *pngs}
+
+
+def test_bake_refuses_without_a_korean_font(make_events, workloads, tmp_path, monkeypatch):
+    """CI 서버에는 한글 글꼴이 없다. 그대로 구우면 실패하지 않고 두부 글자 카드가 만들어진다."""
+    events, cards = _cards(make_events, workloads, TYPICAL)
+    monkeypatch.setattr(render_cards, "korean_font_available", lambda: False)
+
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("글꼴이 없으면 브라우저를 부르지 않는다")
+
+    monkeypatch.setattr(browser, "dump_dom", must_not_run)
+    monkeypatch.setattr(browser, "screenshot", must_not_run)
+    with pytest.raises(RuntimeError, match="한글 글꼴"):
+        bake(cards, tmp_path, REPORT, events)
+    assert not list(tmp_path.iterdir())

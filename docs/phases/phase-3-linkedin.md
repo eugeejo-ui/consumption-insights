@@ -75,7 +75,7 @@
 | ~~3-5~~ | **완료.** 파이프라인 연결. 기록 `docs/tasks/phase3/task-5-pipeline-cards.md`. 커밋 `b2c8576` | C | `pipeline.py --cards` | E1인 날 카드와 게시문이 자동으로 생긴다. 굽기가 실패해도 검토 자료는 남는다 |
 | ~~3-6~~ | **완료.** 워크플로 연결. 기록 `docs/tasks/phase3/task-6-workflow.md`. 커밋 `d72560e`. 시뮬레이션 PR #4로 CI 실측 | C | `collect.yml` | 검토 PR 본문에 카드가 보인다. 머지하면 `site/cards/`가 게시된다 |
 | **3-7** | **완료** (2026-09-15, `5f8740f`, 테스트 117개). 기록 `docs/tasks/phase3/task-7-revise-loop.md`. **문구 반려 재작성 루프 (규칙 16).** `revise-copy` 라벨을 받으면 재작성 요청을 열고, `/humanize-korean`으로 다듬어 같은 PR을 갱신한다 | C | `.github/workflows/revise.yml`, `docs/scripts/revise-loop.md` | 라벨을 붙이면 재작성 요청이 열린다. 재작성 후 같은 PR이 갱신된다. 3회를 넘기면 멈춘다 |
-| 3-8 | 소개 카드 구현 | C | `card_data.intro_cards` | 3-2에서 확정한 문안을 그대로 쓴다. 숫자가 최신 승인 스냅샷과 같다 |
+| 3-8 | 세부 계획 `docs/tasks/phase3/task-8-intro-cards.md`(2026-09-15 작성, 승인 대기). 소개 카드 구현 | C | `card_data.intro_cards` | 3-2에서 확정한 문안을 그대로 쓴다. 숫자가 최신 승인 스냅샷과 같다 |
 | 3-9 | 종단 검증 | C | 검증 기록 | 시뮬레이션 → PR 확인 → 머지 → 게시까지 이어진다 |
 | 3-10 | **첫 게시** | U | LinkedIn 게시물 | 사용자가 직접 게시한다. Claude는 게시하지 않는다 |
 
@@ -151,3 +151,4 @@
 - **2026-09-15:** 3-7 계획 승인. Step 0 새 문안(검토 PR 5~7절, 재작성 요청 Issue)을 작성해 `/humanize-korean`으로 점검했다(변경률 0.0%). 문안 승인을 기다린다.
 - **2026-09-15:** 3-7 새 문안 승인, 로컬 구현 완료(테스트 117개). `revise.yml`, 게시 보류 파일, 재작성 절차서(`docs/scripts/revise-loop.md`). push·CI 실측 승인을 기다린다.
 - **2026-09-15:** **3-7 완료.** CI 실측: 라벨을 붙이면 요청 Issue·보류 파일·본문 경고가 생기고, 떼면 사라진다 [확인]. 시험 Issue #6, PR #5는 닫았다. 다음은 3-8(소개 카드)이다.
+- **2026-09-15:** 3-8 세부 계획을 작성했다. 4장 문안 보완, 결정 D21(로컬 굽기)·D22(글꼴 목록에 Noto Sans KR)를 승인받는다.

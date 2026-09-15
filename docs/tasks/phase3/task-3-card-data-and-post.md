@@ -2,8 +2,8 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **계획 승인 대기** (2026-09-14 작성). 승인 전에는 구현하지 않는다(규칙 15) |
-| 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 3, 결정 D11·D15·D16·D17·D18·D19 |
+| 상태 | **계획 승인** (2026-09-15, 확인 사항 6건 모두 권고안). **Step 0 보완 문안 승인 대기.** 문안 승인 전에는 코드를 쓰지 않는다(규칙 16) |
+| 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 3, 결정 D11·D15·D16·D17·D18·D19·D20 |
 | 문안 정본 | `docs/scripts/cards-script.md`, `docs/scripts/linkedin-post-script.md` |
 | 담당 | C (사용자 확인 2회: 계획 승인, Step 0 보완 문안 승인) |
 
@@ -35,6 +35,37 @@ E1인 날의 `events.json`을 **카드 장별 데이터**와 **LinkedIn 게시�
 
 A안을 택하면 Step 0에서 함께 고치는 문서가 늘어난다. 디자인 계획 1-1(`10-closing` 사용), 3-2(구성표), 4-1·4-2(장수), 코드 계획 D11(최소 장수), `CLAUDE.md` 결정 로그(새 결정)다. D16(`가정과 산출 근거` 장을 두지 않는다)은 유지된다. 마무리 장은 고지가 아니라 안내다.
 
+## 승인 결과 (2026-09-15)
+
+사용자가 "권고안대로 진행해"라고 지시했다. 확인 사항 6건을 모두 권고안으로 확정했다. 6번은 **A안**이다(마무리 안내 장을 이 Task에 포함, D20).
+
+## Step 0 실행 결과 (2026-09-15)
+
+| 대상 | 반영 |
+|---|---|
+| `docs/scripts/cards-script.md` | 0절 자리표시자(`{기준}` 추가, `{대표 시나리오}` 정의 보강, 예시 `$0.39375`), 0-1절 서비스 라벨, 0-2절 금액 표기, 1-1절 마무리 안내 장, 단가 추가·삭제 표기, 월 사용료 변동 내역 리드 `±{기준}%`, 소개 카드 5장 구성과 4장 각주, 4절 상한표·4-1절 장 표 |
+| `docs/scripts/linkedin-post-script.md` | 변동 폭 줄(조건부), 순위 줄 `순서가`, 대표 조합 정의 |
+| `docs/plans/phase3-card-design.md` | 1-1 `10-closing` 사용, 3-1 소개 5장, 3-2 정기 5장 이상, 4-1 장수 표, 4-2 예시(5·6·9장) |
+| `docs/plans/phase3-linkedin-cardnews.md` | D20 추가, D11 갱신 |
+| `docs/phases/phase-3-linkedin.md`, `CLAUDE.md` | 카드 구성·장수, D20, 진행 기록 |
+
+**`/humanize-korean` 점검 [확인]:** run `2026-09-15-001`, light 경로(risk_band low, score 0). 변경률 0.0%, 터치율 0/21, 게이트 exit 0 수렴. 스킬이 보고한 제안 2건을 반영했고, 반영본도 게이트를 다시 통과했다(변경률 0.5%, 터치율 2/21).
+
+| 위치 | 반영 전 | 반영 후 |
+|---|---|---|
+| 마무리 안내 장 리드 | 시나리오별 월 사용료와 서울 프리미엄, 가정과 산출 근거를 공개합니다. | 시나리오별 월 사용료, 서울 프리미엄, 가정과 산출 근거를 공개합니다. |
+| 게시문 순위 줄 | 월 비용이 낮은 순서도 바뀌었습니다. | 월 비용이 낮은 순서가 바뀌었습니다. |
+
+### 계획과 달라진 점
+
+| 계획 | 실제 | 이유 |
+|---|---|---|
+| 확인 사항 5: 공시값을 그대로 적고 **끝의 0만 지운다** | 공시값을 그대로 적되 **소수 둘째 자리까지는 0을 채운다**(`$0.70`, `$23.00`) | 끝의 0을 모두 지우면 `$0.7`, `$23`처럼 금액 표기 관행과 어긋난다. 반올림하지 않는다는 핵심은 같다. 보완 문안 승인 때 함께 확인받는다 |
+| `render_post._price`를 `format_price`로 공개해 재사용 | `card_data.price_label`을 새로 두고 `render_post.py`는 건드리지 않는다 | 위 표기 변경으로 카드·게시문 표기가 검토 보고서 표기와 달라졌다. 검토 보고서의 표기는 그대로 둔다 |
+| 게시문 순위 줄 문안 유지 | `순서도` → `순서가` | 변동 폭 줄에 조건을 붙이면서 순위 줄이 단독으로 나오는 날이 생겼다(스킬 보고 제안) |
+| 소개 카드 4장 | 소개 카드도 5장(마무리 안내 포함). 4장 각주에서 `산출 근거는 대시보드에 있습니다`를 뺐다 | D20은 모든 카드뉴스에 적용한다. 다음 장이 같은 내용을 알리므로 중복을 없앴다. 차트 장 각주(D19)와 같은 처리다. 구현은 Task 8이다 |
+| 테스트 2·3·4의 장수 4·6·7장 | 5·7·8장 | 마무리 안내 장이 모든 카드뉴스의 마지막에 붙는다 |
+
 ## 건드리는 파일
 
 | 파일 | 동작 |
@@ -44,7 +75,6 @@ A안을 택하면 Step 0에서 함께 고치는 문서가 늘어난다. 디자�
 | `publish/card_data.py` | 신규. 이벤트 → 카드 장별 데이터, 누락·글자 수 검사 |
 | `publish/render_linkedin.py` | 신규. 정기 게시문 렌더러, 숫자·길이 검사 |
 | `templates/post_linkedin.md.j2` | 신규. 확정 게시문 문안 |
-| `publish/render_post.py` | 수정. 비공개 함수 `_price`를 `format_price`로 공개한다(카드·게시문이 같은 표기를 쓰도록). 동작 변화 없음 |
 | `tests/conftest.py` | 수정. 변동 이벤트를 만드는 픽스처 `make_events` 추가(Task 4가 재사용) |
 | `tests/test_card_data.py` | 신규. 테스트 13개 |
 | `tests/test_render_linkedin.py` | 신규. 테스트 4개 |
@@ -58,10 +88,13 @@ A안을 택하면 Step 0에서 함께 고치는 문서가 늘어난다. 디자�
 ```python
 # publish/card_data.py
 PER_PAGE = {"price": 5, "cost": 6, "rank": 2}          # 디자인 계획 4-1
-LIMITS = {"cover_title": 20, "title": 28, "lead": 90,   # 카드 스크립트 4절: 한 줄 상한 × 줄 수 상한
+LIMITS = {"cover_title": 20, "closing_title": 20,       # 카드 스크립트 4절: 한 줄 상한 × 줄 수 상한
+          "title": 28, "lead": 90,
           "item": 32, "note": 40}                       # 항목·각주는 한 줄씩 나눠 싣는다
 SERVICE_LABELS = {"compute": "컴퓨트", "storage": "스토리지", "scan": "주문형 쿼리"}   # Step 0 확정값으로 채운다
 REGION_LABELS = {"us": "미국 리전", "seoul": "서울 리전"}
+
+price_label(value: float | None) -> str                 # 스크립트 0-2절. 반올림하지 않는다. $0.70, $0.39375, 없음
 
 cover_title(events: dict) -> list[dict]
     # 스크립트 2절 1장의 세 조건. [{"text": "월 사용료 ", "accent": False}, {"text": "순위 변동", "accent": True}]
@@ -89,12 +122,13 @@ render_linkedin(events: dict, workloads: dict) -> str         # 숫자 검사, 3
 {"kind": "cover",   "title": [...], "subtitle": "2026-09-13 · 단가 1건",
                     "lead": "직전 승인 가격(2026-09-11) 대비 변동 사항입니다."}
 {"kind": "bullets", "group": "price" | "cost", "page": "(1/2)" | None, "title": [...], "lead": str,
-                    "items": [{"strong": "Redshift 컴퓨트 · 미국 리전", "rest": "$0.375 → $0.4 (+6.7%)"}]}
+                    "items": [{"strong": "Redshift 컴퓨트 · 미국 리전", "rest": "$0.375 → $0.40 (+6.7%)"}]}
 {"kind": "chart",   "title": [...], "lead": str, "scenario": "W1",
                     "series": {"us": {"snowflake": 1550, ...}, "seoul": {...}}, "notes": [str, str]}
 {"kind": "banners", "page": "(1/2)" | None, "title": [...], "lead": str,
                     "banners": [{"label": "소규모 BI 대시보드 · 미국 리전",
                                  "before": "Redshift › BigQuery › Snowflake › Databricks", "after": "…"}]}
+{"kind": "closing", "title": [...], "lead": str, "url": "eugeejo-ui.github.io/consumption-insights"}   # 항상 마지막 장(D20)
 ```
 
 상단 바, 하단 알약, 범례(`미국 리전` `서울 리전`), 배너의 `이전`·`현재` 같은 **틀 문구는 템플릿(Task 4)에 둔다.** 데이터에는 날마다 달라지는 문장과 각주만 담는다.
@@ -113,14 +147,14 @@ render_linkedin(events: dict, workloads: dict) -> str         # 숫자 검사, 3
   - **사용자 승인.** 승인 전에는 Step 1로 넘어가지 않는다
 - [ ] **Step 1** 테스트 17개를 먼저 쓰고 실패를 확인한다(`ModuleNotFoundError`)
 - [ ] **Step 2** `publish/card_data.py`를 구현한다
-  - 표지 → 단가 변동 내역(5줄마다 1장) → 플랫폼별 월 사용료(1장) → 월 사용료 변동 내역(6줄마다 1장, 없으면 0장) → 순위 변동(배너 2개마다 1장, 없으면 0장). A안이면 마지막에 마무리 장
+  - 표지 → 단가 변동 내역(5줄마다 1장) → 플랫폼별 월 사용료(1장) → 월 사용료 변동 내역(6줄마다 1장, 없으면 0장) → 순위 변동(배너 2개마다 1장, 없으면 0장) → 마무리 안내(1장, D20)
   - 금액은 `round()`로 달러 정수를 한 번 만들어 `events["display"]["chart"]`와 카드에 같은 값을 쓴다
-- [ ] **Step 3** `render_post._price`를 `format_price`로 바꾸고, `templates/post_linkedin.md.j2`와 `publish/render_linkedin.py`를 구현한다
+- [ ] **Step 3** `templates/post_linkedin.md.j2`와 `publish/render_linkedin.py`를 구현한다. 단가 표기는 `card_data.price_label`을 함께 쓴다
 - [ ] **Step 4** 전체 테스트를 돌린다 → 79개 통과
 - [ ] **Step 5 실제 스냅샷 확인**
   - 2026-09-11 승인 스냅샷에 시뮬레이션 변동(Redshift 미국 리전 컴퓨트 +5%)을 넣어 카드 데이터와 게시문을 만든다. 출력은 스크래치 폴더에만 둔다
   - 차트 금액이 Task 2 시험 카드의 값과 같은지 대조한다(미국 리전 1,550·2,056·933·1,693, 서울 리전 2,032·2,708·1,032·2,167)
-  - 장수(4장, A안이면 5장), 게시문 글자 수, 생략 문구 0건을 확인한다
+  - 장수(5장), 게시문 글자 수, 생략 문구 0건을 확인한다
   - **게시문 전문을 사용자에게 보고한다**
 - [ ] **Step 6** 커밋 전 개인정보 검사(이메일, 로컬 사용자 경로, 개인 프로젝트 ID) → 커밋 `feat: build card data and the LinkedIn post text` → `git ls-files`로 새 파일 추적 확인
 - [ ] **Step 7** 이 파일에 실행 결과를 덧붙이고, 코드 계획 Task 3 절·진행계획·`CLAUDE.md`를 갱신한다. **보고하고 멈춘다**(규칙 10)
@@ -134,15 +168,15 @@ render_linkedin(events: dict, workloads: dict) -> str         # 숫자 검사, 3
 | # | 이름 | 확인하는 것 |
 |---|---|---|
 | 1 | `test_cover_title_follows_the_three_conditions` | 순위 변동 → `월 사용료 순위 변동`, 월 사용료만 → `월 사용료 변동`, 단가만 → `단가 변동`. 강조 덩어리가 스크립트의 굵은 부분과 같다 |
-| 2 | `test_four_cards_on_a_typical_day` | Redshift 미국 리전 컴퓨트 0.40 → 단가 1건·월 사용료 3건·순위 0건 → `cover, bullets(price), chart, bullets(cost)` 4장, `price_change_count == 1` |
-| 3 | `test_rank_banners_are_split_two_per_card` | 같은 단가 0.80 → 순위 변동 3건 → 순위 장 2장(`(1/2)` 배너 2개, `(2/2)` 배너 1개), 전체 6장 |
-| 4 | `test_every_item_is_carried_across_pages` | 단가 7건·월 사용료 12건·순위 2건 → 단가 2장(5+2)·월 사용료 2장(6+6)·순위 1장, 전체 7장. 쪽 표시가 맞고 `외 ` 문구가 없다 |
+| 2 | `test_five_cards_on_a_typical_day` | Redshift 미국 리전 컴퓨트 0.40 → 단가 1건·월 사용료 3건·순위 0건 → `cover, bullets(price), chart, bullets(cost), closing` 5장, `price_change_count == 1`. 마무리 장의 제목·리드가 스크립트 1-1절과 글자 단위로 같다 |
+| 3 | `test_rank_banners_are_split_two_per_card` | 같은 단가 0.80 → 순위 변동 3건 → 순위 장 2장(`(1/2)` 배너 2개, `(2/2)` 배너 1개), 전체 7장이고 마지막은 마무리 장이다 |
+| 4 | `test_every_item_is_carried_across_pages` | 단가 7건·월 사용료 12건·순위 2건 → 단가 2장(5+2)·월 사용료 2장(6+6)·순위 1장, 전체 8장. 쪽 표시가 맞고 `외 ` 문구가 없다 |
 | 5 | `test_missing_item_stops_generation` | 항목 하나를 빼면 `check_complete`가 `누락`으로 중단한다 |
 | 6 | `test_chart_card_always_shows_both_regions` | 변동이 미국 리전에만 있어도 `series`에 두 리전이 4개씩 있고, `events["display"]["chart"]`와 같다 |
 | 7 | `test_chart_names_the_scenario_with_the_largest_change` | 0.40 → 리드가 `월 사용료 변동 폭이 가장 큰 시나리오는 소규모 BI 대시보드입니다.`와 글자 단위로 같다 |
 | 8 | `test_no_cost_card_when_only_the_ranking_changes` | `cost_changes`를 비운 순위 변동 이벤트 → 월 사용료 변동 내역 장이 없고, 대표 시나리오는 전체 조합에서 정해진다 |
 | 9 | `test_labels_follow_the_fixed_terms` | `Redshift 컴퓨트 · 미국 리전` 표기, 제목에 `월 사용료`, 카드 전체에 `월 비용`이 없다(D17) |
-| 10 | `test_added_or_removed_price_is_shown_without_a_rate` | 이전 단가가 없는 항목 → `없음 → $0.4`, 변화율 괄호 없음 |
+| 10 | `test_prices_follow_the_script_format` | 이전 단가가 없는 항목 → `없음 → $0.40`, 변화율 괄호 없음. 반올림하지 않는다(`$0.39375`, `$0.0208`) |
 | 11 | `test_every_number_on_the_cards_is_in_events` | 정상 카드는 통과한다. 시나리오 이름에 `events.json`에 없는 숫자를 넣으면 중단한다 |
 | 12 | `test_text_over_the_length_limit_stops_generation` | 상한을 넘는 제목·리드·항목이 있으면 `글자 수`로 중단한다 |
 | 13 | `test_events_without_a_significant_change_are_rejected` | `significant`가 거짓이면 카드를 만들지 않는다 |

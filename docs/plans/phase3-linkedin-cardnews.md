@@ -41,10 +41,10 @@
 | 2 | **카드 스크립트 작성**(규칙 16). 확정 문안 + `/humanize-korean` 점검 | — | **문안 승인** |
 | 3 | **완료** (2026-09-15, `06ace44`). 카드 데이터 `publish/card_data.py`(정기), 게시문 `publish/render_linkedin.py` | +17 → 79 | 보완 문안 승인 |
 | 4 | **완료** (2026-09-15, `d2490bc`). 카드 HTML 템플릿(디자인 적용) + 굽기 `publish/render_cards.py` | +13 → 92 | 카드 실물 확인(승인) |
-| 5 | `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성 | +4 → 89 | — |
+| 5 | **완료** (2026-09-15, `6a8b023`). `pipeline.py` 연결(`--cards`), 1단계에서 자동 생성, 승인된 카드 사이트 복사 | +9 → 101 | — |
 | 6 | 워크플로: 검토 PR에 카드 표시, 머지 후 사이트 게시 | 워크플로 실측 | 시뮬레이션 PR 확인 |
-| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 91 | 반려 시 라벨 1개 |
-| 8 | 소개 카드 구현 | +4 → 95 | — |
+| 7 | **문구 반려 재작성 루프**(규칙 16). `revise.yml` + 재작성 절차 | +2 → 103 | 반려 시 라벨 1개 |
+| 8 | 소개 카드 구현 | +4 → 107 | — |
 | 9 | 종단 검증 | — | — |
 | 10 | **첫 게시** | — | **LinkedIn에 직접 게시** |
 
@@ -479,6 +479,8 @@ def bake(cards, out_dir, eyebrow):
 ---
 
 ### Task 5: `pipeline.py` 연결
+
+> **완료 (2026-09-15).** 실제 설계와 실행 기록은 `docs/tasks/phase3/task-5-pipeline-cards.md`에 있다. 아래 초안과 달라진 점: 실패는 `card-errors.txt`와 단계 출력(`cards`, `card_count`)에 남긴다, 굽기 전 한글 글꼴 확인, 승인된 카드 복사를 이 Task에서 구현, 실측에서 찾은 상대 경로 결함 수정(`browser.py`), 테스트 +9 → 101. `--cards intro`는 Task 8로 미룬다.
 
 **Files:** Modify `pipeline.py`, `tests/test_pipeline.py`
 

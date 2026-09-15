@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **계획 승인 대기** (2026-09-15 작성). 승인 전에는 구현하지 않는다(규칙 15) |
+| 상태 | **완료** (2026-09-15). 테스트 101개. 코드 커밋 `6a8b023` |
 | 상위 계획 | `docs/plans/phase3-linkedin-cardnews.md` Task 5, 결정 D9(수집 단계에서 만들고 머지 후 게시), 규칙 14·18 |
 | 담당 | C (사용자 확인 1회: 계획 승인) |
 
@@ -78,19 +78,19 @@ korean_font_available() -> bool
 
 ## 단계
 
-- [ ] **Step 1** 테스트 8개를 먼저 쓰고 실패를 확인한다
-- [ ] **Step 2** `render_cards.korean_font_available`과 `bake`의 글꼴 확인을 구현한다. 실제 굽기 테스트의 건너뛰기 조건에 글꼴을 더한다
-- [ ] **Step 3** `pipeline.py`에 `make_card_outputs`를 구현하고 `collect_and_review()`에 연결한다
-- [ ] **Step 4** `rebuild_cards`와 `--cards DAY` 인자를 구현한다
-- [ ] **Step 5** `publish_cards`를 구현하고 `build_site()`·`confirm()`에 연결한다
-- [ ] **Step 6** 전체 테스트를 돌린다 → 100개 통과
-- [ ] **Step 7 로컬 실측** (작업 사본을 더럽히지 않도록 임시 폴더에서)
+- [x] **Step 1** 테스트 8개를 먼저 쓰고 실패를 확인한다
+- [x] **Step 2** `render_cards.korean_font_available`과 `bake`의 글꼴 확인을 구현한다. 실제 굽기 테스트의 건너뛰기 조건에 글꼴을 더한다
+- [x] **Step 3** `pipeline.py`에 `make_card_outputs`를 구현하고 `collect_and_review()`에 연결한다
+- [x] **Step 4** `rebuild_cards`와 `--cards DAY` 인자를 구현한다
+- [x] **Step 5** `publish_cards`를 구현하고 `build_site()`·`confirm()`에 연결한다
+- [x] **Step 6** 전체 테스트를 돌린다 → 100개 통과
+- [x] **Step 7 로컬 실측** (작업 사본을 더럽히지 않도록 임시 폴더에서)
   - 실제 승인 스냅샷을 임시 폴더로 복사하고, 수집기를 실제 승인 가격 + Redshift 미국 리전 +5%로 바꿔 1단계를 돌린다
   - 확인: `cards/` 7개 파일(HTML·PNG 5장·PDF), `linkedin.md`, `events.json`의 `display`, `card-errors.txt` 없음, 단계 출력 `cards=ok`
   - 글꼴이 없는 상황을 흉내 내 다시 돌린다. 확인: 검토 자료는 그대로, `card-errors.txt`에 글꼴 사유, `cards=failed`
   - 임시 폴더에서 승인 기록을 만든 뒤 `--build`를 돌려 `site/cards/<날짜>/`에 파일이 복사되는지 확인한다
-- [ ] **Step 8** 개인정보 검사 → 커밋 `feat: make cards as part of the daily pipeline` → `git ls-files` 확인
-- [ ] **Step 9** 이 파일에 실행 결과를 덧붙이고 관련 문서를 갱신한다. **보고하고 멈춘다**(규칙 10)
+- [x] **Step 8** 개인정보 검사 → 커밋 `feat: make cards as part of the daily pipeline` → `git ls-files` 확인
+- [x] **Step 9** 이 파일에 실행 결과를 덧붙이고 관련 문서를 갱신한다. **보고하고 멈춘다**(규칙 10)
 
 ## 테스트 목록
 
@@ -151,3 +151,75 @@ korean_font_available() -> bool
 - 한글 글꼴이 없으면 굽지 않고 사유를 남긴다.
 - 테스트 8개를 추가해 전체 100개가 통과한다.
 - 이 파일에 실행 결과가 덧붙고, 관련 문서가 갱신되고, 커밋됐다.
+
+---
+
+## 실행 결과 (2026-09-15)
+
+**완료.** 테스트 9개를 추가해 전체 101개가 통과한다. 코드 커밋 `6a8b023`.
+
+### 실제로 한 일
+
+| Step | 결과 |
+|---|---|
+| 1 | 테스트 8개 작성, 새 테스트 모두 실패 확인 |
+| 2 | `render_cards.korean_font_available`, `bake` 첫 단계의 글꼴 확인. 실제 굽기 테스트는 글꼴이 없으면 건너뛴다 |
+| 3 | `clear_card_outputs`·`prepare_cards`·`write_card_outputs`를 `collect_and_review()`에 연결 |
+| 4 | `rebuild_cards`, `--cards DAY` |
+| 5 | `publish_cards`를 `build_site()`와 `confirm()`(승인 기록 뒤)에 연결 |
+| 6 | 전체 **101개 통과**(56.9초) [확인] |
+| 7 | 임시 폴더 종단 실측(아래). **실측 중 결함 1건을 발견해 고쳤다** |
+| 8 | 개인정보 검사 0건, 커밋 `6a8b023` |
+
+### 바뀐 파일
+
+| 파일 | 내용 |
+|---|---|
+| `pipeline.py` | 1단계 카드·게시문 연결, `--cards`, 승인된 카드 복사 |
+| `publish/render_cards.py` | 한글 글꼴 확인 |
+| `publish/browser.py` | 출력 경로를 절대 경로로 넘긴다(결함 수정) |
+| `tests/test_pipeline.py` | 7개 추가. 파이프라인 테스트 전체에 실제 굽기를 막는 기본 설정 |
+| `tests/test_render_cards.py` | 1개 추가. 실제 굽기 테스트의 건너뛰기 조건에 글꼴 추가 |
+| `tests/test_browser.py` | 1개 추가(결함 회귀 테스트) |
+
+### Step 7 종단 실측 [확인]
+
+실제 승인 스냅샷(2026-09-11)을 임시 폴더로 복사하고, 수집기를 승인 가격 + Redshift 미국 리전 컴퓨트 +5%로 바꿔 돌렸다. 저장소 작업 사본은 건드리지 않았다.
+
+| 상황 | 결과 |
+|---|---|
+| 1) E1 1단계 | 38초. `cards/`에 PNG 5장·`cards.html`·`cards.pdf`, `linkedin.md`, `events.json`의 `display`(차트 금액이 Task 2·3 값과 같다). 단계 출력 `cards=ok`, `card_count=5`. `card-errors.txt` 없음 |
+| 2) 한글 글꼴 없음 | 검토 자료(`review.md`·`events.json`·`post.md`·`linkedin.md`)는 그대로. `cards/` 없음. `card-errors.txt`: `굽기: 한글 글꼴이 없다. 두부 글자 카드를 만들지 않는다(fonts-noto-cjk 설치 필요)`. `cards=failed`, `card_count=0` |
+| 3) `--cards DAY` | 35초. 카드 5장과 `linkedin.md`를 다시 만들고 `card-errors.txt`를 지웠다 |
+| 4) 승인 기록 뒤 `--build` | `site/cards/<날짜>/`에 PNG 5장·`cards.html`·`cards.pdf`·`linkedin.md` 복사 |
+
+### 막혔던 것과 해결
+
+**결함: 상대 경로로 굽으면 Edge가 파일을 쓰지 못한다 [확인].** 첫 실측에서 PNG가 60초를 기다려도 생기지 않았다(두 가지 헤드리스 표기 모두). 파이프라인은 `data/raw/<날짜>/cards` 같은 상대 경로를 넘긴다. Edge의 분리된 하위 프로세스는 작업 폴더가 달라 그 경로에 쓰지 못한다. Task 1·4의 테스트와 실측은 모두 절대 경로여서 드러나지 않았다.
+
+- 수정: `browser.screenshot`·`print_pdf`가 출력 경로를 절대 경로로 바꿔 넘긴다.
+- 회귀 테스트: 상대 경로를 줘도 브라우저 인자에는 절대 경로가 들어가는지 확인한다(브라우저 없이 돈다).
+- 엉뚱한 곳에 파일이 남았는지 Edge 설치 폴더와 저장소를 확인했다. 남은 파일은 없다.
+
+**보완: 굽기가 도중에 실패하면 반쪽 카드 폴더가 남았다.** 첫 실측에서 `cards/`에 `cards.html`만 남았다. 검토 PR에 반쪽 카드가 올라가지 않도록 굽기가 실패하면 `cards/`를 지운다(테스트 3에 단언 추가).
+
+**테스트 시간:** 새 연결 뒤 기존 파이프라인 테스트 중 E1인 두 개가 실제 브라우저로 구워 276초가 걸렸다. 파이프라인 테스트 전체에 굽기를 막는 기본 설정을 넣어 전체 실행이 57초로 돌아왔다.
+
+### 계획과 달라진 점
+
+| 계획 | 실제 | 이유 |
+|---|---|---|
+| `make_card_outputs` 한 함수 | `prepare_cards`(데이터·게시문 텍스트)와 `write_card_outputs`(파일·굽기) 두 함수 | `events.json`을 두 단계 사이에 써야 한다. 한 함수 안에서 `events.json`까지 쓰면 이름과 하는 일이 어긋난다 |
+| 테스트 8개(→ 100) | 9개(→ 101) | 실측에서 찾은 상대 경로 결함의 회귀 테스트를 더했다 |
+| `publish/browser.py`는 건드리지 않음 | 출력 경로 절대화 | 위 결함 |
+| 굽기 실패 시 사유만 기록 | 사유 기록 + 반쪽 `cards/` 삭제 | 실측에서 반쪽 카드가 남았다 |
+
+### 다음 Task에 넘기는 것
+
+- **Task 6 (워크플로)**
+  - `fonts-noto-cjk` 설치를 **pytest보다 먼저** 둔다. 설치 전에는 1단계가 카드를 굽지 않고 `cards=failed`로 끝난다.
+  - `collect.yml`은 이미 `data/raw/<날짜>` 전체를 커밋한다. `cards/`, `linkedin.md`, `card-errors.txt`가 함께 올라간다.
+  - 단계 출력 `cards`, `card_count`와 `card-errors.txt`로 검토 PR 본문을 구성한다. 본문의 고정 문장과 10장 초과 경고는 규칙 16 스크립트 단계를 거친다.
+  - `publish.yml`은 `--confirm` 뒤 `--build`를 돌리므로 `site/cards/<날짜>/`가 Pages에 함께 올라간다. 게시 후 주소는 `…/consumption-insights/cards/<날짜>/cards.pdf` 형태다.
+  - CI Chrome에서의 굽기 시간을 잰다(로컬 Edge 5장 약 38초).
+  - **push는 이 Task에서 사용자 승인을 받아 한다.** Task 3~5 커밋이 함께 올라간다.

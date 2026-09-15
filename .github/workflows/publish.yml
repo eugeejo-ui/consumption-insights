@@ -33,6 +33,7 @@ jobs:
       PYTHONIOENCODING: utf-8
     outputs:
       day: ${{ steps.site.outputs.day }}
+      confirmed: ${{ steps.record.outputs.confirmed }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -45,16 +46,24 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: record approval for merged snapshots
+      - id: record
+        name: record approval for merged snapshots
+        # 이번 실행에서 새로 승인한 날짜를 단계 출력(confirmed)으로 낸다. 시트 적재는 이 날짜에만 한다(3-9).
         run: |
+          confirmed=""
           for dir in data/raw/*/; do
             day=$(basename "$dir")
             if [ -f "$dir/review.md" ] && [ ! -f "$dir/approved.txt" ]; then
               echo "confirming $day"
               # 시뮬레이션 스냅샷과 문구 재작성 중(copy-hold.txt)인 스냅샷은 파이프라인이 거부한다. 그때는 건너뛰고 게시는 계속한다.
-              python pipeline.py --confirm "$day" || echo "::warning::$day 스냅샷은 반영하지 않았다(시뮬레이션이거나, 문구 재작성 중이거나, 검토 자료가 불완전하다)."
+              if python pipeline.py --confirm "$day"; then
+                confirmed="$confirmed $day"
+              else
+                echo "::warning::$day 스냅샷은 반영하지 않았다(시뮬레이션이거나, 문구 재작성 중이거나, 검토 자료가 불완전하다)."
+              fi
             fi
           done
+          echo "confirmed=${confirmed# }" >> "$GITHUB_OUTPUT"
           git add data/raw
           if ! git diff --cached --quiet; then
             git commit -m "chore: record approval for merged snapshots"
@@ -80,6 +89,8 @@ jobs:
 
   log:
     needs: [build, deploy]
+    # 이번 실행에서 새로 승인한 날이 있을 때만 적재한다. 최근 승인일로 적재하면 코드를 push할 때마다 같은 행이 다시 쌓인다(3-9).
+    if: needs.build.outputs.confirmed != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -87,7 +98,7 @@ jobs:
       issues: write
     env:
       PYTHONIOENCODING: utf-8
-      DAY: ${{ needs.build.outputs.day }}
+      DAYS: ${{ needs.build.outputs.confirmed }}
       PRICE_SHEET_ID: ${{ secrets.PRICE_SHEET_ID }}
     steps:
       - uses: actions/checkout@v7
@@ -108,17 +119,19 @@ jobs:
         if: env.PRICE_SHEET_ID != ''
         continue-on-error: true
         run: |
-          if [ -f "data/raw/$DAY/events.json" ]; then
-            python -m publish.sheets_log --events "data/raw/$DAY/events.json" \
-              --commit-url "${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
-          else
-            echo "events.json이 없다(첫 스냅샷). 적재를 건너뛴다."
-          fi
+          for day in $DAYS; do
+            if [ -f "data/raw/$day/events.json" ]; then
+              python -m publish.sheets_log --events "data/raw/$day/events.json" \
+                --commit-url "${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+            else
+              echo "$day: events.json이 없다(첫 스냅샷). 적재를 건너뛴다."
+            fi
+          done
       - name: open an issue when the sheet write fails
         if: steps.sheet.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh issue create \
-            --title "시트 적재 실패 ($DAY)" \
+            --title "시트 적재 실패 ($DAYS)" \
             --body "게시는 끝났지만 Google 스프레드시트 적재가 실패했다. 실행 기록: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

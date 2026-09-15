@@ -41,6 +41,17 @@ def test_revise_workflow_is_scoped_and_never_puts_comments_in_the_shell():
     assert collect.index("copy-hold.txt") < collect.index('git commit -m "review: price snapshot')
 
 
+def test_sheet_append_runs_only_for_days_approved_in_this_run():
+    """최근 승인일로 적재하면 첫 실제 변동을 승인한 뒤 코드를 push할 때마다 같은 행이 시트에 다시 쌓인다(3-9 코드 확인)."""
+    publish = yaml.safe_load((WORKFLOWS / "publish.yml").read_text(encoding="utf-8"))
+    build, log = publish["jobs"]["build"], publish["jobs"]["log"]
+    record = next(step for step in build["steps"] if step.get("name") == "record approval for merged snapshots")
+    assert record.get("id") == "record" and "confirmed=" in record["run"] and "GITHUB_OUTPUT" in record["run"]
+    assert build["outputs"]["confirmed"] == "${{ steps.record.outputs.confirmed }}"
+    assert "needs.build.outputs.confirmed" in log["if"]
+    assert "needs.build.outputs.day" not in yaml.safe_dump(log)            # 최근 승인일로는 적재하지 않는다
+
+
 def test_publish_runs_when_intro_cards_change():
     publish = yaml.safe_load((WORKFLOWS / "publish.yml").read_text(encoding="utf-8"))
     assert "data/cards/**" in publish[True]["push"]["paths"]             # 소개 카드만 바뀐 push에도 사이트에 올린다(D21)

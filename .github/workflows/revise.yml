@@ -27,6 +27,7 @@ jobs:
     env:
       PYTHONIOENCODING: utf-8
       GH_TOKEN: ${{ github.token }}
+      OWNER: ${{ github.repository_owner }}
       ACTION: ${{ github.event.action }}
       PR: ${{ github.event.pull_request.number }}
       BRANCH: ${{ github.event.pull_request.head.ref }}
@@ -56,7 +57,7 @@ jobs:
           python -m publish.revise_request request --day "$DAY" --repo "$GITHUB_REPOSITORY" --pr "$PR" \
             --issues "$RUNNER_TEMP/issues.json" --comments "$RUNNER_TEMP/comments.json" --out "$OUT"
           if [ -f "$OUT/body.md" ]; then
-            URL=$(gh issue create --label copy-revision --title "$(head -n 1 "$OUT/title.txt")" --body-file "$OUT/body.md")
+            URL=$(gh issue create --label copy-revision --assignee "$OWNER" --title "$(head -n 1 "$OUT/title.txt")" --body-file "$OUT/body.md")
           else
             # 상한(3회)을 넘겼다. 요청을 열지 않고 사람에게 넘긴다. 보류는 그대로 건다.
             gh pr edit "$PR" --add-label copy-needs-human

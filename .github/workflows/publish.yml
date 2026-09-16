@@ -134,7 +134,8 @@ jobs:
         if: steps.sheet.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
         run: |
-          gh issue create \
+          gh issue create --assignee "$OWNER" \
             --title "시트 적재 실패 ($DAYS)" \
             --body "게시는 끝났지만 Google 스프레드시트 적재가 실패했다. 실행 기록: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

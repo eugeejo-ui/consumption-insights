@@ -68,6 +68,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           DAY: ${{ steps.run.outputs.day }}
+          OWNER: ${{ github.repository_owner }}
         run: |
           BRANCH=review/pending
           TITLE="가격 검토 $DAY"
@@ -89,7 +90,7 @@ jobs:
           python -m publish.review_pr --day "$DAY" --repo "$GITHUB_REPOSITORY" --sha "$SHA" > "$BODY"
           gh label create revise-copy --color FBCA04 || true      # 검토자가 문구 반려에 쓰는 라벨(revise.yml)
           if [ "$(gh pr view "$BRANCH" --json state -q .state 2>/dev/null)" = "OPEN" ]; then
-            gh pr edit "$BRANCH" --title "$TITLE" --body-file "$BODY"
+            gh pr edit "$BRANCH" --title "$TITLE" --body-file "$BODY" --add-assignee "$OWNER"
           else
-            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY"
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY" --assignee "$OWNER"
           fi

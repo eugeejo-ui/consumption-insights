@@ -76,3 +76,16 @@ def test_workflows_pin_actions_and_limit_oidc_and_shell_inputs():
 def test_publish_runs_when_intro_cards_change():
     publish = yaml.safe_load((WORKFLOWS / "publish.yml").read_text(encoding="utf-8"))
     assert "data/cards/**" in publish[True]["push"]["paths"]             # 소개 카드만 바뀐 push에도 사이트에 올린다(D21)
+
+
+def test_bot_assigns_the_owner_so_notifications_reach_a_person():
+    """저장소 구독자 수가 0이라, 담당자를 지정하지 않으면 봇이 연 검토 PR과 알림 Issue가
+    메일로 오지 않는다 [확인 2026-09-16]. 계정 이름은 적지 않고 소유자 문맥값을 쓴다."""
+    texts = {path.stem: path.read_text(encoding="utf-8") for path in WORKFLOWS.glob("*.yml")}
+    for name, text in texts.items():
+        opened = text.count("gh issue create") + text.count("gh pr create")
+        if not opened:
+            continue
+        assert opened == text.count('--assignee "$OWNER"'), name
+        assert "OWNER: ${{ github.repository_owner }}" in text, name
+    assert '--add-assignee "$OWNER"' in texts["collect"]        # 열려 있는 검토 PR을 갱신할 때도 담당자를 유지한다

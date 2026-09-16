@@ -23,6 +23,7 @@ jobs:
     env:
       PYTHONIOENCODING: utf-8
       GH_TOKEN: ${{ github.token }}
+      OWNER: ${{ github.repository_owner }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
@@ -40,7 +41,7 @@ jobs:
         if: steps.check.outputs.bigquery_changed == 'true'
         run: |
           if [ -z "$(gh issue list --label price-watch --state open --json number --jq '.[].number')" ]; then
-            gh issue create --label price-watch \
+            gh issue create --label price-watch --assignee "$OWNER" \
               --title "BigQuery 가격 페이지가 바뀌었습니다 (${{ steps.check.outputs.day }})" \
               --body-file "$RUNNER_TEMP/bigquery_issue.md"
           else
@@ -51,7 +52,7 @@ jobs:
         run: |
           title="수동 가격표 확인 요청 (${{ steps.check.outputs.quarter }})"
           if [ -z "$(gh issue list --label vendor-check --state open --search "$title" --json number --jq '.[].number')" ]; then
-            gh issue create --label vendor-check --title "$title" --body-file "$RUNNER_TEMP/vendor_reminder.md"
+            gh issue create --label vendor-check --assignee "$OWNER" --title "$title" --body-file "$RUNNER_TEMP/vendor_reminder.md"
           else
             echo "이번 분기 vendor-check Issue가 이미 있다."
           fi

@@ -65,3 +65,6 @@ def test_intro_post_matches_the_script():
     text = render_intro_post()
     assert text == block.replace("{대시보드 주소}", DASHBOARD_URL)
     assert not NUMBER.findall(text) and len(text) <= MAX_CHARS
+    # 첫 게시물은 문제의식과 측정 결과로 연다(2026-09-16). LinkedIn은 첫 두 줄만 펼쳐 보인다.
+    assert text.startswith("같은 워크로드를 돌려도 플랫폼마다 월 비용이 두 배 넘게 벌어졌습니다.\n")
+    assert "매일" not in text and "어려웠습니다" not in text

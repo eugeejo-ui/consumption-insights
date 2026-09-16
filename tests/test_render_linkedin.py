@@ -58,13 +58,29 @@ def test_a_number_not_in_events_is_rejected(make_events, workloads):
         render_linkedin(events, workloads)
 
 
+INTRO_FACTS = {"region_costs": [[900, 1032, 14.7], [1693, 2167, 28.1], [1550, 2032, 31.1], [2056, 2708, 31.7]]}
+
+
 def test_intro_post_matches_the_script():
-    """소개 게시문(스크립트 2절)은 고정 문안이다. 대시보드 주소만 채운다. 숫자가 하나도 없어 events.json이 필요 없다."""
+    """소개 게시문(스크립트 2절)은 대시보드 주소와 리전 최대 차이만 채운다. events.json 없이 승인 스냅샷으로 만든다."""
     script = (Path(__file__).resolve().parent.parent / "docs" / "scripts" / "linkedin-post-script.md").read_text(encoding="utf-8")
     block = script.split("## 2. 소개 게시문")[1].split("```\n")[1]
-    text = render_intro_post()
-    assert text == block.replace("{대시보드 주소}", DASHBOARD_URL)
-    assert not NUMBER.findall(text) and len(text) <= MAX_CHARS
+    text = render_intro_post(INTRO_FACTS)
+    assert text == block.replace("{대시보드 주소}", DASHBOARD_URL).replace("{리전 최대 차이}", "31.7%")
+    assert NUMBER.findall(text) == ["31.7"] and len(text) <= MAX_CHARS
     # 첫 게시물은 문제의식과 측정 결과로 연다(2026-09-16). LinkedIn은 첫 두 줄만 펼쳐 보인다.
-    assert text.startswith("같은 워크로드를 돌려도 플랫폼마다 월 비용이 두 배 넘게 벌어졌습니다.\n")
+    assert text.startswith("같은 워크로드를 돌려도 플랫폼마다 월 비용이 두 배 넘게 차이가 납니다.\n"
+                           "같은 플랫폼이라도 서울 리전은 미국 리전보다 월 비용이 최대 31.7% 높습니다.\n")
     assert "매일" not in text and "어려웠습니다" not in text
+
+
+def test_intro_post_carries_the_largest_region_gap():
+    """리전 차이는 카드와 같은 승인 스냅샷에서 온다. 게시문에 숫자를 적어 두지 않는다(3-1절)."""
+    text = render_intro_post({"region_costs": [[900, 1000, 11.1], [1000, 1234, 23.4]]})
+    assert "월 비용이 최대 23.4% 높습니다." in text and "31.7" not in text
+
+
+def test_intro_post_stops_when_seoul_is_never_dearer():
+    """서울 리전이 더 비싼 워크로드가 없으면 `최대 … 높습니다`가 거짓이 된다. 생성을 멈춘다(3-1절)."""
+    with pytest.raises(ValueError, match="더 비싼"):
+        render_intro_post({"region_costs": [[900, 880, -2.2], [1000, 1000, 0.0]]})

@@ -27,10 +27,16 @@ def render_linkedin(events: dict, workloads: dict) -> str:
     return _within_limit(text)
 
 
-def render_intro_post() -> str:
-    """소개 게시문(스크립트 2절, Task 8). 숫자가 없는 고정 문안이라 events.json 없이 만든다."""
+def render_intro_post(facts: dict) -> str:
+    """소개 게시문(스크립트 2절, Task 8). events.json 없이 승인 스냅샷으로 만든다.
+    리전 최대 차이는 소개 카드가 쓰는 사전(intro_cards의 facts)에서 받는다. 게시문에 숫자를 적어 두지 않는다."""
+    gap = max(rise for _, _, rise in facts["region_costs"])
+    if gap <= 0:                                                     # `최대 … 높습니다`가 거짓이 된다
+        raise ValueError(f"서울 리전이 더 비싼 워크로드가 없다(최대 {gap:+.1f}%). 소개 게시문을 만들지 않는다")
     env = Environment(loader=FileSystemLoader(TEMPLATES), keep_trailing_newline=True)
-    return _within_limit(env.get_template("post_linkedin_intro.md.j2").render(url=DASHBOARD_URL))
+    text = env.get_template("post_linkedin_intro.md.j2").render(url=DASHBOARD_URL, region_gap=f"{gap:.1f}%")
+    check_numbers(text, facts)                                       # 카드와 다른 숫자를 말하지 않는다
+    return _within_limit(text)
 
 
 def _within_limit(text: str) -> str:

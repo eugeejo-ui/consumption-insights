@@ -228,13 +228,13 @@ def rebuild_cards(day: str) -> Path:
 
 
 def rebuild_intro() -> Path:
-    """--cards intro: 최신 승인 스냅샷으로 소개 카드 5장과 소개 게시문을 data/cards/intro/에 만든다(Task 8).
+    """--cards intro: 최신 승인 스냅샷으로 소개 카드와 소개 게시문을 data/cards/intro/에 만든다(Task 8).
     승인한 값만 쓴다(규칙 14). 승인 기록은 건드리지 않는다. 명시적으로 부른 명령이라 실패를 드러낸다."""
     day = latest_approved_day(dt.date.max.isoformat(), RAW)
     if day is None:
         raise SystemExit("승인된 스냅샷이 없다. 소개 카드는 승인한 값으로만 만든다.")
     cards, facts = intro_cards(analyze(snapshot_records(day)), day)
-    post = render_intro_post()
+    post = render_intro_post(facts)
     bake(cards, INTRO_DIR, INTRO, facts)
     (INTRO_DIR / LINKEDIN_FILE).write_text(post, encoding="utf-8")
     print(f"intro cards written: {INTRO_DIR} ({len(cards)}장, {day} 승인 스냅샷 기준)")

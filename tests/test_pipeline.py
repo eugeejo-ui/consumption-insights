@@ -391,7 +391,11 @@ def test_cards_intro_bakes_from_the_latest_approved_snapshot(tmp_path, monkeypat
     assert [c.get("group") or c["kind"] for c in calls[0]["cards"]] == [
         "cover", "chips", "flow", "result", "unit", "unit", "region", "closing"]
     assert calls[0]["cards"][3]["notes"][0] == "2000-01-03 승인 스냅샷 기준"
-    assert (out / "linkedin.md").read_text(encoding="utf-8").startswith("같은 워크로드를 돌려도 플랫폼마다")
+    post = (out / "linkedin.md").read_text(encoding="utf-8")
+    assert post.startswith("같은 워크로드를 돌려도 플랫폼마다")
+    # 게시문의 리전 차이는 카드 `서울 리전 월 사용료`의 최댓값과 같은 값이다(스크립트 3-1절).
+    region = next(c for c in calls[0]["cards"] if c.get("group") == "region")
+    assert f"최대 {region['items'][-1]['rest'].split('(+')[1].rstrip(')')} 높습니다." in post
     assert not Path("data/raw/2000-01-05/approved.txt").exists()                # 승인 기록은 바꾸지 않는다
 
 

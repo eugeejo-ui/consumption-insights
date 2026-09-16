@@ -389,8 +389,8 @@ def test_cards_intro_bakes_from_the_latest_approved_snapshot(tmp_path, monkeypat
     assert out == Path("data/cards/intro") and len(calls) == 1
     assert calls[0]["out_dir"] == out and calls[0]["eyebrow"] == "소개"
     assert [c["kind"] for c in calls[0]["cards"]] == ["cover", "chips", "flow", "bullets", "closing"]
-    assert calls[0]["cards"][3]["notes"][0] == "2000-01-03 승인 스냅샷 기준입니다."
-    assert (out / "linkedin.md").read_text(encoding="utf-8").startswith("데이터 플랫폼 네 곳의 월 비용을 매일 추적합니다.")
+    assert calls[0]["cards"][3]["notes"][0] == "2000-01-03 승인 스냅샷 기준"
+    assert (out / "linkedin.md").read_text(encoding="utf-8").startswith("데이터 플랫폼 네 곳의 월 비용을 추적합니다.")
     assert not Path("data/raw/2000-01-05/approved.txt").exists()                # 승인 기록은 바꾸지 않는다
 
 

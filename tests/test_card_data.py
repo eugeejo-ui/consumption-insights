@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from model.tco import CostRow
 from publish.card_data import (card_text, check_complete, closing_card, cover_title, intro_cards, price_change_cards,
                                price_item, price_label)
 from publish.render_post import check_numbers
@@ -43,7 +44,7 @@ def test_five_cards_on_a_typical_day(make_events, workloads):
     closing = cards[-1]
     assert _title(closing) == "전체 비교는 대시보드에 있습니다"
     assert [p["text"] for p in closing["title"] if p["accent"]] == ["대시보드"]
-    assert closing["lead"] == "시나리오별 월 사용료, 서울 프리미엄, 가정과 산출 근거를 공개합니다."
+    assert closing["lead"] == "워크로드별 월 사용료, 리전별 가격 차이, 계산 가정을 공개합니다."
     assert closing["url"] == "eugeejo-ui.github.io/consumption-insights"
 
 
@@ -151,13 +152,19 @@ def test_events_without_a_significant_change_are_rejected(make_events, workloads
 SCRIPT = Path(__file__).resolve().parent.parent / "docs" / "scripts" / "cards-script.md"
 
 
-def _result(us=False, seoul=False, t2=True, spread=39.5, us_winner="redshift", seoul_winner="redshift"):
-    """analyze()의 판정 부분. supported=True가 채택이다. 채택이면 시나리오마다 1위가 다르다."""
-    def t1(supported, winner):
-        return {"winners": {"W1": winner, "W2": "bigquery" if supported else winner, "W3": winner},
-                "robustness": {"W1": "견고", "W2": "견고", "W3": "견고"}, "supported": supported}
-    return {"t1_by_region": {"us": t1(us, us_winner), "seoul": t1(seoul, seoul_winner)},
-            "t2": {"spread_pp": spread, "supported": t2}}
+ORDER = ("redshift", "snowflake", "bigquery", "databricks")
+
+
+def _result(us_order=ORDER, seoul_order=None, hours=220, storage_gb=10000):
+    """analyze()에서 소개 카드가 쓰는 부분. 첫 시나리오의 월 사용료로 순위를 만든다."""
+    rows = [CostRow(scenario="W1", platform=platform, region=region,
+                    compute_usd=900 + n * 500 + (100 if region == "seoul" else 0), storage_usd=0)
+            for region, order in (("us", us_order), ("seoul", seoul_order or us_order))
+            for n, platform in enumerate(order)]
+    return {"rows": rows,
+            "workloads": {"storage_gb": storage_gb,
+                          "scenarios": {"W1": {"name": "소규모 BI 대시보드", "hours_per_month": hours},
+                                        "W2": {"name": "야간 배치 ETL", "hours_per_month": 60}}}}
 
 
 def test_intro_cards_are_five_in_order():
@@ -171,29 +178,40 @@ def test_intro_cards_are_five_in_order():
     assert [step["text"] for step in cards[2]["steps"] if step["stop"]] == ["검토 요청에서 정지"]   # 멈춤 지점
 
 
-def test_intro_results_state_each_region_and_the_conclusion():
-    cards, _ = intro_cards(_result(us_winner="databricks"), "2026-09-11")
+def test_intro_ranks_the_platforms_by_monthly_cost():
+    """4장은 가설 판정이 아니라 플랫폼별 순위와 두 리전 금액을 싣는다(2026-09-16 개정)."""
+    cards, _ = intro_cards(_result(us_order=("databricks", "redshift", "snowflake", "bigquery")), "2026-09-11")
     result = cards[3]
-    assert result["lead"] == "월 사용료가 가장 낮은 플랫폼이 1위입니다."
+    assert [part["text"] for part in result["title"]] == ["월 사용료 ", "현재 순위"]
+    assert result["lead"] == "월 사용료가 낮은 순서입니다."
     assert result["items"] == [
-        {"strong": "T1 기각 · 미국 리전", "rest": "시나리오가 달라도 1위는 Databricks로 같습니다."},
-        {"strong": "T1 기각 · 서울 리전", "rest": "시나리오가 달라도 1위는 Redshift로 같습니다."},
-        {"strong": "T2 채택", "rest": "서울 프리미엄은 서비스마다 최대 39.5%p 다릅니다."}]
-    assert result["notes"] == ["2026-09-11 승인 스냅샷 기준입니다.", "약정 할인을 제외한 모델 추정치입니다."]
+        {"strong": "1위 Databricks", "rest": "미국 리전 $900 · 서울 리전 $1,000"},
+        {"strong": "2위 Redshift", "rest": "미국 리전 $1,400 · 서울 리전 $1,500"},
+        {"strong": "3위 Snowflake", "rest": "미국 리전 $1,900 · 서울 리전 $2,000"},
+        {"strong": "4위 BigQuery", "rest": "미국 리전 $2,400 · 서울 리전 $2,500"}]
+    assert result["notes"] == ["2026-09-11 승인 스냅샷 기준", "금액은 벤더 공시 통화인 달러 기준",
+                               "약정 할인을 제외한 모델 추정치"]     # 각주는 명사구로 끝맺는다
+    assert result["basis"] == "비교 기준: 소형 컴퓨트 월 220시간 · 스토리지 10TB(압축 후)"
+    text = card_text(cards)
+    for banned in ("T1", "T2", "채택", "기각", "시나리오", "매일 비교"):
+        assert banned not in text                                          # 가설·시나리오는 카드에 싣지 않는다
+    assert cards[0]["lead"] == "같은 워크로드를 기준으로 월 사용료를 환산해 비교합니다."
 
-    cards, _ = intro_cards(_result(us=True, t2=False, spread=9.9), "2026-09-11")
-    assert cards[3]["items"][0] == {"strong": "T1 채택 · 미국 리전", "rest": "시나리오에 따라 1위가 달라집니다."}
-    assert cards[3]["items"][2] == {"strong": "T2 기각", "rest": "서울 프리미엄의 서비스 간 차이가 9.9%p로 작습니다."}
-    assert "지지" not in card_text(cards)                                  # 규칙 17: 채택 / 기각
+
+def test_intro_stops_when_the_two_regions_rank_differently():
+    """한 항목에 두 리전을 묶으므로 순서가 같아야 한다. 다르면 문안부터 고친다."""
+    with pytest.raises(ValueError, match="순위"):
+        intro_cards(_result(seoul_order=("snowflake", "redshift", "bigquery", "databricks")), "2026-09-11")
 
 
 def test_intro_numbers_come_from_the_approved_snapshot():
-    cards, facts = intro_cards(_result(spread=39.5), "2026-09-11")
+    cards, facts = intro_cards(_result(), "2026-09-11")
     text = card_text(cards)
-    assert "39.5%p" in text and "2026-09-11" in text
+    assert "미국 리전 $900 · 서울 리전 $1,000" in text and "2026-09-11" in text
+    assert "월 220시간" in text and "10TB" in text                          # 비교 기준 줄도 숫자 검사를 받는다
     check_numbers(text, facts)                                             # 그대로면 통과
-    with pytest.raises(ValueError, match="39.5"):
-        check_numbers(text, {**facts, "spread_pp": 12.3})                  # 기준 사전에 없는 숫자는 멈춘다
+    with pytest.raises(ValueError, match="900"):
+        check_numbers(text, {**facts, "amounts": {}})                      # 기준 사전에 없는 숫자는 멈춘다
 
 
 def test_intro_copy_matches_the_script():
@@ -204,19 +222,17 @@ def test_intro_copy_matches_the_script():
         stripped = line.strip()
         if stripped.startswith(("- 제목:", "- 부제:", "- 리드:")):
             expected.append(stripped.split(":", 1)[1].strip().replace("**", "").strip("`"))
-        elif stripped.startswith(("- 칩 4개:", "- 흐름 4단계:", "- 각주")):
+        elif stripped.startswith(("- 칩 4개:", "- 흐름 4단계:", "- 각주", "- 항목", "- 비교 기준")):
             expected += re.findall(r"`([^`]+)`", stripped)
         elif stripped.startswith("| T1") or stripped.startswith("| T2") or stripped.startswith("| |"):
             expected += [re.sub(r"^\[.+?\] ", "", cell) for cell in re.findall(r"(?:\[.+?\] )?`([^`]+)`", stripped)]
-        elif stripped and not stripped.startswith(("-", "#", "|", "`", "1-1")) and "니다." in stripped:
-            expected.append(stripped)                                      # 3장 각주 코드 블록의 문장
+        elif stripped and not stripped.startswith(("-", "#", "|", "`", "*", "1-1")) and "니다." in stripped:
+            expected.append(stripped)                                      # 3장 각주 코드 블록의 문장(설명 문단은 **로 시작한다)
     assert len(expected) >= 20
-    variants = [intro_cards(_result(), "2026-09-11")[0], intro_cards(_result(us=True, t2=False, spread=9.9), "2026-09-11")[0]]
-    lines = set()
-    for cards in variants:
-        lines |= set(card_text(cards).splitlines())
-        lines |= {f"{chip['platform']} {chip['unit']}" for chip in cards[1]["chips"]}
-        lines |= {step["text"] for step in cards[2]["steps"]}
+    cards = intro_cards(_result(), "2026-09-11")[0]
+    lines = set(card_text(cards).splitlines())
+    lines |= {f"{chip['platform']} {chip['unit']}" for chip in cards[1]["chips"]}
+    lines |= {step["text"] for step in cards[2]["steps"]}
     for text in expected:
         pattern = re.sub(r"\\\{.+?\\\}", ".+?", re.escape(text))
         assert any(re.fullmatch(pattern, line) for line in lines), text

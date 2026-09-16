@@ -52,6 +52,7 @@ body{font-family:var(--font);color:var(--ink);word-break:keep-all;-webkit-font-s
 .pname{font-size:22px;font-weight:700;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
 .val{font-size:26px;font-weight:700;margin-top:6px;white-space:nowrap}
 .note{font-size:26px;font-weight:400;line-height:1.45;color:var(--faint)}
+.basis{font-size:22px;font-weight:400;line-height:1.45;color:var(--faint);margin-top:22px}
 .panel+.note{margin-top:28px}
 .banners{margin-top:40px}
 .banner{background:var(--dark);color:#FFFFFF;border-radius:36px;padding:36px 44px;text-align:center}
@@ -85,7 +86,7 @@ body{font-family:var(--font);color:var(--ink);word-break:keep-all;-webkit-font-s
   <div class="main"><div class="content">
     <h1 class="title xl" data-role="title" data-lines="2" data-orphan="skip">데이터 플랫폼 네 곳의 <br><em class="accent">월 사용료 추적</em></h1>
     <p class="subtitle" data-role="subtitle" data-lines="1">Snowflake · Databricks · BigQuery · Redshift</p>
-    <p class="lead" data-role="lead" data-lines="3">같은 워크로드를 기준으로 월 사용료를 환산해 매일 비교합니다.</p>
+    <p class="lead" data-role="lead" data-lines="3">같은 워크로드를 기준으로 월 사용료를 환산해 비교합니다.</p>
   </div></div>
   <div class="pill"><span class="pill-url">eugeejo-ui.github.io/consumption-insights</span><span class="swipe">넘기기 &nbsp;/&nbsp; &#8594;</span></div>
 </section>
@@ -122,15 +123,18 @@ body{font-family:var(--font);color:var(--ink);word-break:keep-all;-webkit-font-s
 <section class="card" data-kind="bullets">
   <div class="topbar"><span class="project">CONSUMPTION INSIGHTS</span><span class="eyebrow">소개</span></div>
   <div class="main"><div class="content">
-    <h2 class="title" data-role="title" data-lines="2">현재 <em class="accent">결과</em></h2>
-    <p class="lead" data-role="lead" data-lines="3">월 사용료가 가장 낮은 플랫폼이 1위입니다.</p>
+    <h2 class="title" data-role="title" data-lines="2">월 사용료 <em class="accent">현재 순위</em></h2>
+    <p class="lead" data-role="lead" data-lines="3">월 사용료가 낮은 순서입니다.</p>
     <ul class="items">
-      <li class="item"><span class="mark">&#9642;</span><div><p class="strong" data-role="item" data-lines="1">T1 기각 · 미국 리전</p><p class="rest" data-role="item" data-lines="1">시나리오가 달라도 1위는 Redshift로 같습니다.</p></div></li>
-      <li class="item"><span class="mark">&#9642;</span><div><p class="strong" data-role="item" data-lines="1">T1 기각 · 서울 리전</p><p class="rest" data-role="item" data-lines="1">시나리오가 달라도 1위는 Redshift로 같습니다.</p></div></li>
-      <li class="item"><span class="mark">&#9642;</span><div><p class="strong" data-role="item" data-lines="1">T2 채택</p><p class="rest" data-role="item" data-lines="1">서울 프리미엄은 서비스마다 최대 39.5%p 다릅니다.</p></div></li>
+      <li class="item"><span class="mark">&#9642;</span><div><p class="strong" data-role="item" data-lines="1">1위 Redshift</p><p class="rest" data-role="item" data-lines="1">미국 리전 $900 · 서울 리전 $1,032</p></div></li>
+      <li class="item"><span class="mark">&#9642;</span><div><p class="strong" data-role="item" data-lines="1">2위 Snowflake</p><p class="rest" data-role="item" data-lines="1">미국 리전 $1,550 · 서울 리전 $2,032</p></div></li>
+      <li class="item"><span class="mark">&#9642;</span><div><p class="strong" data-role="item" data-lines="1">3위 BigQuery</p><p class="rest" data-role="item" data-lines="1">미국 리전 $1,693 · 서울 리전 $2,167</p></div></li>
+      <li class="item"><span class="mark">&#9642;</span><div><p class="strong" data-role="item" data-lines="1">4위 Databricks</p><p class="rest" data-role="item" data-lines="1">미국 리전 $2,056 · 서울 리전 $2,708</p></div></li>
     </ul>
-    <p class="note" data-role="note" data-lines="1">2026-09-11 승인 스냅샷 기준입니다.</p>
-    <p class="note" data-role="note" data-lines="1">약정 할인을 제외한 모델 추정치입니다.</p>
+    <p class="note" data-role="note" data-lines="1">2026-09-11 승인 스냅샷 기준</p>
+    <p class="note" data-role="note" data-lines="1">금액은 벤더 공시 통화인 달러 기준</p>
+    <p class="note" data-role="note" data-lines="1">약정 할인을 제외한 모델 추정치</p>
+    <p class="basis" data-role="basis" data-lines="1">비교 기준: 소형 컴퓨트 월 220시간 · 스토리지 10TB(압축 후)</p>
   </div></div>
   <div class="pill"><span class="pill-url">eugeejo-ui.github.io/consumption-insights</span><span class="swipe">넘기기 &nbsp;/&nbsp; &#8594;</span></div>
 </section>
@@ -138,7 +142,7 @@ body{font-family:var(--font);color:var(--ink);word-break:keep-all;-webkit-font-s
   <div class="topbar"><span class="project">CONSUMPTION INSIGHTS</span><span class="eyebrow">소개</span></div>
   <div class="main"><div class="content">
     <h2 class="title xl" data-role="title" data-lines="2">전체 비교는 <em class="accent">대시보드</em>에 있습니다</h2>
-    <p class="lead" data-role="lead" data-lines="3">시나리오별 월 사용료, 서울 프리미엄, 가정과 산출 근거를 공개합니다.</p>
+    <p class="lead" data-role="lead" data-lines="3">워크로드별 월 사용료, 리전별 가격 차이, 계산 가정을 공개합니다.</p>
     <p class="closing-url" data-role="url" data-lines="1">eugeejo-ui.github.io/consumption-insights</p>
   </div></div>
   <div class="pill"><span class="pill-url">eugeejo-ui.github.io/consumption-insights</span><span class="swipe">끝</span></div>

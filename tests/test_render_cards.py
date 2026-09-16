@@ -4,6 +4,7 @@ import struct
 
 import pytest
 
+from model.tco import CostRow
 from publish import browser
 from publish.card_data import intro_cards, price_change_cards
 from publish import render_cards
@@ -100,7 +101,7 @@ def test_closing_card_shows_the_dashboard_address(make_events, workloads):
     _, cards = _cards(make_events, workloads, TYPICAL)
     closing = _sections(render_html(cards, REPORT))[-1]
     assert '전체 비교는 <em class="accent">대시보드</em>에 있습니다' in closing
-    assert "시나리오별 월 사용료, 서울 프리미엄, 가정과 산출 근거를 공개합니다." in closing
+    assert "워크로드별 월 사용료, 리전별 가격 차이, 계산 가정을 공개합니다." in closing
     assert '<p class="closing-url" data-role="url" data-lines="1">eugeejo-ui.github.io/consumption-insights</p>' in closing
 
 
@@ -131,10 +132,17 @@ def test_typesetting_rules_are_in_the_css(make_events, workloads):
     assert all(int(w) <= 700 for w in re.findall(r"font-weight:(\d+)", html))
 
 
+def _intro_result():
+    rows = [CostRow(scenario="W1", platform=platform, region=region,
+                    compute_usd=900 + n * 500 + (100 if region == "seoul" else 0), storage_usd=0)
+            for region in ("us", "seoul")
+            for n, platform in enumerate(("redshift", "snowflake", "bigquery", "databricks"))]
+    return {"rows": rows, "workloads": {"storage_gb": 10000,
+                                        "scenarios": {"W1": {"name": "소규모 BI 대시보드", "hours_per_month": 220}}}}
+
+
 def test_chips_and_flow_render_with_layout_fields():
-    cards, _ = intro_cards({"t1_by_region": {r: {"winners": {"W1": "redshift"}, "robustness": {}, "supported": False}
-                                             for r in ("us", "seoul")},
-                            "t2": {"spread_pp": 39.5, "supported": True}}, "2026-09-11")
+    cards, _ = intro_cards(_intro_result(), "2026-09-11")
     html = render_html(cards, INTRO, measure=True)
     chips, flow = _sections(html)[1], _sections(html)[2]
     assert '가격표만으로는 <br><em class="accent">비교되지 않습니다</em>' in chips   # 강조 구절이 두 줄로 갈라지지 않는다
@@ -143,8 +151,21 @@ def test_chips_and_flow_render_with_layout_fields():
     assert flow.count('data-role="step" data-lines="1"') == 4
     assert flow.count(" stop") == 1 and "검토 요청에서 정지" in flow.split(" stop")[1].split("</li>")[0]
     assert 'class="lead"' in chips and 'class="lead"' not in flow               # 리드가 없는 장에 빈 리드를 두지 않는다
-    assert all(section.count('class="note"') == n for section, n in ((chips, 1), (flow, 2), (_sections(html)[3], 2)))
+    assert all(section.count('class="note"') == n for section, n in ((chips, 1), (flow, 2), (_sections(html)[3], 3)))
     assert html.index('"Noto Sans KR"') < html.index('"Malgun Gothic"')        # D22: 로컬도 CI와 같은 Noto 계열로 굽는다
+
+
+def test_the_basis_line_is_smaller_than_the_notes():
+    """비교 기준 줄은 각주 아래에 각주보다 작은 글자로 한 줄 들어간다(2026-09-16 사용자 지시)."""
+    cards, _ = intro_cards(_intro_result(), "2026-09-11")
+    html = render_html(cards, INTRO, measure=True)
+    result = _sections(html)[3]
+    assert result.count('<p class="basis" data-role="basis" data-lines="1">') == 1
+    assert "비교 기준: 소형 컴퓨트 월 220시간 · 스토리지 10TB(압축 후)" in result
+    assert result.index('class="note"') < result.index('class="basis"')        # 각주 아래에 둔다
+    sizes = {name: int(re.search(rf"\.{name}{{font-size:(\d+)px", html).group(1)) for name in ("note", "basis")}
+    assert sizes["basis"] < sizes["note"]
+    assert all('class="basis"' not in section for section in _sections(html)[:3] + _sections(html)[4:])
 
 
 def _page(**overrides):

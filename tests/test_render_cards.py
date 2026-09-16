@@ -137,8 +137,11 @@ def _intro_result():
                     compute_usd=900 + n * 500 + (100 if region == "seoul" else 0), storage_usd=0)
             for region in ("us", "seoul")
             for n, platform in enumerate(("redshift", "snowflake", "bigquery", "databricks"))]
-    return {"rows": rows, "workloads": {"storage_gb": 10000,
-                                        "scenarios": {"W1": {"name": "소규모 BI 대시보드", "hours_per_month": 220}}}}
+    premiums = [{"platform": "databricks", "service": "compute", "us": 0.7, "seoul": 0.95, "premium_pct": 35.7},
+                {"platform": "redshift", "service": "storage", "us": 0.024, "seoul": 0.0261, "premium_pct": 8.8}]
+    return {"rows": rows, "premiums": premiums,
+            "workloads": {"storage_gb": 10000,
+                          "scenarios": {"W1": {"name": "소규모 BI 대시보드", "hours_per_month": 220}}}}
 
 
 def test_chips_and_flow_render_with_layout_fields():
@@ -165,7 +168,8 @@ def test_the_basis_line_is_smaller_than_the_notes():
     assert result.index('class="note"') < result.index('class="basis"')        # 각주 아래에 둔다
     sizes = {name: int(re.search(rf"\.{name}{{font-size:(\d+)px", html).group(1)) for name in ("note", "basis")}
     assert sizes["basis"] < sizes["note"]
-    assert all('class="basis"' not in section for section in _sections(html)[:3] + _sections(html)[4:])
+    with_basis = [n for n, section in enumerate(_sections(html)) if 'class="basis"' in section]
+    assert with_basis == [3, 5]                        # 현재 순위 장과 서울 리전 월 사용료 장에만 둔다
 
 
 def _page(**overrides):

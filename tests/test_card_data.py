@@ -153,24 +153,34 @@ SCRIPT = Path(__file__).resolve().parent.parent / "docs" / "scripts" / "cards-sc
 
 
 ORDER = ("redshift", "snowflake", "bigquery", "databricks")
+PREMIUMS = [("databricks", "compute", 0.7, 0.95), ("snowflake", "compute", 3.0, 4.05),
+            ("bigquery", "storage", 0.04, 0.052), ("bigquery", "compute", 0.06, 0.0765),
+            ("bigquery", "scan", 6.25, 7.5), ("redshift", "compute", 0.375, 0.438),
+            ("redshift", "storage", 0.024, 0.0261), ("snowflake", "storage", 23.0, 25.0),
+            ("databricks", "storage", 0.0208, 0.02)]
 
 
-def _result(us_order=ORDER, seoul_order=None, hours=220, storage_gb=10000):
-    """analyze()에서 소개 카드가 쓰는 부분. 첫 시나리오의 월 사용료로 순위를 만든다."""
+def _result(us_order=ORDER, seoul_order=None, hours=220, storage_gb=10000, premiums=PREMIUMS):
+    """analyze()에서 소개 카드가 쓰는 부분. 첫 시나리오의 월 사용료로 순위를 만든다.
+    서울 리전 금액은 미국 리전보다 조금씩 더 비싸고, 비싼 플랫폼일수록 증가율이 크다(실제 스냅샷과 같은 모양)."""
     rows = [CostRow(scenario="W1", platform=platform, region=region,
-                    compute_usd=900 + n * 500 + (100 if region == "seoul" else 0), storage_usd=0)
+                    compute_usd=900 + n * 500 + (100 * (n + 1) if region == "seoul" else 0), storage_usd=0)
             for region, order in (("us", us_order), ("seoul", seoul_order or us_order))
             for n, platform in enumerate(order)]
     return {"rows": rows,
+            "premiums": [{"platform": platform, "service": service, "sku": f"{platform}-{service}",
+                          "us": us, "seoul": seoul, "premium_pct": round((seoul / us - 1) * 100, 1)}
+                         for platform, service, us, seoul in premiums],
             "workloads": {"storage_gb": storage_gb,
                           "scenarios": {"W1": {"name": "소규모 BI 대시보드", "hours_per_month": hours},
                                         "W2": {"name": "야간 배치 ETL", "hours_per_month": 60}}}}
 
 
-def test_intro_cards_are_five_in_order():
+def test_intro_cards_are_eight_in_order():
     cards, _ = intro_cards(_result(), "2026-09-11")
     assert [(c["kind"], c.get("group")) for c in cards] == [
-        ("cover", None), ("chips", None), ("flow", None), ("bullets", "result"), ("closing", None)]
+        ("cover", None), ("chips", None), ("flow", None), ("bullets", "result"),
+        ("bullets", "unit"), ("bullets", "unit"), ("bullets", "region"), ("closing", None)]
     assert cards[-1] == closing_card()
     assert [(chip["platform"], chip["unit"]) for chip in cards[1]["chips"]] == [
         ("Snowflake", "크레딧"), ("Databricks", "DBU-시간"), ("Redshift", "RPU-시간"), ("BigQuery", "슬롯-시간")]
@@ -186,9 +196,9 @@ def test_intro_ranks_the_platforms_by_monthly_cost():
     assert result["lead"] == "월 사용료가 낮은 순서입니다."
     assert result["items"] == [
         {"strong": "1위 Databricks", "rest": "미국 리전 $900 · 서울 리전 $1,000"},
-        {"strong": "2위 Redshift", "rest": "미국 리전 $1,400 · 서울 리전 $1,500"},
-        {"strong": "3위 Snowflake", "rest": "미국 리전 $1,900 · 서울 리전 $2,000"},
-        {"strong": "4위 BigQuery", "rest": "미국 리전 $2,400 · 서울 리전 $2,500"}]
+        {"strong": "2위 Redshift", "rest": "미국 리전 $1,400 · 서울 리전 $1,600"},
+        {"strong": "3위 Snowflake", "rest": "미국 리전 $1,900 · 서울 리전 $2,200"},
+        {"strong": "4위 BigQuery", "rest": "미국 리전 $2,400 · 서울 리전 $2,800"}]
     assert result["notes"] == ["2026-09-11 승인 스냅샷 기준", "금액은 벤더 공시 통화인 달러 기준",
                                "약정 할인을 제외한 모델 추정치"]     # 각주는 명사구로 끝맺는다
     assert result["basis"] == "비교 기준: 소형 컴퓨트 월 220시간 · 스토리지 10TB(압축 후)"
@@ -196,6 +206,42 @@ def test_intro_ranks_the_platforms_by_monthly_cost():
     for banned in ("T1", "T2", "채택", "기각", "시나리오", "매일 비교"):
         assert banned not in text                                          # 가설·시나리오는 카드에 싣지 않는다
     assert cards[0]["lead"] == "같은 워크로드를 기준으로 월 사용료를 환산해 비교합니다."
+
+
+def test_unit_price_cards_carry_every_item_with_page_labels():
+    """단가 항목을 생략하지 않는다(규칙 18). 5개마다 장을 늘리고 쪽 표시를 붙인다."""
+    cards, _ = intro_cards(_result(), "2026-09-11")
+    unit = [c for c in cards if c.get("group") == "unit"]
+    assert [c["page"] for c in unit] == ["(1/2)", "(2/2)"]
+    assert [[part["text"] for part in c["title"]] for c in unit] == [["서울 리전 ", "단가 차이"]] * 2
+    items = [item for c in unit for item in c["items"]]
+    assert len(items) == len(_result()["premiums"]) == 9              # 9개를 5 + 4로 나눈다
+    assert [len(c["items"]) for c in unit] == [5, 4]
+    assert items[0] == {"strong": "Databricks 컴퓨트", "rest": "$0.70 → $0.95 (+35.7%)"}
+    assert items[-1] == {"strong": "Databricks 스토리지", "rest": "$0.0208 → $0.02 (-3.8%)"}   # 차이가 큰 순
+    assert all(c["notes"] == ["2026-09-11 승인 스냅샷 기준", "단가는 벤더 공시 통화인 달러 기준"] for c in unit)
+
+
+def test_unit_price_lead_mentions_a_cheaper_seoul_only_when_one_exists():
+    cards, _ = intro_cards(_result(), "2026-09-11")
+    lead = next(c["lead"] for c in cards if c.get("group") == "unit")
+    assert lead == ("같은 상품의 서울 리전 단가가 미국 리전보다 높습니다. "
+                    "항목에 따라 서울 리전 단가가 더 낮은 경우도 있습니다.")
+
+    dearer = _result(premiums=[("snowflake", "compute", 3.0, 4.05)])   # 서울이 더 싼 항목이 없는 날
+    lead = next(c["lead"] for c in intro_cards(dearer, "2026-09-11")[0] if c.get("group") == "unit")
+    assert lead == "같은 상품의 서울 리전 단가가 미국 리전보다 높습니다."
+
+
+def test_region_cost_card_compares_the_same_workload_in_both_regions():
+    cards, _ = intro_cards(_result(), "2026-09-11")
+    region = next(c for c in cards if c.get("group") == "region")
+    assert [part["text"] for part in region["title"]] == ["서울 리전 ", "월 사용료"]
+    assert region["lead"] == "같은 워크로드를 서울 리전에서 돌릴 때의 월 사용료입니다."
+    assert region["items"][0] == {"strong": "Redshift", "rest": "$900 → $1,000 (+11.1%)"}   # 증가율이 낮은 순
+    assert [item["strong"] for item in region["items"]] == ["Redshift", "Snowflake", "BigQuery", "Databricks"]
+    assert region["notes"] == ["2026-09-11 승인 스냅샷 기준", "금액은 벤더 공시 통화인 달러 기준"]
+    assert region["basis"] == "비교 기준: 소형 컴퓨트 월 220시간 · 스토리지 10TB(압축 후)"   # 4장과 같은 줄
 
 
 def test_intro_stops_when_the_two_regions_rank_differently():
@@ -211,7 +257,7 @@ def test_intro_numbers_come_from_the_approved_snapshot():
     assert "월 220시간" in text and "10TB" in text                          # 비교 기준 줄도 숫자 검사를 받는다
     check_numbers(text, facts)                                             # 그대로면 통과
     with pytest.raises(ValueError, match="900"):
-        check_numbers(text, {**facts, "amounts": {}})                      # 기준 사전에 없는 숫자는 멈춘다
+        check_numbers(text, {**facts, "amounts": {}, "region_costs": []})  # 기준 사전에 없는 숫자는 멈춘다
 
 
 def test_intro_copy_matches_the_script():
@@ -221,7 +267,8 @@ def test_intro_copy_matches_the_script():
     for line in section.splitlines():
         stripped = line.strip()
         if stripped.startswith(("- 제목:", "- 부제:", "- 리드:")):
-            expected.append(stripped.split(":", 1)[1].strip().replace("**", "").strip("`"))
+            # 쪽 표시는 장 순번이라 card_text에 들어가지 않는다(4절). 제목 대조에서도 뺀다.
+            expected.append(stripped.split(":", 1)[1].replace("**", "").replace("`", "").replace("{쪽}", "").strip())
         elif stripped.startswith(("- 칩 4개:", "- 흐름 4단계:", "- 각주", "- 항목", "- 비교 기준")):
             expected += re.findall(r"`([^`]+)`", stripped)
         elif stripped.startswith("| T1") or stripped.startswith("| T2") or stripped.startswith("| |"):
@@ -233,6 +280,8 @@ def test_intro_copy_matches_the_script():
     lines = set(card_text(cards).splitlines())
     lines |= {f"{chip['platform']} {chip['unit']}" for chip in cards[1]["chips"]}
     lines |= {step["text"] for step in cards[2]["steps"]}
+    # 리드가 두 문장인 장이 있다. 스크립트는 문장마다 한 줄로 적으므로 문장 단위도 대조 대상에 넣는다.
+    lines |= {f"{sentence.strip()}." for line in set(lines) for sentence in line.split(".") if sentence.strip()}
     for text in expected:
         pattern = re.sub(r"\\\{.+?\\\}", ".+?", re.escape(text))
         assert any(re.fullmatch(pattern, line) for line in lines), text

@@ -10,7 +10,7 @@ from common.schema import REGIONS
 from model.tco import CostRow  # noqa: F401  (rank_items·price_change_cards의 자료형)
 from publish.render_post import PLATFORM_LABELS, check_numbers
 
-PER_PAGE = {"price": 5, "cost": 6, "rank": 2}                       # 디자인 계획 4-1
+PER_PAGE = {"price": 5, "cost": 6, "rank": 2, "unit": 5}           # 디자인 계획 4-1, 스크립트 4-1절
 LIMITS = {"cover_line": 10, "closing_title": 20, "title": 28,       # 스크립트 4절: 한 줄 상한 × 줄 수 상한
           "lead": 90, "item": 32, "note": 40, "basis": 44,           # 항목·각주·비교 기준은 한 줄씩 싣는다
           "chip": 12, "step": 16}                                   # 소개 카드 칩·흐름 단계는 한 줄
@@ -21,6 +21,10 @@ CHART_NOTES = ["금액은 벤더 공시 통화인 미국 달러 기준입니다.
 # 소개 4장 각주는 명사구로 끝맺는다(2026-09-16 사용자 수정). 읽는 문장이 아니라 조건 표시다(규칙 17).
 INTRO_NOTES = ["금액은 벤더 공시 통화인 달러 기준", "약정 할인을 제외한 모델 추정치"]
 BASIS = "비교 기준: 소형 컴퓨트 월 {hours}시간 · 스토리지 {storage_tb}TB(압축 후)"   # 순위가 나온 조건. 각주보다 작게 싣는다
+UNIT_LEAD = "같은 상품의 서울 리전 단가가 미국 리전보다 높습니다."
+UNIT_LEAD_CHEAPER = "항목에 따라 서울 리전 단가가 더 낮은 경우도 있습니다."   # 서울이 더 싼 항목이 있는 날만 붙인다
+UNIT_NOTE = "단가는 벤더 공시 통화인 달러 기준"
+REGION_LEAD = "같은 워크로드를 서울 리전에서 돌릴 때의 월 사용료입니다."
 INTRO_UNITS = [("Snowflake", "크레딧"), ("Databricks", "DBU-시간"), ("Redshift", "RPU-시간"), ("BigQuery", "슬롯-시간")]
 INTRO_FLOW = ["매일 수집", "월 사용료 계산", "검토 요청에서 정지", "승인 후 게시"]
 INTRO_STOP = "검토 요청에서 정지"                                      # 사람의 승인을 기다리는 지점. 흐름 장에서 구분한다
@@ -151,6 +155,34 @@ def rank_items(rows: list[CostRow], scenario: str) -> tuple[list[dict], dict]:
     return items, amounts
 
 
+def unit_price_cards(premiums: list[dict], day: str) -> tuple[list[dict], list]:
+    """상품 단가를 미국 리전과 서울 리전으로 비교한다(스크립트 3절). 차이가 큰 순이며 항목을 생략하지 않는다."""
+    ranked = sorted(premiums, key=lambda p: -p["premium_pct"])
+    lead = UNIT_LEAD + (f" {UNIT_LEAD_CHEAPER}" if any(p["premium_pct"] < 0 for p in ranked) else "")
+    items = [{"strong": f"{PLATFORM_LABELS[p['platform']]} {SERVICE_LABELS[p['service']]}",
+              "rest": f"{price_label(p['us'])} → {price_label(p['seoul'])} ({p['premium_pct']:+.1f}%)"}
+             for p in ranked]
+    cards = [{"kind": "bullets", "group": "unit", "page": page, "title": _title("서울 리전 ", "단가 차이"),
+              "lead": lead, "items": chunk, "notes": [f"{day} 승인 스냅샷 기준", UNIT_NOTE]}
+             for chunk, page in _pages(items, PER_PAGE["unit"])]
+    return cards, [[p["us"], p["seoul"], round(p["premium_pct"], 1)] for p in ranked]
+
+
+def region_cost_card(rows: list[CostRow], scenario: str, day: str, basis: str) -> tuple[dict, list]:
+    """같은 워크로드를 두 리전에서 돌렸을 때의 월 사용료(스크립트 3절). 증가율이 낮은 순이다."""
+    cost = {(r.region, r.platform): r.total_usd for r in rows if r.scenario == scenario}
+    rise = {platform: cost[("seoul", platform)] / cost[("us", platform)] - 1
+            for region, platform in cost if region == "us"}
+    platforms = sorted(rise, key=lambda platform: rise[platform])
+    card = {"kind": "bullets", "group": "region", "page": None, "title": _title("서울 리전 ", "월 사용료"),
+            "lead": REGION_LEAD,
+            "items": [{"strong": PLATFORM_LABELS[platform],
+                       "rest": f"{usd_label(cost[('us', platform)])} → {usd_label(cost[('seoul', platform)])} "
+                               f"({rise[platform] * 100:+.1f}%)"} for platform in platforms],
+            "notes": [f"{day} 승인 스냅샷 기준", INTRO_NOTES[0]], "basis": basis}
+    return card, [[round(cost[("us", p)]), round(cost[("seoul", p)]), round(rise[p] * 100, 1)] for p in platforms]
+
+
 def intro_cards(result: dict, day: str) -> tuple[list[dict], dict]:
     """소개 카드 5장(스크립트 3절). result는 승인 스냅샷의 analyze() 결과(rows, workloads), day는 그 승인일이다.
     소개 카드에는 events.json이 없으므로 숫자 검사 기준 사전을 함께 돌려준다. 굽기의 숫자 검사도 이 사전을 쓴다."""
@@ -159,6 +191,9 @@ def intro_cards(result: dict, day: str) -> tuple[list[dict], dict]:
     hours = workloads["scenarios"][scenario]["hours_per_month"]
     storage_tb = round(workloads["storage_gb"] / 1000)
     items, amounts = rank_items(result["rows"], scenario)
+    basis = BASIS.format(hours=hours, storage_tb=storage_tb)
+    unit, unit_prices = unit_price_cards(result["premiums"], day)
+    region, region_costs = region_cost_card(result["rows"], scenario, day, basis)
     cards = [
         {"kind": "cover", "title": _title("데이터 플랫폼 네 곳의 ", "월 사용료 추적"),
          "subtitle": "Snowflake · Databricks · BigQuery · Redshift",
@@ -172,12 +207,13 @@ def intro_cards(result: dict, day: str) -> tuple[list[dict], dict]:
          "notes": ["가격이 바뀐 날에만 검토 요청이 열립니다.", "승인한 값만 기록과 비교 기준에 사용합니다."]},
         {"kind": "bullets", "group": "result", "page": None, "title": _title("월 사용료 ", "현재 순위"),
          "lead": "월 사용료가 낮은 순서입니다.", "items": items,
-         "notes": [f"{day} 승인 스냅샷 기준", *INTRO_NOTES],
-         "basis": BASIS.format(hours=hours, storage_tb=storage_tb)},
+         "notes": [f"{day} 승인 스냅샷 기준", *INTRO_NOTES], "basis": basis},
+        *unit,
+        region,
         closing_card(),
     ]
-    facts = {"day": day, "ranks": list(range(1, len(items) + 1)), "hours": hours,
-             "storage_tb": storage_tb, "amounts": amounts}
+    facts = {"day": day, "ranks": list(range(1, len(items) + 1)), "hours": hours, "storage_tb": storage_tb,
+             "amounts": amounts, "unit_prices": unit_prices, "region_costs": region_costs}
     check_lengths(cards)
     check_numbers(card_text(cards), facts)
     return cards, facts

@@ -25,6 +25,44 @@ def test_env_var_wins(monkeypatch, tmp_path):
     assert browser.find_browser() == str(fake)
 
 
+def _two_browsers(monkeypatch, tmp_path, first_output, second_output):
+    """설치된 브라우저 두 개를 흉내 낸다. 각 실행 파일이 돌려줄 표준 출력을 정한다."""
+    import subprocess
+
+    monkeypatch.delenv("BROWSER_BIN", raising=False)
+    exes = [str(tmp_path / name) for name in ("edge.exe", "chrome.exe")]
+    for exe in exes:
+        Path(exe).write_text("")
+    monkeypatch.setattr(browser, "CANDIDATES", exes)
+    stdout = dict(zip(exes, (first_output, second_output)))
+    calls = []
+
+    def fake_run(args, **kwargs):
+        calls.append(args[0])
+        return subprocess.CompletedProcess(args, 0, stdout[args[0]], b"")
+
+    monkeypatch.setattr(browser.subprocess, "run", fake_run)
+    page = tmp_path / "card.html"
+    page.write_text("<p>x</p>", encoding="utf-8")
+    return exes, calls, page
+
+
+def test_dump_dom_tries_the_next_browser_when_one_returns_nothing(monkeypatch, tmp_path):
+    """Edge가 종료 코드 0에 빈 출력을 돌려주는 환경이 있다(2026-09-16 실측). 다음 브라우저로 넘어간다."""
+    (edge, chrome), calls, page = _two_browsers(monkeypatch, tmp_path, b"", b"<html>ok</html>")
+
+    assert "ok" in browser.dump_dom(page)
+    assert calls[0] == edge and chrome in calls                              # 빈 출력을 준 쪽을 먼저 시도한다
+
+
+def test_dump_dom_reports_every_browser_it_tried(monkeypatch, tmp_path):
+    (edge, chrome), calls, page = _two_browsers(monkeypatch, tmp_path, b"", b"")
+
+    with pytest.raises(RuntimeError, match="DOM을 받지 못했다"):
+        browser.dump_dom(page)
+    assert {Path(call).name for call in calls} == {"edge.exe", "chrome.exe"}
+
+
 def test_no_browser_raises(monkeypatch):
     monkeypatch.delenv("BROWSER_BIN", raising=False)
     monkeypatch.setattr(browser, "CANDIDATES", [])

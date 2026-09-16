@@ -30,15 +30,20 @@ TIMEOUT = 120
 FILE_WAIT = 60                                      # 브라우저 종료 뒤 파일이 쓰일 때까지 기다리는 상한(초)
 
 
-def find_browser() -> str:
-    """쓸 브라우저 경로. BROWSER_BIN이 가장 우선한다."""
+def browsers() -> list[str]:
+    """설치된 브라우저 경로를 우선순위대로 돌려준다. BROWSER_BIN이 가장 우선한다."""
     chosen = os.environ.get("BROWSER_BIN")
     if chosen and Path(chosen).exists():
-        return chosen
-    for path in CANDIDATES:
-        if Path(path).exists():
-            return path
-    raise RuntimeError("브라우저를 찾지 못했다. Edge나 Chrome을 설치하거나 BROWSER_BIN에 경로를 지정한다.")
+        return [chosen]
+    return [path for path in CANDIDATES if Path(path).exists()]
+
+
+def find_browser() -> str:
+    """쓸 브라우저 경로."""
+    found = browsers()
+    if not found:
+        raise RuntimeError("브라우저를 찾지 못했다. Edge나 Chrome을 설치하거나 BROWSER_BIN에 경로를 지정한다.")
+    return found[0]
 
 
 def wait_for_file(out: Path, timeout: float = FILE_WAIT) -> bool:
@@ -106,19 +111,25 @@ def print_pdf(html: Path, out: Path) -> Path:
 def dump_dom(html: Path) -> str:
     """페이지 스크립트가 실행된 뒤의 DOM을 표준 출력으로 받는다. 카드 레이아웃 측정값을 읽는 데 쓴다.
 
-    Edge에서도 출력을 받는다(5회 모두, 최대 30KB) [확인 2026-09-15]. PDF 제목으로 받는 방식은 4,096자에서 잘린다.
+    PDF 제목으로 받는 방식은 4,096자에서 잘린다 [확인 2026-09-15].
+    **설치된 브라우저를 차례로 시도한다.** Edge가 종료 코드 0에 빈 출력을 돌려주는 환경이 있다
+    [확인 2026-09-16]. 화면 캡처·PDF는 파일로 쓰므로 같은 Edge에서도 정상이다.
     """
     reasons = []
-    for headless in HEADLESS:
-        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
-            try:
-                result = subprocess.run([find_browser(), *COMMON, f"--user-data-dir={profile}", headless, "--dump-dom",
-                                         Path(html).resolve().as_uri()], capture_output=True, timeout=TIMEOUT)
-            except subprocess.TimeoutExpired:
-                reasons.append(f"{headless}: {TIMEOUT}초 안에 끝나지 않았다")
-                continue
-        dom = result.stdout.decode("utf-8", "replace")
-        if result.returncode == 0 and dom.strip():
-            return dom
-        reasons.append(f"{headless}: 종료 코드 {result.returncode}, 출력 {len(dom)}자")
+    found = browsers()
+    if not found:
+        find_browser()                                  # 설치된 브라우저가 없으면 같은 사유로 멈춘다
+    for exe in found:
+        for headless in HEADLESS:
+            with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
+                try:
+                    result = subprocess.run([exe, *COMMON, f"--user-data-dir={profile}", headless, "--dump-dom",
+                                             Path(html).resolve().as_uri()], capture_output=True, timeout=TIMEOUT)
+                except subprocess.TimeoutExpired:
+                    reasons.append(f"{Path(exe).name} {headless}: {TIMEOUT}초 안에 끝나지 않았다")
+                    continue
+            dom = result.stdout.decode("utf-8", "replace")
+            if result.returncode == 0 and dom.strip():
+                return dom
+            reasons.append(f"{Path(exe).name} {headless}: 종료 코드 {result.returncode}, 출력 {len(dom)}자")
     raise RuntimeError("DOM을 받지 못했다.\n" + "\n".join(reasons))

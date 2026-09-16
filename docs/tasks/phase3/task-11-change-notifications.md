@@ -96,6 +96,10 @@
 
 `OWNER`는 `${{ github.repository_owner }}`를 환경변수로 받는다. 계정 이름을 워크플로에 적지 않고, 식을 셸 명령에 넣지 않는다.
 
+## 커밋
+
+`86c3853` (워크플로 4개, `tests/test_workflows.py`, 이 문서, `CLAUDE.md`). 원격 봇 커밋 위로 리베이스해 push했다.
+
 ## 확인한 값 [확인]
 
 | 항목 | 값 |
@@ -104,6 +108,8 @@
 | 저장소 구독 | `subscribed: true`, `ignored: false` |
 | 구독자 수 | 0 → **1** |
 | 기존 보안 검사 | 액션 SHA 고정, OIDC 범위, `revise.yml` 셸 입력 금지 모두 유지 |
+| push 뒤 원격 파일 | `collect` 담당자 1·갱신 담당자 1, `watch` 2, `publish` 1, `revise` 1. 네 파일 모두 소유자 환경변수를 가진다 |
+| 게시 워크플로 | 성공. 새 승인이 없어 시트 적재는 건너뛰었다(정상) |
 
 B안은 API로 처리했다(`PUT /repos/{소유자}/{저장소}/subscription`). 웹에서 누를 필요가 없었다.
 
